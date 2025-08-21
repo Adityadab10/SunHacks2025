@@ -8,6 +8,7 @@ import youtubeRoutes from "./routes/youtubeRoutes.js";
 import studyBoardYTRoutes from "./routes/studyboard-ytRoutess.js";
 import videoRoutes from "./routes/videoRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import groupRoutes from "./routes/groupRoutes.js";
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use("/api/youtube", youtubeRoutes);
 app.use("/api/studyboard-yt", studyBoardYTRoutes);
 app.use("/api/video", videoRoutes);
 app.use("/api", userRoutes);
+app.use("/api/group", groupRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
