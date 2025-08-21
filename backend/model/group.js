@@ -1,5 +1,21 @@
 import mongoose from 'mongoose';
 
+const messageSchema = new mongoose.Schema({
+  sender: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  content: {
+    type: String,
+    required: true
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now
+  }
+});
+
 const groupSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -14,6 +30,7 @@ const groupSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
+  messages: [messageSchema],
   createdAt: {
     type: Date,
     default: Date.now

@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { io } from 'socket.io-client';
 import { useUser } from '../context/UserContext';
 import toast from 'react-hot-toast';
 import MainSidebar from '../components/Sidebar';
+
+const socket = io('http://localhost:5000');
 
 const StudyGroup = () => {
   const { firebaseUid } = useUser();
@@ -14,6 +17,9 @@ const StudyGroup = () => {
   const [addedMembers, setAddedMembers] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [members, setMembers] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const chatEndRef = useRef(null);
   const [ownerEmail, setOwnerEmail] = useState('');
 
   useEffect(() => {
@@ -103,7 +109,34 @@ const StudyGroup = () => {
     if (data.success) {
       setSelectedGroup(data.group);
       setMembers(data.group.members);
+      setMessages(data.group.messages || []);
+      socket.emit('joinGroup', groupId);
     }
+  };
+
+  useEffect(() => {
+    socket.on('receiveMessage', ({ groupId, message }) => {
+      if (selectedGroup && groupId === selectedGroup._id) {
+        setMessages((prev) => [...prev, message]);
+      }
+    });
+    return () => {
+      socket.off('receiveMessage');
+    };
+  }, [selectedGroup]);
+
+  useEffect(() => {
+    if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const sendMessage = () => {
+    if (!chatInput.trim() || !selectedGroup) return;
+    socket.emit('sendMessage', {
+      groupId: selectedGroup._id,
+      senderId: firebaseUid,
+      content: chatInput.trim()
+    });
+    setChatInput('');
   };
 
   return (
@@ -184,7 +217,7 @@ const StudyGroup = () => {
             ))}
           </ul>
         </div>
-        {/* Show selected group details */}
+        {/* Show selected group details and chat */}
         {selectedGroup && (
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-2">Group: {selectedGroup.name}</h2>
@@ -197,6 +230,31 @@ const StudyGroup = () => {
                 </li>
               ))}
             </ul>
+            {/* Chat UI */}
+            <div className="mt-8 bg-gray-800 rounded-lg p-4 max-w-xl">
+              <h3 className="text-lg font-semibold mb-2">Group Chat</h3>
+              <div className="h-64 overflow-y-auto bg-gray-900 rounded p-2 mb-2">
+                {messages.map((msg, idx) => (
+                  <div key={idx} className={`mb-2 flex ${msg.sender === firebaseUid ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`px-3 py-2 rounded-lg ${msg.sender === firebaseUid ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200'}`}>
+                      <span>{msg.content}</span>
+                    </div>
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+              <div className="flex">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  className="flex-1 p-2 rounded bg-gray-700 text-white mr-2"
+                  placeholder="Type a message..."
+                  onKeyDown={e => { if (e.key === 'Enter') sendMessage(); }}
+                />
+                <button onClick={sendMessage} className="bg-green-600 px-4 py-2 rounded">Send</button>
+              </div>
+            </div>
           </div>
         )}
       </div>
