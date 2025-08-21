@@ -82,7 +82,6 @@ mongoose
       console.log(
         `🎥 YouTube API: http://localhost:${process.env.PORT}/api/youtube`
       );
-      console.log(`📄 OCR API: http://localhost:${process.env.PORT}/api/ocr`);
     });
   })
   .catch((err) => console.error(err));

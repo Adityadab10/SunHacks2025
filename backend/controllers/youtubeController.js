@@ -151,51 +151,27 @@ export const summarizeVideo = async (req, res) => {
 
     // Prepare prompts for all 3 summary types with markdown formatting
     const prompts = {
-      brief: `Please provide a brief summary (2-3 sentences) of this YouTube video. Format your response in markdown with proper structure:
+      brief: `Summarize this YouTube video in 2-3 sentences. Do not add any introductory phrases.
 
-**Video:** ${metadata.title}
-**Channel:** ${metadata.channel}
+Title: ${metadata.title}
+Channel: ${metadata.channel}
 
-**Transcript:**
-${transcript}
+${transcript}`,
 
-**Instructions:** Provide a concise 2-3 sentence summary that captures the main topic and key message. Use markdown formatting for emphasis.
+      detailed: `Summarize the transcript into detailed paragraphs with key points and takeaways. Output must start directly with the content. Do not say things like "Here is the summary" or similar.
 
-**Brief Summary:**`,
+Title: ${metadata.title}
+Channel: ${metadata.channel}
+Duration: ${metadata.duration}
 
-      detailed: `Please provide a detailed summary of this YouTube video in markdown format. Include key points, main topics discussed, and important takeaways:
+${transcript}`,
 
-**Video Details:**
-- **Title:** ${metadata.title}
-- **Channel:** ${metadata.channel}
-- **Duration:** ${metadata.duration}
+      bulletPoints: `Summarize the transcript into bullet points only. No introductions, no closing sentences. Output must start directly with bullet points.
 
-**Transcript:**
-${transcript}
+Title: ${metadata.title}
+Channel: ${metadata.channel}
 
-**Instructions:** Create a comprehensive summary using markdown formatting. Use headers, bullet points, and emphasis where appropriate. Include:
-- Main topic/theme
-- Key points discussed
-- Important insights
-- Conclusions or takeaways
-
-**Detailed Summary:**`,
-
-      bulletPoints: `Please provide a summary of this YouTube video in bullet point format using markdown. Highlight the main topics and key insights:
-
-**Video:** ${metadata.title}
-**Channel:** ${metadata.channel}
-
-**Transcript:**
-${transcript}
-
-**Instructions:** Create a well-structured bullet point summary using markdown formatting. Organize into sections if needed. Use:
-- Main bullet points for key topics
-- Sub-points for details
-- **Bold text** for emphasis
-- Clear, concise language
-
-**Summary (Bullet Points):`
+${transcript}`
     };
 
     // Generate all 3 summaries using Gemini in parallel
