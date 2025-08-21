@@ -61,7 +61,7 @@ const Navbar = () => {
   return (
     <motion.div
       ref={ref}
-      className="fixed inset-x-0 top-0 z-50 max-w-6xl mx-auto mb-16 md:mb-0"
+      className="fixed inset-x-0 top-0 z-50 max-w-6xl mx-auto"
     >
       {/* Desktop Navbar */}
       <motion.div
@@ -201,7 +201,7 @@ const Navbar = () => {
           stiffness: 400,
           damping: 40,
         }}
-        className="md:hidden flex items-center justify-between px-6 py-3 mt-4 mx-6 rounded-full"
+        className="md:hidden flex items-center justify-between px-6 py-3 mx-6 rounded-full"
       >
         <motion.h1
           animate={{

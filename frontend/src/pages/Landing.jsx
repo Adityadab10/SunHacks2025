@@ -42,7 +42,7 @@ const Landing = () => {
   return (
     <div className={`min-h-screen ${themeClasses.bg} ${themeClasses.text}`}>
       {/* Theme Toggle Button */}
-      <div className="fixed top-6 right-6 z-50">
+      <div className="fixed top-24 right-6 z-40">
         <button
           onClick={toggleTheme}
           className={`p-3 rounded-full shadow-lg transition-all duration-300 ${
@@ -56,7 +56,7 @@ const Landing = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 pt-20 pb-16">
+      <div className="max-w-7xl mx-auto px-4 pt-32 pb-16">
         <div className="text-center space-y-8">
           <h1 className="text-6xl font-bold mb-6">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-400">StudyGenie</span>

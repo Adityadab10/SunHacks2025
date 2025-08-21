@@ -14,14 +14,14 @@ const AppContent = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+      <div className="min-h-screen bg-gray-100 dark:bg-black flex items-center justify-center">
+        <div className="text-gray-900 dark:text-white text-xl">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen">
       <Navbar />
       <Routes>
         {firebaseUid ? (
