@@ -10,17 +10,25 @@ const Dashboard = () => {
   const [minutesSpent, setMinutesSpent] = useState(0);
   const [streak, setStreak] = useState(1);
 
-  // Stopwatch logic
+  // Fetch session time from backend (same as Profile)
   useEffect(() => {
-    setMinutesSpent(0);
-    const startTime = Date.now();
-    const intervalId = setInterval(() => {
-      const currentTime = Date.now();
-      const mins = Math.floor((currentTime - startTime) / (1000 * 60));
-      setMinutesSpent(mins);
-    }, 1000);
+    let intervalId;
+    async function fetchSessionTime() {
+      if (firebaseUid) {
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          const res = await fetch(`http://localhost:5000/api/user/${firebaseUid}/session?date=${today}`);
+          const data = await res.json();
+          setMinutesSpent(Math.floor((data.totalTime || 0) / 60));
+        } catch (err) {
+          setMinutesSpent(0);
+        }
+      }
+    }
+    fetchSessionTime();
+    intervalId = setInterval(fetchSessionTime, 60000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [firebaseUid]);
 
   // Streak logic (simple: checks localStorage for login days)
   useEffect(() => {
