@@ -1,6 +1,6 @@
 # YouTube Video Summarization API
 
-This API allows you to summarize YouTube videos using Google's Gemini AI with 3 different summary types.
+This API allows you to summarize YouTube videos using Google's Gemini AI with 3 different summary types and stores them in MongoDB.
 
 ## Endpoints
 
@@ -8,13 +8,14 @@ This API allows you to summarize YouTube videos using Google's Gemini AI with 3 
 
 **POST** `/api/youtube/summarize`
 
-Summarizes a YouTube video using Gemini AI and returns all 3 summary types: brief, detailed, and bullet-points.
+Summarizes a YouTube video using Gemini AI, returns all 3 summary types, and saves to database.
 
 **Request Body:**
 
 ```json
 {
-  "youtubeUrl": "https://www.youtube.com/watch?v=VIDEO_ID"
+  "youtubeUrl": "https://www.youtube.com/watch?v=VIDEO_ID",
+  "userId": "user_mongodb_id"
 }
 ```
 
@@ -47,12 +48,86 @@ Summarizes a YouTube video using Gemini AI and returns all 3 summary types: brie
         "content": "• Key point 1\n• Key point 2\n• Key point 3...",
         "generatedAt": "2025-01-21T12:00:00.000Z"
       }
-    }
+    },
+    "savedId": "mongodb_record_id",
+    "isExisting": false
   }
 }
 ```
 
-### 2. Get Transcript
+### 2. Get User YouTube History
+
+**GET** `/api/youtube/history/:userId`
+
+Gets a user's YouTube video summarization history.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "count": 5,
+    "videos": [
+      {
+        "id": "mongodb_record_id",
+        "videoId": "VIDEO_ID",
+        "title": "Video Title",
+        "channel": "Channel Name",
+        "duration": "10:30",
+        "url": "https://www.youtube.com/watch?v=VIDEO_ID",
+        "createdAt": "2025-01-21T12:00:00.000Z",
+        "updatedAt": "2025-01-21T12:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+### 3. Get Specific YouTube Summary
+
+**GET** `/api/youtube/summary/:id`
+
+Gets a specific YouTube video summary by MongoDB record ID.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "video": {
+      "id": "VIDEO_ID",
+      "title": "Video Title",
+      "channel": "Channel Name",
+      "duration": "10:30",
+      "url": "https://www.youtube.com/watch?v=VIDEO_ID"
+    },
+    "summaries": {
+      "brief": {
+        "type": "brief",
+        "content": "Brief summary...",
+        "generatedAt": "2025-01-21T12:00:00.000Z"
+      },
+      "detailed": {
+        "type": "detailed",
+        "content": "Detailed summary...",
+        "generatedAt": "2025-01-21T12:00:00.000Z"
+      },
+      "bulletPoints": {
+        "type": "bullet-points",
+        "content": "• Key points...",
+        "generatedAt": "2025-01-21T12:00:00.000Z"
+      }
+    },
+    "savedId": "mongodb_record_id",
+    "createdAt": "2025-01-21T12:00:00.000Z",
+    "updatedAt": "2025-01-21T12:00:00.000Z"
+  }
+}
+```
+
+### 4. Get Transcript
 
 **POST** `/api/youtube/transcript`
 
@@ -83,7 +158,7 @@ Gets the transcript of a YouTube video.
 }
 ```
 
-### 3. Health Check
+### 5. Health Check
 
 **GET** `/api/youtube/health`
 
@@ -99,13 +174,36 @@ Checks if the YouTube API service is running.
 }
 ```
 
+## MongoDB Schema
+
+The YouTube schema stores the following fields:
+
+- `userId`: MongoDB ObjectId referencing the user
+- `videoId`: YouTube video ID
+- `title`: Video title
+- `channel`: Channel name  
+- `duration`: Video duration
+- `url`: Full YouTube URL
+- `briefSummary`: Brief summary content
+- `detailedSummary`: Detailed summary content (optional)
+- `bulletPointsSummary`: Bullet points summary content (optional)
+- `createdAt`: Record creation timestamp
+- `updatedAt`: Record update timestamp
+
 ## Summary Types
 
-All three types are now generated automatically:
+All three types are now generated automatically and stored:
 
-- **brief**: 2-3 sentence summary
+- **brief**: 2-3 sentence summary (required)
 - **detailed**: Comprehensive summary with key points and takeaways  
 - **bulletPoints**: Main topics in bullet point format
+
+## Features
+
+- **Duplicate Prevention**: If a user tries to summarize the same video twice, the existing summary is returned
+- **History Tracking**: All summarized videos are stored and can be retrieved later
+- **User Association**: Each summary is linked to a specific user
+- **Comprehensive Storage**: Stores video metadata along with all summary types
 
 ## Environment Variables
 
@@ -141,7 +239,8 @@ The API returns appropriate error messages for:
 curl -X POST http://localhost:5000/api/youtube/summarize \
   -H "Content-Type: application/json" \
   -d '{
-    "youtubeUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    "youtubeUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "userId": "user_mongodb_id"
   }'
 
 # Get transcript only
@@ -162,7 +261,8 @@ const response = await fetch("/api/youtube/summarize", {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    userId: "user_mongodb_id"
   }),
 });
 

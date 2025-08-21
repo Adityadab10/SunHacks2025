@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import MainSidebar from '../components/Sidebar';
+import { useUser } from '../context/UserContext';
 import {
   Youtube, Play, Loader2, CheckCircle, AlertCircle, 
   Clock, User, Copy, Download, Sparkles, Zap, 
@@ -10,6 +11,7 @@ import {
 import toast from 'react-hot-toast';
 
 const YouTubePage = () => {
+  const { mongoUid, firebaseUid, loading: userLoading } = useUser();
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -41,6 +43,17 @@ const YouTubePage = () => {
       return;
     }
 
+    // Check if user is logged in and MongoDB UID is available
+    if (!firebaseUid) {
+      toast.error('Please log in to use this feature');
+      return;
+    }
+
+    if (!mongoUid) {
+      toast.error('User profile not synced. Please try refreshing the page.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setResult(null);
@@ -52,7 +65,8 @@ const YouTubePage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          youtubeUrl: url.trim()
+          youtubeUrl: url.trim(),
+          userId: mongoUid // Use MongoDB UID from context
         }),
       });
 
@@ -65,7 +79,7 @@ const YouTubePage = () => {
         }
         
         setResult(data.data);
-        toast.success('Video summarized successfully!');
+        toast.success('Video summarized and saved successfully!');
         setActiveTab('brief'); // Reset to first tab
       } else {
         const errorMsg = data.error || `Server error: ${response.status}`;
@@ -151,6 +165,45 @@ Generated on: ${new Date().toLocaleString()}
     URL.revokeObjectURL(blobUrl);
     toast.success('All summaries downloaded!');
   };
+
+  // Show loading spinner while user data is being fetched
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex">
+        <MainSidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-red-400" />
+            <p className="text-gray-400">Loading user data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if user is not properly authenticated
+  if (!firebaseUid || !mongoUid) {
+    return (
+      <div className="min-h-screen bg-black text-white flex">
+        <MainSidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-400" />
+            <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
+            <p className="text-gray-400 mb-4">
+              Please log in and ensure your profile is synced to use the YouTube summarizer.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white flex">
