@@ -7,66 +7,44 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-
-const ProtectedRoute = ({ children }) => {
-  const { firebaseUid, loading } = useUser();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    );
-  }
-  
-  return firebaseUid ? children : <Navigate to="/login" replace />;
-};
-
-const PublicRoute = ({ children }) => {
-  const { firebaseUid, loading } = useUser();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    );
-  }
-  
-  return firebaseUid ? <Navigate to="/dashboard" replace /> : children;
-};
+import Upload from './pages/Upload';
+import Profile from './pages/Profile';
+import YouTubePage from './pages/Youtube';
 
 const AppContent = () => {
+  const { firebaseUid, loading } = useUser();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-black flex items-center justify-center">
+        <div className="text-gray-900 dark:text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-black">
-      <Navbar />
+    <div className="min-h-screen">
+      {/* Only show Navbar for non-dashboard routes */}
+      {!firebaseUid && <Navbar />}
       <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route 
-          path="/login" 
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          } 
-        />
-        <Route 
-          path="/register" 
-          element={
-            <PublicRoute>
-              <Register />
-            </PublicRoute>
-          } 
-        />
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {firebaseUid ? (
+          // User is logged in - show all authenticated pages
+          <>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/upload" element={<Upload />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/youtube" element={<YouTubePage />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </>
+        ) : (
+          // User is not logged in - show landing, login, and register
+          <>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </>
+        )}
       </Routes>
       <Toaster 
         position="top-right"
