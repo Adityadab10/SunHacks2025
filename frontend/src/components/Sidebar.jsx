@@ -1,7 +1,7 @@
 import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X, Home, BookOpen, BarChart3, Settings, LogOut, User, Upload, Target, Zap, MessageCircle, Globe } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useUser } from '../context/UserContext';
 import { auth } from '../../firebase.config';
 
@@ -125,14 +125,19 @@ export const MobileSidebar = ({ className, children, ...props }) => {
 
 export const SidebarLink = ({ link, className, onClick, ...props }) => {
   const { open, animate, setOpen } = useSidebar();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleClick = (e) => {
+    e.preventDefault();
+    
     if (onClick) {
-      e.preventDefault();
       onClick();
     } else if (link.onClick) {
-      e.preventDefault();
       link.onClick();
+    } else if (link.href && link.href !== "#") {
+      // Navigate to the link if it's not a special action
+      navigate(link.href);
     }
 
     // For mobile, close the sidebar after clicking a link
@@ -141,14 +146,22 @@ export const SidebarLink = ({ link, className, onClick, ...props }) => {
     }
   };
 
+  // Check if this link is currently active
+  const isActive = location.pathname === link.href;
+
   return (
-    <a
-      href={link.href || "#"}
+    <div
       onClick={handleClick}
-      className={`flex items-center justify-start gap-3 group/sidebar py-3 px-2 rounded-lg hover:bg-gray-800 transition-all duration-200 cursor-pointer relative ${className || ''}`}
+      className={`flex items-center justify-start gap-3 group/sidebar py-3 px-2 rounded-lg transition-all duration-200 cursor-pointer relative ${
+        isActive 
+          ? 'bg-green-600/20 border border-green-500/30 text-green-400' 
+          : 'hover:bg-gray-800 text-gray-300'
+      } ${className || ''}`}
       {...props}
     >
-      <div className="flex-shrink-0 relative z-10 text-gray-300 group-hover/sidebar:text-green-400 transition-colors">
+      <div className={`flex-shrink-0 relative z-10 transition-colors ${
+        isActive ? 'text-green-400' : 'text-gray-300 group-hover/sidebar:text-green-400'
+      }`}>
         {link.icon}
       </div>
 
@@ -161,7 +174,9 @@ export const SidebarLink = ({ link, className, onClick, ...props }) => {
           duration: 0.2,
           ease: "easeInOut",
         }}
-        className="text-gray-300 text-sm group-hover/sidebar:text-white group-hover/sidebar:translate-x-1 transition-all duration-200 whitespace-pre inline-block !p-0 !m-0 relative z-10"
+        className={`text-sm transition-all duration-200 whitespace-pre inline-block !p-0 !m-0 relative z-10 ${
+          isActive ? 'text-green-400' : 'text-gray-300 group-hover/sidebar:text-white group-hover/sidebar:translate-x-1'
+        }`}
       >
         {link.label}
       </motion.span>
@@ -172,7 +187,7 @@ export const SidebarLink = ({ link, className, onClick, ...props }) => {
           {link.label}
         </div>
       )}
-    </a>
+    </div>
   );
 };
 
@@ -194,6 +209,11 @@ const MainSidebar = () => {
       icon: <Home className="w-5 h-5" />,
     },
     {
+      label: "My Profile",
+      href: "/profile", 
+      icon: <User className="w-5 h-5" />,
+    },
+    {
       label: "My Courses",
       href: "/courses",
       icon: <BookOpen className="w-5 h-5" />,
@@ -202,6 +222,11 @@ const MainSidebar = () => {
       label: "Upload Materials",
       href: "/upload",
       icon: <Upload className="w-5 h-5" />,
+    },
+    {
+      label: "YouTube Summarizer",
+      href: "/youtube",
+      icon: <Globe className="w-5 h-5" />,
     },
     {
       label: "Study Flow",
