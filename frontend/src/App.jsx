@@ -7,6 +7,7 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Upload from './pages/Upload';
 
 const AppContent = () => {
   const { firebaseUid, loading } = useUser();
@@ -25,9 +26,10 @@ const AppContent = () => {
       {!firebaseUid && <Navbar />}
       <Routes>
         {firebaseUid ? (
-          // User is logged in - only show dashboard
+          // User is logged in - show dashboard and upload
           <>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/upload" element={<Upload />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </>
         ) : (
