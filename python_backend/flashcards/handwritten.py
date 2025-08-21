@@ -1,15 +1,30 @@
-from pdf2image import convert_from_path
-from transformers import pipeline
+import easyocr
+import cv2
 from PIL import Image
+import numpy as np
 
-ocr_pipe = pipeline("image-to-text", model="microsoft/trocr-base-handwritten")
+def preprocess_image(image_path):
+    img = cv2.imread(image_path, cv2.IMREAD_COLOR)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # Apply thresholding or contrast enhancement
+    _, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    pil_img = Image.fromarray(thresh)
+    return pil_img
 
-pdf_path = "./FA_Output_Notes.pdf"
-pages = convert_from_path(pdf_path)
+# Initialize EasyOCR reader
+reader = easyocr.Reader(['en'])
 
-full_text = ""
-for page in pages:
-    text = ocr_pipe(page)[0]['generated_text']
-    full_text += text + "\n\n"
+def extract_handwritten_text(preprocessed_img):
+    img_np = np.array(preprocessed_img)
+    results = reader.readtext(img_np)
+    text = ""
+    for (_, text_line, confidence) in results:
+        if confidence > 0.5:  # filter low confidence results
+            text += text_line + " "
+    return text
 
-print(full_text)
+# Usage
+img_path = "./notes_image.jpg"
+preprocessed_img = preprocess_image(img_path)
+text = extract_handwritten_text(preprocessed_img)
+print(text)
