@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import authRoutes from './routes/authRoutes.js';
+import youtubeRoutes from './routes/youtubeRoutes.js';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.get("/", (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/youtube', youtubeRoutes);
 
 // DB connection
 mongoose
