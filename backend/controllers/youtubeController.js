@@ -61,10 +61,13 @@ export const summarizeVideo = async (req, res) => {
       if (!apiKey) {
         return res.status(500).json({
           success: false,
-          error: "GEMINI_API_KEY environment variable is not set"
+          error: "GEMINI_API_KEY environment variable is not set",
         });
       }
-      console.log("API Key loaded:", apiKey ? `${apiKey.substring(0, 10)}...` : "Not found");
+      console.log(
+        "API Key loaded:",
+        apiKey ? `${apiKey.substring(0, 10)}...` : "Not found"
+      );
       genAI = new GoogleGenerativeAI(apiKey);
     }
 

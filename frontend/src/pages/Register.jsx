@@ -48,7 +48,7 @@ const Register = () => {
       });
 
       toast.success('Registration successful!');
-      navigate('/dashboard');
+      // Navigation will be handled by the routing logic in App.jsx
     } catch (error) {
       console.error('Registration error:', error);
       toast.error(error.message || 'Registration failed');
@@ -63,7 +63,7 @@ const Register = () => {
     try {
       await signInWithPopup(auth, googleProvider);
       toast.success('Registration successful!');
-      navigate('/dashboard');
+      // Navigation will be handled by the routing logic in App.jsx
     } catch (error) {
       console.error('Google registration error:', error);
       toast.error(error.message || 'Google registration failed');

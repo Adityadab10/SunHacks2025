@@ -2,8 +2,8 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
-import authRoutes from './routes/authRoutes.js';
-import youtubeRoutes from './routes/youtubeRoutes.js';
+import authRoutes from "./routes/authRoutes.js";
+import youtubeRoutes from "./routes/youtubeRoutes.js";
 
 dotenv.config();
 
@@ -18,12 +18,15 @@ app.get("/", (req, res) => {
   res.send("PadhAI API is running...");
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/youtube', youtubeRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/youtube", youtubeRoutes);
 
 // DB connection
 mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => {
     console.log("MongoDB connected...");
     app.listen(process.env.PORT, () => {

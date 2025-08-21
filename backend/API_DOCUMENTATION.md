@@ -5,11 +5,13 @@ This API allows you to summarize YouTube videos using Google's Gemini AI.
 ## Endpoints
 
 ### 1. Summarize Video
+
 **POST** `/api/youtube/summarize`
 
 Summarizes a YouTube video using Gemini AI.
 
 **Request Body:**
+
 ```json
 {
   "youtubeUrl": "https://www.youtube.com/watch?v=VIDEO_ID",
@@ -18,6 +20,7 @@ Summarizes a YouTube video using Gemini AI.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -39,11 +42,13 @@ Summarizes a YouTube video using Gemini AI.
 ```
 
 ### 2. Get Transcript
+
 **POST** `/api/youtube/transcript`
 
 Gets the transcript of a YouTube video.
 
 **Request Body:**
+
 ```json
 {
   "youtubeUrl": "https://www.youtube.com/watch?v=VIDEO_ID"
@@ -51,6 +56,7 @@ Gets the transcript of a YouTube video.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -67,11 +73,13 @@ Gets the transcript of a YouTube video.
 ```
 
 ### 3. Health Check
+
 **GET** `/api/youtube/health`
 
 Checks if the YouTube API service is running.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -105,6 +113,7 @@ PORT=5000
 ## Error Handling
 
 The API returns appropriate error messages for:
+
 - Invalid YouTube URLs
 - Videos without available transcripts
 - API key issues
@@ -135,15 +144,15 @@ curl -X POST http://localhost:5000/api/youtube/transcript \
 
 ```javascript
 // Summarize video
-const response = await fetch('/api/youtube/summarize', {
-  method: 'POST',
+const response = await fetch("/api/youtube/summarize", {
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    summaryType: 'detailed'
-  })
+    youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    summaryType: "detailed",
+  }),
 });
 
 const data = await response.json();
