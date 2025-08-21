@@ -2,8 +2,11 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
+import path from "path";
 import authRoutes from "./routes/authRoutes.js";
 import youtubeRoutes from "./routes/youtubeRoutes.js";
+import studyBoardYTRoutes from "./routes/studyboard-ytRoutess.js";
+import videoRoutes from "./routes/videoRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
@@ -20,6 +23,9 @@ app.use(
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
+// Serve static files from storage directory
+app.use('/storage', express.static(path.join(process.cwd(), 'storage')));
+
 // Routes
 app.get("/", (req, res) => {
   res.send("PadhAI API is running...");
@@ -27,6 +33,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/youtube", youtubeRoutes);
+app.use("/api/studyboard-yt", studyBoardYTRoutes);
+app.use("/api/video", videoRoutes);
 app.use("/api", userRoutes);
 
 // Health check endpoint
@@ -37,6 +45,7 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
     services: {
       youtube: "active",
+      studyBoard: "active",
       ocr: "active",
     },
   });
@@ -84,7 +93,6 @@ mongoose
       console.log(
         `🎥 YouTube API: http://localhost:${process.env.PORT}/api/youtube`
       );
-      console.log(`📄 OCR API: http://localhost:${process.env.PORT}/api/ocr`);
     });
   })
   .catch((err) => console.error(err));

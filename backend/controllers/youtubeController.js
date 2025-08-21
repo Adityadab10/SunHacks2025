@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { YoutubeTranscript } from "youtube-transcript";
 import fetch from "node-fetch";
+import Youtube from "../model/youtube.js";
 
 // Initialize Gemini AI client (will be done in the function)
 let genAI;
@@ -108,16 +109,23 @@ export const summarizeVideo = async (req, res) => {
       genAI = new GoogleGenerativeAI(apiKey);
     }
 
-    const { url, youtubeUrl } = req.body;
+    const { url, youtubeUrl, userId } = req.body;
 
     // Accept either 'url' or 'youtubeUrl' parameter
     const videoUrl = url || youtubeUrl;
 
-    // Validate YouTube URL
+    // Validate required fields
     if (!videoUrl) {
       return res.status(400).json({
         success: false,
         error: "YouTube URL is required",
+      });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: "User ID is required",
       });
     }
 
@@ -130,7 +138,44 @@ export const summarizeVideo = async (req, res) => {
       });
     }
 
-    console.log(`Processing video ID: ${videoId}`);
+    console.log(`Processing video ID: ${videoId} for user: ${userId}`);
+
+    // Check if this video has already been processed by this user
+    const existingVideo = await Youtube.findOne({ userId, videoId });
+    if (existingVideo) {
+      console.log("Video already exists for this user, returning existing data");
+      return res.json({
+        success: true,
+        data: {
+          video: {
+            id: existingVideo.videoId,
+            title: existingVideo.title,
+            channel: existingVideo.channel,
+            duration: existingVideo.duration,
+            url: existingVideo.url,
+          },
+          summaries: {
+            brief: {
+              type: "brief",
+              content: existingVideo.briefSummary,
+              generatedAt: existingVideo.createdAt.toISOString(),
+            },
+            detailed: {
+              type: "detailed",
+              content: existingVideo.detailedSummary || existingVideo.briefSummary,
+              generatedAt: existingVideo.createdAt.toISOString(),
+            },
+            bulletPoints: {
+              type: "bullet-points",
+              content: existingVideo.bulletPointsSummary || existingVideo.briefSummary,
+              generatedAt: existingVideo.createdAt.toISOString(),
+            }
+          },
+          savedId: existingVideo._id,
+          isExisting: true
+        },
+      });
+    }
 
     // Get video transcript first (this is the most important part)
     let transcript;
@@ -151,51 +196,27 @@ export const summarizeVideo = async (req, res) => {
 
     // Prepare prompts for all 3 summary types with markdown formatting
     const prompts = {
-      brief: `Please provide a brief summary (2-3 sentences) of this YouTube video. Format your response in markdown with proper structure:
+      brief: `Summarize this YouTube video in 2-3 sentences. Do not add any introductory phrases.
 
-**Video:** ${metadata.title}
-**Channel:** ${metadata.channel}
+Title: ${metadata.title}
+Channel: ${metadata.channel}
 
-**Transcript:**
-${transcript}
+${transcript}`,
 
-**Instructions:** Provide a concise 2-3 sentence summary that captures the main topic and key message. Use markdown formatting for emphasis.
+      detailed: `Summarize the transcript into detailed paragraphs with key points and takeaways. Output must start directly with the content. Do not say things like "Here is the summary" or similar.
 
-**Brief Summary:**`,
+Title: ${metadata.title}
+Channel: ${metadata.channel}
+Duration: ${metadata.duration}
 
-      detailed: `Please provide a detailed summary of this YouTube video in markdown format. Include key points, main topics discussed, and important takeaways:
+${transcript}`,
 
-**Video Details:**
-- **Title:** ${metadata.title}
-- **Channel:** ${metadata.channel}
-- **Duration:** ${metadata.duration}
+      bulletPoints: `Summarize the transcript into bullet points only. No introductions, no closing sentences. Output must start directly with bullet points.
 
-**Transcript:**
-${transcript}
+Title: ${metadata.title}
+Channel: ${metadata.channel}
 
-**Instructions:** Create a comprehensive summary using markdown formatting. Use headers, bullet points, and emphasis where appropriate. Include:
-- Main topic/theme
-- Key points discussed
-- Important insights
-- Conclusions or takeaways
-
-**Detailed Summary:**`,
-
-      bulletPoints: `Please provide a summary of this YouTube video in bullet point format using markdown. Highlight the main topics and key insights:
-
-**Video:** ${metadata.title}
-**Channel:** ${metadata.channel}
-
-**Transcript:**
-${transcript}
-
-**Instructions:** Create a well-structured bullet point summary using markdown formatting. Organize into sections if needed. Use:
-- Main bullet points for key topics
-- Sub-points for details
-- **Bold text** for emphasis
-- Clear, concise language
-
-**Summary (Bullet Points):`
+${transcript}`
     };
 
     // Generate all 3 summaries using Gemini in parallel
@@ -228,6 +249,22 @@ ${transcript}
         throw new Error("Failed to generate one or more summaries");
       }
 
+      // Save to MongoDB
+      const youtubeRecord = new Youtube({
+        userId: userId,
+        videoId: videoId,
+        title: metadata.title,
+        channel: metadata.channel,
+        duration: metadata.duration,
+        url: videoUrl,
+        briefSummary: briefSummary.text().trim(),
+        detailedSummary: detailedSummary.text().trim(),
+        bulletPointsSummary: bulletPointsSummary.text().trim()
+      });
+
+      const savedRecord = await youtubeRecord.save();
+      console.log("Video data saved to database with ID:", savedRecord._id);
+
       // Return the response with all 3 summary types
       res.json({
         success: true,
@@ -256,6 +293,8 @@ ${transcript}
               generatedAt: new Date().toISOString(),
             }
           },
+          savedId: savedRecord._id,
+          isExisting: false
         },
       });
     } catch (aiError) {
@@ -326,6 +365,102 @@ export const getTranscript = async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || "Failed to fetch transcript",
+    });
+  }
+};
+
+// Add new controller function to get user's YouTube history
+export const getUserYoutubeHistory = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: "User ID is required",
+      });
+    }
+
+    const youtubeHistory = await Youtube.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    res.json({
+      success: true,
+      data: {
+        count: youtubeHistory.length,
+        videos: youtubeHistory.map(video => ({
+          id: video._id,
+          videoId: video.videoId,
+          title: video.title,
+          channel: video.channel,
+          duration: video.duration,
+          url: video.url,
+          createdAt: video.createdAt,
+          updatedAt: video.updatedAt
+        }))
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching YouTube history:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch YouTube history",
+    });
+  }
+};
+
+// Add controller function to get specific YouTube video summary
+export const getYoutubeSummary = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const youtubeRecord = await Youtube.findById(id);
+
+    if (!youtubeRecord) {
+      return res.status(404).json({
+        success: false,
+        error: "YouTube video summary not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        video: {
+          id: youtubeRecord.videoId,
+          title: youtubeRecord.title,
+          channel: youtubeRecord.channel,
+          duration: youtubeRecord.duration,
+          url: youtubeRecord.url,
+        },
+        summaries: {
+          brief: {
+            type: "brief",
+            content: youtubeRecord.briefSummary,
+            generatedAt: youtubeRecord.createdAt.toISOString(),
+          },
+          detailed: {
+            type: "detailed",
+            content: youtubeRecord.detailedSummary || youtubeRecord.briefSummary,
+            generatedAt: youtubeRecord.createdAt.toISOString(),
+          },
+          bulletPoints: {
+            type: "bullet-points",
+            content: youtubeRecord.bulletPointsSummary || youtubeRecord.briefSummary,
+            generatedAt: youtubeRecord.createdAt.toISOString(),
+          }
+        },
+        savedId: youtubeRecord._id,
+        createdAt: youtubeRecord.createdAt,
+        updatedAt: youtubeRecord.updatedAt
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching YouTube summary:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch YouTube summary",
     });
   }
 };

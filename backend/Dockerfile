@@ -1,0 +1,24 @@
+FROM node:18-bullseye
+
+# Install system dependencies including curl for downloading videos
+RUN apt-get update && apt-get install -y curl wget && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies (including @google/genai)
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Create storage directory
+RUN mkdir -p /app/storage
+
+# Expose port
+EXPOSE 5000
+
+# Start the server
+CMD ["npm", "start"]
