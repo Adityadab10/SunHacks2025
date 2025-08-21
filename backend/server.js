@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
+import authRoutes from './routes/authRoutes.js';
 
 dotenv.config();
 
@@ -13,8 +14,10 @@ app.use(express.json());
 
 // Routes
 app.get("/", (req, res) => {
-  res.send("API is running...");
+  res.send("PadhAI API is running...");
 });
+
+app.use('/api/auth', authRoutes);
 
 // DB connection
 mongoose
