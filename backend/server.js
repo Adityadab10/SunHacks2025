@@ -32,6 +32,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/youtube", youtubeRoutes);
+app.use("/api/studyboard-yt", studyBoardYTRoutes);
+app.use("/api/video", videoRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
