@@ -26,7 +26,7 @@ const AppContent = () => {
       {!firebaseUid && <Navbar />}
       <Routes>
         {firebaseUid ? (
-          // User is logged in - show dashboard and upload
+          // User is logged in - only show dashboard
           <>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/upload" element={<Upload />} />
