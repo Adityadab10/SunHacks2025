@@ -209,6 +209,11 @@ const MainSidebar = () => {
       icon: <Home className="w-5 h-5" />,
     },
     {
+      label: "My Profile",
+      href: "/profile", 
+      icon: <User className="w-5 h-5" />,
+    },
+    {
       label: "My Courses",
       href: "/courses",
       icon: <BookOpen className="w-5 h-5" />,
