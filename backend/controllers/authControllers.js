@@ -72,10 +72,8 @@ export const getUserByFirebaseUid = async (req, res) => {
     
     if (!user) {
       console.log('❌ User not found');
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      // Return 200 with success: false and user: null
+      return res.json({ success: false, user: null });
     }
 
     console.log('✅ User found:', user._id);
