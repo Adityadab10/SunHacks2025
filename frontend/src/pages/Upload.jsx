@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useDropzone } from "react-dropzone";
+import MainSidebar from '../components/Sidebar';
 
 const mainVariant = {
   initial: {
@@ -202,45 +203,51 @@ const FileUploadDemo = () => {
 
 const Upload = () => {
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header Section */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Upload Documents</h1>
-          <p className="text-gray-400">
-            Upload your study materials and let AI help you learn better
-          </p>
-        </div>
+    <div className="min-h-screen bg-black text-white flex">
+      {/* Sidebar */}
+      <MainSidebar />
+      
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          {/* Header Section */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">Upload Documents</h1>
+            <p className="text-gray-400">
+              Upload your study materials and let AI help you learn better
+            </p>
+          </div>
 
-        {/* Upload Section */}
-        <div className="mb-8">
-          <FileUploadDemo />
-        </div>
+          {/* Upload Section */}
+          <div className="mb-8">
+            <FileUploadDemo />
+          </div>
 
-        {/* Instructions */}
-        <div className="bg-gray-900 rounded-lg p-6">
-          <h2 className="text-2xl font-semibold mb-4">How it works</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="bg-blue-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-white font-bold">1</span>
+          {/* Instructions */}
+          <div className="bg-gray-900 rounded-lg p-6">
+            <h2 className="text-2xl font-semibold mb-4">How it works</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="text-center">
+                <div className="bg-blue-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <span className="text-white font-bold">1</span>
+                </div>
+                <h3 className="font-semibold mb-2">Upload</h3>
+                <p className="text-gray-400 text-sm">Upload your PDFs, documents, or study materials</p>
               </div>
-              <h3 className="font-semibold mb-2">Upload</h3>
-              <p className="text-gray-400 text-sm">Upload your PDFs, documents, or study materials</p>
-            </div>
-            <div className="text-center">
-              <div className="bg-purple-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-white font-bold">2</span>
+              <div className="text-center">
+                <div className="bg-purple-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <span className="text-white font-bold">2</span>
+                </div>
+                <h3 className="font-semibold mb-2">Process</h3>
+                <p className="text-gray-400 text-sm">AI analyzes and extracts key information</p>
               </div>
-              <h3 className="font-semibold mb-2">Process</h3>
-              <p className="text-gray-400 text-sm">AI analyzes and extracts key information</p>
-            </div>
-            <div className="text-center">
-              <div className="bg-green-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-white font-bold">3</span>
+              <div className="text-center">
+                <div className="bg-green-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <span className="text-white font-bold">3</span>
+                </div>
+                <h3 className="font-semibold mb-2">Learn</h3>
+                <p className="text-gray-400 text-sm">Get personalized study plans and insights</p>
               </div>
-              <h3 className="font-semibold mb-2">Learn</h3>
-              <p className="text-gray-400 text-sm">Get personalized study plans and insights</p>
             </div>
           </div>
         </div>
