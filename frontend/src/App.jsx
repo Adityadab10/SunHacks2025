@@ -34,6 +34,7 @@ const AppContent = () => {
             <Route path="/upload" element={<Upload />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/youtube" element={<YouTubePage />} />
+
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </>
         ) : (
