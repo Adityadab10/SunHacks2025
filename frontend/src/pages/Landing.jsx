@@ -1,7 +1,20 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen, Brain, Users } from 'lucide-react';
+import { useUser } from '../context/UserContext';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Landing = () => {
+  const { firebaseUid } = useUser();
+  const navigate = useNavigate();
+
+  // Redirect to dashboard if user is logged in
+  useEffect(() => {
+    if (firebaseUid) {
+      navigate('/dashboard');
+    }
+  }, [firebaseUid, navigate]);
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Hero Section */}
