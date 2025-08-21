@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import Profile from './pages/Profile';
+import YouTubePage from './pages/Youtube';
 
 const AppContent = () => {
   const { firebaseUid, loading } = useUser();
@@ -27,11 +28,12 @@ const AppContent = () => {
       {!firebaseUid && <Navbar />}
       <Routes>
         {firebaseUid ? (
-          // User is logged in - show dashboard, upload, and profile
+          // User is logged in - show all authenticated pages
           <>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/upload" element={<Upload />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/youtube" element={<YouTubePage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </>
         ) : (

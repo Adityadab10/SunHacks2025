@@ -1,21 +1,20 @@
 # YouTube Video Summarization API
 
-This API allows you to summarize YouTube videos using Google's Gemini AI.
+This API allows you to summarize YouTube videos using Google's Gemini AI with 3 different summary types.
 
 ## Endpoints
 
-### 1. Summarize Video
+### 1. Summarize Video (All Types)
 
 **POST** `/api/youtube/summarize`
 
-Summarizes a YouTube video using Gemini AI.
+Summarizes a YouTube video using Gemini AI and returns all 3 summary types: brief, detailed, and bullet-points.
 
 **Request Body:**
 
 ```json
 {
-  "youtubeUrl": "https://www.youtube.com/watch?v=VIDEO_ID",
-  "summaryType": "detailed" // optional: "brief", "detailed", "bullet-points"
+  "youtubeUrl": "https://www.youtube.com/watch?v=VIDEO_ID"
 }
 ```
 
@@ -28,14 +27,26 @@ Summarizes a YouTube video using Gemini AI.
     "video": {
       "id": "VIDEO_ID",
       "title": "Video Title",
-      "author": "Channel Name",
+      "channel": "Channel Name",
       "duration": "10:30",
       "url": "https://www.youtube.com/watch?v=VIDEO_ID"
     },
-    "summary": {
-      "type": "detailed",
-      "content": "Generated summary content...",
-      "generatedAt": "2025-08-21T12:00:00.000Z"
+    "summaries": {
+      "brief": {
+        "type": "brief",
+        "content": "Brief 2-3 sentence summary...",
+        "generatedAt": "2025-01-21T12:00:00.000Z"
+      },
+      "detailed": {
+        "type": "detailed",
+        "content": "Detailed comprehensive summary...",
+        "generatedAt": "2025-01-21T12:00:00.000Z"
+      },
+      "bulletPoints": {
+        "type": "bullet-points",
+        "content": "• Key point 1\n• Key point 2\n• Key point 3...",
+        "generatedAt": "2025-01-21T12:00:00.000Z"
+      }
     }
   }
 }
@@ -90,9 +101,11 @@ Checks if the YouTube API service is running.
 
 ## Summary Types
 
+All three types are now generated automatically:
+
 - **brief**: 2-3 sentence summary
-- **detailed**: Comprehensive summary with key points and takeaways
-- **bullet-points**: Main topics in bullet point format
+- **detailed**: Comprehensive summary with key points and takeaways  
+- **bulletPoints**: Main topics in bullet point format
 
 ## Environment Variables
 
@@ -128,8 +141,7 @@ The API returns appropriate error messages for:
 curl -X POST http://localhost:5000/api/youtube/summarize \
   -H "Content-Type: application/json" \
   -d '{
-    "youtubeUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    "summaryType": "detailed"
+    "youtubeUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
   }'
 
 # Get transcript only
@@ -143,18 +155,19 @@ curl -X POST http://localhost:5000/api/youtube/transcript \
 ### Using JavaScript fetch:
 
 ```javascript
-// Summarize video
+// Get all summary types
 const response = await fetch("/api/youtube/summarize", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    summaryType: "detailed",
+    youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
   }),
 });
 
 const data = await response.json();
-console.log(data);
+console.log(data.data.summaries.brief.content);
+console.log(data.data.summaries.detailed.content);
+console.log(data.data.summaries.bulletPoints.content);
 ```

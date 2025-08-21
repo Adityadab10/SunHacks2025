@@ -209,6 +209,11 @@ const MainSidebar = () => {
       icon: <Upload className="w-5 h-5" />,
     },
     {
+      label: "YouTube Summarizer",
+      href: "/youtube",
+      icon: <Globe className="w-5 h-5" />,
+    },
+    {
       label: "Study Flow",
       href: "/study-flow",
       icon: <Target className="w-5 h-5" />,
