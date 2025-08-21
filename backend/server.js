@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import youtubeRoutes from "./routes/youtubeRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/youtube", youtubeRoutes);
+app.use("/api", userRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
