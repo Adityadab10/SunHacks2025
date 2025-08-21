@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import youtubeRoutes from "./routes/youtubeRoutes.js";
+import studyBoardYTRoutes from "./routes/studyboard-ytRoutess.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/youtube", youtubeRoutes);
+app.use("/api/studyboard-yt", studyBoardYTRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -35,6 +37,7 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
     services: {
       youtube: "active",
+      studyBoard: "active",
       ocr: "active",
     },
   });
