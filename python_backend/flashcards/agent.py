@@ -1,17 +1,17 @@
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import ToolNode, tools_condition
-from langchain_community.agent_toolkits.load_tools import load_tools
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.tools import tool
 from langchain_core.messages import HumanMessage, AIMessage
 from dotenv import load_dotenv
-from teachers import anil_prompt, kavita_prompt, raghav_prompt, mary_prompt
+from .teachers import anil_prompt, kavita_prompt, raghav_prompt, mary_prompt
 from typing import TypedDict, List, Literal, Annotated, Optional, Dict, Any, AsyncGenerator
 import tempfile
 import os
@@ -20,13 +20,18 @@ import asyncio
 from pathlib import Path
 import logging
 
+# Load environment variables FIRST
 load_dotenv()
+
+# Verify Google API key is loaded
+if not os.getenv('GOOGLE_API_KEY'):
+    raise ValueError("GOOGLE_API_KEY not found in environment variables. Please check your .env file.")
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Global storage for vector databases (in production, use Redis or similar)
+# Global storage for vector databases
 vector_stores: Dict[str, Chroma] = {}
 
 class State(TypedDict):
@@ -60,12 +65,59 @@ def create_retrieval_tool(vector_store: Chroma, vector_store_id: str):
     
     return retrieve_documents
 
+def create_google_llm():
+    """Create Google LLM with proper error handling"""
+    try:
+        api_key = os.getenv('GOOGLE_API_KEY')
+        if not api_key:
+            raise ValueError("GOOGLE_API_KEY environment variable is not set")
+        
+        llm = ChatGoogleGenerativeAI(
+            model='gemini-2.0-flash-exp',  # Updated model
+            google_api_key=api_key,
+            temperature=0.7
+        )
+        logger.info("Google LLM initialized successfully")
+        return llm
+    except Exception as e:
+        logger.error(f"Failed to initialize Google LLM: {e}")
+        raise
+
+def create_huggingface_embeddings():
+    """Create Hugging Face embeddings with proper error handling"""
+    try:
+        # Using a good sentence transformer model for embeddings
+        embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2",
+            model_kwargs={'device': 'cpu'},  # Use 'cuda' if you have GPU
+            encode_kwargs={'normalize_embeddings': True}
+        )
+        logger.info("Hugging Face embeddings initialized successfully")
+        return embeddings
+    except Exception as e:
+        logger.error(f"Failed to initialize Hugging Face embeddings: {e}")
+        # Fallback to a different model if the first one fails
+        try:
+            embeddings = HuggingFaceEmbeddings(
+                model_name="sentence-transformers/paraphrase-MiniLM-L6-v2",
+                model_kwargs={'device': 'cpu'},
+                encode_kwargs={'normalize_embeddings': True}
+            )
+            logger.info("Hugging Face embeddings initialized with fallback model")
+            return embeddings
+        except Exception as e2:
+            logger.error(f"Failed to initialize fallback embeddings: {e2}")
+            raise
+
 def process_pdf(pdf_path: str) -> tuple[Chroma, str]:
     """Process PDF and create vector store"""
     try:
         # Load PDF
         loader = PyPDFLoader(pdf_path)
         documents = loader.load()
+        
+        if not documents:
+            raise ValueError("No content found in PDF")
         
         # Split documents
         text_splitter = RecursiveCharacterTextSplitter(
@@ -74,8 +126,11 @@ def process_pdf(pdf_path: str) -> tuple[Chroma, str]:
         )
         splits = text_splitter.split_documents(documents)
         
-        # Create embeddings
-        embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        if not splits:
+            raise ValueError("No text chunks created from PDF")
+        
+        # Create embeddings with error handling
+        embeddings = create_huggingface_embeddings()
         
         # Create vector store with unique ID
         vector_store_id = str(uuid.uuid4())
@@ -88,7 +143,7 @@ def process_pdf(pdf_path: str) -> tuple[Chroma, str]:
             persist_directory=os.path.join(temp_dir, f"chroma_{vector_store_id}")
         )
         
-        # Store globally (in production, use proper storage)
+        # Store globally
         vector_stores[vector_store_id] = vector_store
         
         logger.info(f"Created vector store {vector_store_id} with {len(splits)} chunks")
@@ -100,43 +155,63 @@ def process_pdf(pdf_path: str) -> tuple[Chroma, str]:
 
 def initialise_teacher(state: State):
     """Initialize teacher with appropriate prompt and tools"""
-    llm = ChatGoogleGenerativeAI(model='gemini-2.5-flash')
-    teacher = state['teacher']
-    
-    # Get teacher prompt
-    if teacher == 'Anil Deshmukh':
-        prompt = anil_prompt
-    elif teacher == 'Kavita Iyer':
-        prompt = kavita_prompt
-    elif teacher == 'Raghav Sharma':
-        prompt = raghav_prompt
-    else:
-        prompt = mary_prompt
-    
-    # Load basic tools
-    tools = load_tools(['serpapi'])
-    
-    # Add retrieval tool if PDF is available
-    if state.get('pdf_there') == 'yes' and state.get('vector_store_id'):
-        vector_store = vector_stores.get(state['vector_store_id'])
-        if vector_store:
-            retrieval_tool = create_retrieval_tool(vector_store, state['vector_store_id'])
-            tools.append(retrieval_tool)
-            logger.info(f"Added retrieval tool for vector store {state['vector_store_id']}")
-    
-    # Create prompt template
-    prompt_template = ChatPromptTemplate.from_messages([
-        ("system", prompt),
-        MessagesPlaceholder(variable_name="messages"),
-    ])
-    
-    # Create chain
-    chain = prompt_template | llm.bind_tools(tools)
-    
-    return {
-        "chain": chain,
-        "retrieval_tool": tools[-1] if state.get('pdf_there') == 'yes' else None
-    }
+    try:
+        llm = create_google_llm()
+        teacher = state['teacher']
+        
+        # Get teacher prompt
+        if teacher == 'Anil Deshmukh':
+            prompt = anil_prompt
+        elif teacher == 'Kavita Iyer':
+            prompt = kavita_prompt
+        elif teacher == 'Raghav Sharma':
+            prompt = raghav_prompt
+        else:
+            prompt = mary_prompt
+        
+        # Initialize tools list
+        tools = []
+        
+        # Try to load SerpAPI tools if available
+        try:
+            if os.getenv('SERPAPI_API_KEY'):
+                from langchain_community.agent_toolkits.load_tools import load_tools
+                serpapi_tools = load_tools(['serpapi'])
+                tools.extend(serpapi_tools)
+                logger.info("SerpAPI tools loaded successfully")
+            else:
+                logger.info("SERPAPI_API_KEY not found, web search will not be available")
+        except Exception as e:
+            logger.warning(f"Could not load SerpAPI tools: {e}")
+        
+        # Add retrieval tool if PDF is available
+        if state.get('pdf_there') == 'yes' and state.get('vector_store_id'):
+            vector_store = vector_stores.get(state['vector_store_id'])
+            if vector_store:
+                retrieval_tool = create_retrieval_tool(vector_store, state['vector_store_id'])
+                tools.append(retrieval_tool)
+                logger.info(f"Added retrieval tool for vector store {state['vector_store_id']}")
+        
+        # Create prompt template
+        prompt_template = ChatPromptTemplate.from_messages([
+            ("system", prompt),
+            MessagesPlaceholder(variable_name="messages"),
+        ])
+        
+        # Create chain
+        if tools:
+            chain = prompt_template | llm.bind_tools(tools)
+        else:
+            chain = prompt_template | llm
+        
+        return {
+            "chain": chain,
+            "retrieval_tool": tools[-1] if state.get('pdf_there') == 'yes' and tools else None
+        }
+        
+    except Exception as e:
+        logger.error(f"Error initializing teacher: {e}")
+        raise
 
 def should_continue(state: State):
     """Determine next step based on PDF presence"""
@@ -145,48 +220,14 @@ def should_continue(state: State):
     else:
         return "chat"
 
-async def process_pdf(pdf_path: str) -> tuple[Chroma, str]:
-    """Process PDF and create vector store"""
+async def process_pdf_async(pdf_path: str) -> tuple[Chroma, str]:
+    """Process PDF and create vector store asynchronously"""
     try:
-        # Run CPU-intensive operations in a thread pool
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, lambda: _process_pdf_sync(pdf_path))
+        return await loop.run_in_executor(None, lambda: process_pdf(pdf_path))
     except Exception as e:
-        logger.error(f"Error processing PDF: {e}")
+        logger.error(f"Error processing PDF async: {e}")
         raise
-
-def _process_pdf_sync(pdf_path: str) -> tuple[Chroma, str]:
-    """Synchronous part of PDF processing"""
-    # Load PDF
-    loader = PyPDFLoader(pdf_path)
-    documents = loader.load()
-    
-    # Split documents
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200
-    )
-    splits = text_splitter.split_documents(documents)
-    
-    # Create embeddings
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-    
-    # Create vector store with unique ID
-    vector_store_id = str(uuid.uuid4())
-    
-    # Create temporary directory for Chroma
-    temp_dir = tempfile.mkdtemp()
-    vector_store = Chroma.from_documents(
-        documents=splits,
-        embedding=embeddings,
-        persist_directory=os.path.join(temp_dir, f"chroma_{vector_store_id}")
-    )
-    
-    # Store globally
-    vector_stores[vector_store_id] = vector_store
-    
-    logger.info(f"Created vector store {vector_store_id} with {len(splits)} chunks")
-    return vector_store, vector_store_id
 
 async def process_pdf_node(state: State):
     """Process PDF and create vector store"""
@@ -198,7 +239,7 @@ async def process_pdf_node(state: State):
                 "pdf_there": "no"
             }
         
-        vector_store, vector_store_id = await process_pdf(pdf_path)
+        vector_store, vector_store_id = await process_pdf_async(pdf_path)
         
         return {
             "vector_store_id": vector_store_id,
@@ -218,6 +259,9 @@ def chat(state: State):
         chain = state['chain']
         messages = state['messages'][:-1] if len(state['messages']) > 1 else state['messages']
         
+        if not messages:
+            return {"messages": [AIMessage(content="I didn't receive any message. Please try again.")]}
+        
         response = chain.invoke({"messages": messages})
         return {"messages": [response]}
         
@@ -230,18 +274,46 @@ def cleanup_vector_store(vector_store_id: str):
     try:
         if vector_store_id in vector_stores:
             vector_store = vector_stores[vector_store_id]
-            # Clean up Chroma directory
             if hasattr(vector_store, '_persist_directory'):
                 import shutil
-                shutil.rmtree(vector_store._persist_directory, ignore_errors=True)
+                persist_dir = vector_store._persist_directory
+                if os.path.exists(persist_dir):
+                    shutil.rmtree(persist_dir, ignore_errors=True)
             del vector_stores[vector_store_id]
             logger.info(f"Cleaned up vector store {vector_store_id}")
     except Exception as e:
         logger.error(f"Error cleaning up vector store {vector_store_id}: {e}")
 
-# Create tools for basic functionality
-tools = load_tools(['serpapi'])
-tool_node = ToolNode(tools)
+# Safe tools condition
+def safe_tools_condition(state: State):
+    """Safe tools condition that handles cases with no tools"""
+    try:
+        last_message = state['messages'][-1]
+        if hasattr(last_message, 'tool_calls') and last_message.tool_calls:
+            return "tools"
+        else:
+            return END
+    except Exception as e:
+        logger.error(f"Error in tools_condition: {e}")
+        return END
+
+# Initialize tools with error handling
+try:
+    if os.getenv('SERPAPI_API_KEY'):
+        from langchain_community.agent_toolkits.load_tools import load_tools
+        tools = load_tools(['serpapi'])
+        tool_node = ToolNode(tools)
+        has_tools = True
+        logger.info("Tools initialized with SerpAPI")
+    else:
+        tool_node = None
+        has_tools = False
+        logger.info("No SerpAPI key found, running without web search tools")
+except Exception as e:
+    logger.warning(f"Could not initialize tools: {e}")
+    tool_node = None
+    has_tools = False
+
 memory = MemorySaver()
 
 # Build the graph
@@ -251,7 +323,9 @@ graph_builder = StateGraph(State)
 graph_builder.add_node("teacher", initialise_teacher)
 graph_builder.add_node("process_pdf", process_pdf_node)
 graph_builder.add_node("chat", chat)
-graph_builder.add_node("tools", tool_node)
+
+if has_tools and tool_node:
+    graph_builder.add_node("tools", tool_node)
 
 # Add edges
 graph_builder.add_conditional_edges(
@@ -263,24 +337,30 @@ graph_builder.add_conditional_edges(
     }
 )
 graph_builder.add_edge("process_pdf", "teacher")
-graph_builder.add_conditional_edges("chat", tools_condition)
-graph_builder.add_edge("tools", "chat")
+
+if has_tools and tool_node:
+    graph_builder.add_conditional_edges("chat", safe_tools_condition)
+    graph_builder.add_edge("tools", "chat")
+else:
+    graph_builder.add_edge("chat", END)
 
 # Set entry point
 graph_builder.set_entry_point("teacher")
 
 # Compile graph
-graph = graph_builder.compile(checkpointer=memory)
+try:
+    graph = graph_builder.compile(checkpointer=memory)
+    logger.info("Graph compiled successfully")
+except Exception as e:
+    logger.error(f"Error compiling graph: {e}")
+    raise
 
-# Enhanced streaming functions for API usage
+# API functions
 async def stream_graph_updates(user_input: Dict[str, Any], thread_id: str = "default") -> AsyncGenerator[Dict[str, Any], None]:
-    """
-    Stream graph updates for API usage with better error handling and formatting
-    """
+    """Stream graph updates for API usage"""
     config = {'configurable': {"thread_id": thread_id}}
     
     try:
-        # Prepare initial state
         initial_state = {
             'messages': user_input.get('messages', []),
             'teacher': user_input.get('teacher', 'Anil Deshmukh'),
@@ -288,7 +368,6 @@ async def stream_graph_updates(user_input: Dict[str, Any], thread_id: str = "def
             'pdf_path': user_input.get('pdf_path'),
         }
         
-        # Stream the graph execution
         async for event in graph.astream(initial_state, config=config):
             for node_name, value in event.items():
                 response_data = {
@@ -330,12 +409,9 @@ def create_user_input(message: str, teacher: str = 'Anil Deshmukh', pdf_path: Op
     
     return user_input
 
-# API-friendly functions
 async def chat_with_teacher(message: str, teacher: str = 'Anil Deshmukh', 
                           pdf_path: Optional[str] = None, thread_id: str = "default") -> AsyncGenerator[Dict[str, Any], None]:
-    """
-    Main API function for chatting with a teacher
-    """
+    """Main API function for chatting with a teacher"""
     user_input = create_user_input(message, teacher, pdf_path)
     
     async for response in stream_graph_updates(user_input, thread_id):
@@ -347,7 +423,7 @@ def get_conversation_history(thread_id: str) -> List[Dict[str, Any]]:
         config = {'configurable': {"thread_id": thread_id}}
         state = graph.get_state(config)
         
-        if state and 'messages' in state.values:
+        if state and hasattr(state, 'values') and 'messages' in state.values:
             messages = []
             for msg in state.values['messages']:
                 messages.append({
@@ -367,45 +443,54 @@ def cleanup_conversation(thread_id: str):
         config = {'configurable': {"thread_id": thread_id}}
         state = graph.get_state(config)
         
-        if state and 'vector_store_id' in state.values:
+        if state and hasattr(state, 'values') and 'vector_store_id' in state.values:
             cleanup_vector_store(state.values['vector_store_id'])
         
-        # Clear conversation from memory (if supported by checkpointer)
         logger.info(f"Cleaned up conversation {thread_id}")
         
     except Exception as e:
         logger.error(f"Error cleaning up conversation {thread_id}: {e}")
 
-# Example usage functions
-async def example_usage():
-    """Example of how to use the enhanced system"""
+# Test function
+async def test_system():
+    """Test the system with basic functionality"""
     try:
-        # Example 1: Chat without PDF
-        print("=== Chat without PDF ===")
+        print("Testing Google LLM initialization...")
+        llm = create_google_llm()
+        print("✓ Google LLM initialized successfully")
+        
+        print("\nTesting basic chat...")
         async for response in chat_with_teacher(
-            message="Hello, can you help me with mathematics?",
+            message="Hello, can you tell me what 2+2 equals?",
             teacher="Anil Deshmukh",
-            thread_id="user1"
+            thread_id="test123"
         ):
             if response.get("content"):
                 print(f"Assistant: {response['content']}")
+                break
         
-        # Example 2: Chat with PDF
-        print("\n=== Chat with PDF ===")
-        pdf_path = "./MP notes shravani (1).pdf"  # Replace with actual PDF path
+        print("✓ Basic chat test completed")
+        cleanup_conversation("test123")
         
-        if os.path.exists(pdf_path):
-            async for response in chat_with_teacher(
-                message="What is this document about?",
-                teacher="Kavita Iyer",
-                pdf_path=pdf_path,
-                thread_id="user2"
-            ):
-                if response.get("content"):
-                    print(f"Assistant: {response['content']}")
     except Exception as e:
-        logger.error(f"Error in example usage: {e}")
-    finally:
-        # Clean up
-        cleanup_conversation("user1")
-        cleanup_conversation("user2")
+        print(f"✗ Test failed: {e}")
+        raise
+
+if __name__ == "__main__":
+    print("=== Teacher Agent System ===")
+    print("Checking environment variables...")
+    
+    if os.getenv('GOOGLE_API_KEY'):
+        print("✓ GOOGLE_API_KEY found")
+    else:
+        print("✗ GOOGLE_API_KEY not found")
+        
+    if os.getenv('SERPAPI_API_KEY'):
+        print("✓ SERPAPI_API_KEY found")
+    else:
+        print("! SERPAPI_API_KEY not found (web search disabled)")
+    
+    print("\n" + graph.get_graph().draw_mermaid())
+    
+    # Uncomment to run test
+    # asyncio.run(test_system())
