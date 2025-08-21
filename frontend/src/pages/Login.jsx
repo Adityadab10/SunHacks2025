@@ -19,7 +19,7 @@ const Login = () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast.success('Login successful!');
-      navigate('/dashboard');
+      // Navigation will be handled by the routing logic in App.jsx
     } catch (error) {
       console.error('Login error:', error);
       toast.error(error.message || 'Login failed');
@@ -34,7 +34,7 @@ const Login = () => {
     try {
       await signInWithPopup(auth, googleProvider);
       toast.success('Login successful!');
-      navigate('/dashboard');
+      // Navigation will be handled by the routing logic in App.jsx
     } catch (error) {
       console.error('Google login error:', error);
       toast.error(error.message || 'Google login failed');

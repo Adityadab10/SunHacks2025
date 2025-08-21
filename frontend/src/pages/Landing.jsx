@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen, Brain, Users, Upload, Target, Zap, MessageCircle, Globe, BarChart3, Play, UserPlus, CheckCircle, Clock, TrendingUp, Smartphone, Sun, Moon } from 'lucide-react';
+import { useUser } from '../context/UserContext';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
 const Landing = () => {
@@ -25,6 +28,16 @@ const Landing = () => {
     bgIcon: isDarkMode ? 'bg-gray-800' : 'bg-gray-200',
     bgIconHover: isDarkMode ? 'bg-green-500' : 'bg-green-600',
   };
+
+  const { firebaseUid } = useUser();
+  const navigate = useNavigate();
+
+  // Redirect to dashboard if user is logged in
+  useEffect(() => {
+    if (firebaseUid) {
+      navigate('/dashboard');
+    }
+  }, [firebaseUid, navigate]);
 
   return (
     <div className={`min-h-screen ${themeClasses.bg} ${themeClasses.text}`}>
