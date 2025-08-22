@@ -213,11 +213,11 @@ const MainSidebar = () => {
       href: "/profile", 
       icon: <User className="w-5 h-5" />,
     },
-    {
-      label: "My Courses",
-      href: "/courses",
-      icon: <BookOpen className="w-5 h-5" />,
-    },
+      // {
+      //   label: "My Courses",
+      //   href: "/courses",
+      //   icon: <BookOpen className="w-5 h-5" />,
+      // },
     {
       label: "Upload Materials",
       href: "/upload",
@@ -233,26 +233,26 @@ const MainSidebar = () => {
       href: "/study-flow",
       icon: <Target className="w-5 h-5" />,
     },
-    {
-      label: "Flashcards",
-      href: "/flashcards",
-      icon: <Zap className="w-5 h-5" />,
-    },
+    // {
+    //   label: "Flashcards",
+    //   href: "/flashcards",
+    //   icon: <Zap className="w-5 h-5" />,
+    // },
     {
       label: "Study Group",
       href: "/study-group",
       icon: <MessageCircle className="w-5 h-5" />,
     },
-    {
-      label: "Progress",
-      href: "/progress",
-      icon: <BarChart3 className="w-5 h-5" />,
-    },
-    {
-      label: "Settings",
-      href: "/settings",
-      icon: <Settings className="w-5 h-5" />,
-    },
+    // {
+    //   label: "Progress",
+    //   href: "/progress",
+    //   icon: <BarChart3 className="w-5 h-5" />,
+    // },
+    // {
+    //   label: "Settings",
+    //   href: "/settings",
+    //   icon: <Settings className="w-5 h-5" />,
+    // },
     {
       label: "Public Study Boards",
       href: "/public-studyboards",
