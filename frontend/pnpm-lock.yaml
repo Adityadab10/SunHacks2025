@@ -35,6 +35,9 @@ importers:
       framer-motion:
         specifier: ^12.23.12
         version: 12.23.12(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      i18next:
+        specifier: ^25.4.0
+        version: 25.4.0
       lucide-react:
         specifier: ^0.540.0
         version: 0.540.0(react@19.1.1)
