@@ -11,7 +11,7 @@ import userRoutes from "./routes/userRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js";
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-
+import extensionRoutes from './routes/extensionRoutes.js'
 dotenv.config();
 
 const app = express();
@@ -49,6 +49,7 @@ app.use("/api/video", videoRoutes);
 app.use("/api", userRoutes);
 app.use("/api/group", groupRoutes);
 app.use("/api/translate", translateRoutes);
+app.use("/api/extension", extensionRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
