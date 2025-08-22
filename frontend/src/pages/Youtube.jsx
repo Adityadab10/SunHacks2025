@@ -6,37 +6,47 @@ import YTStudyBoard from '../components/YTStudyBoard';
 import YTFollowUp from '../components/YTFollowUp';
 import { useUser } from '../context/UserContext';
 import {
-  Loader2, AlertCircle, BrainCircuit, FileText, MessageCircle, Youtube
+  Loader2, AlertCircle, BrainCircuit, FileText, MessageCircle, Youtube, CheckCircle, Play
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const YouTubePage = () => {
   const { mongoUid, firebaseUid, loading: userLoading } = useUser();
-  const [activeComponent, setActiveComponent] = useState('transcribe');
+  const [activeTab, setActiveTab] = useState('transcribe');
   const [unifiedUrl, setUnifiedUrl] = useState('');
-  const [unifiedVideoData, setUnifiedVideoData] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processedData, setProcessedData] = useState({
+    transcribe: null,
+    studyboard: null,
+    followup: null
+  });
+  const [processingStatus, setProcessingStatus] = useState({
+    transcribe: 'pending',
+    studyboard: 'pending', 
+    followup: 'pending'
+  });
+  const [videoInfo, setVideoInfo] = useState(null);
 
   const components = [
     {
       id: 'transcribe',
       label: 'Quick Summarize',
       icon: FileText,
-      description: 'Get quick AI summaries in 3 formats',
+      description: 'AI summaries in 3 formats',
       component: YTTranscribe
     },
     {
       id: 'studyboard',
       label: 'Study Board',
       icon: BrainCircuit,
-      description: 'Create comprehensive study materials',
+      description: 'Comprehensive study materials',
       component: YTStudyBoard
     },
     {
       id: 'followup',
       label: 'Follow-up Chat',
       icon: MessageCircle,
-      description: 'Ask questions about the video content',
+      description: 'Ask questions about content',
       component: YTFollowUp
     }
   ];
@@ -46,7 +56,7 @@ const YouTubePage = () => {
     return regex.test(url);
   };
 
-  const processUnifiedVideo = async () => {
+  const processAllTools = async () => {
     if (!unifiedUrl.trim()) {
       toast.error('Please enter a YouTube URL');
       return;
@@ -63,10 +73,17 @@ const YouTubePage = () => {
     }
 
     setIsProcessing(true);
-    
+    setProcessingStatus({
+      transcribe: 'processing',
+      studyboard: 'pending',
+      followup: 'pending'
+    });
+
     try {
-      // First, get the summary data
-      const summaryResponse = await fetch('http://localhost:5000/api/youtube/summarize', {
+      // Step 1: Generate Transcribe/Summary (this gives us the base data)
+      toast.loading('Processing video for transcription...', { id: 'processing' });
+      
+      const transcribeResponse = await fetch('http://localhost:5000/api/youtube/summarize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,17 +94,77 @@ const YouTubePage = () => {
         }),
       });
 
-      const summaryData = await summaryResponse.json();
+      const transcribeData = await transcribeResponse.json();
 
-      if (summaryResponse.ok && summaryData.success) {
-        setUnifiedVideoData(summaryData.data);
-        toast.success('Video processed successfully! All tools are now ready to use.');
+      if (transcribeResponse.ok && transcribeData.success) {
+        setProcessedData(prev => ({ ...prev, transcribe: transcribeData.data }));
+        setVideoInfo(transcribeData.data.video);
+        setProcessingStatus(prev => ({ ...prev, transcribe: 'completed', studyboard: 'processing' }));
+        toast.loading('Creating study board...', { id: 'processing' });
+
+        // Step 2: Generate Study Board
+        const studyboardResponse = await fetch('http://localhost:5000/api/studyboard-yt/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            youtubeUrl: unifiedUrl.trim(),
+            userId: mongoUid,
+            studyBoardName: `${transcribeData.data.video.title.substring(0, 50)}... - Study Board`
+          }),
+        });
+
+        const studyboardData = await studyboardResponse.json();
+
+        if (studyboardResponse.ok && studyboardData.success) {
+          setProcessedData(prev => ({ ...prev, studyboard: studyboardData.data }));
+          setProcessingStatus(prev => ({ ...prev, studyboard: 'completed', followup: 'processing' }));
+          toast.loading('Setting up chat session...', { id: 'processing' });
+
+          // Step 3: Create Chat Session
+          const chatResponse = await fetch('http://localhost:5000/api/youtube/chat/session', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: mongoUid,
+              videoUrl: unifiedUrl.trim(),
+              videoTitle: transcribeData.data.video.title,
+              videoChannel: transcribeData.data.video.channel
+            }),
+          });
+
+          const chatData = await chatResponse.json();
+
+          if (chatResponse.ok && chatData.success) {
+            setProcessedData(prev => ({ 
+              ...prev, 
+              followup: {
+                sessionData: chatData.data,
+                videoData: transcribeData.data
+              }
+            }));
+            setProcessingStatus(prev => ({ ...prev, followup: 'completed' }));
+            toast.success('All tools ready! 🎉', { id: 'processing' });
+          } else {
+            throw new Error('Failed to create chat session');
+          }
+        } else {
+          throw new Error('Failed to create study board');
+        }
       } else {
-        throw new Error(summaryData.error || 'Failed to process video');
+        throw new Error(transcribeData.error || 'Failed to process video');
       }
     } catch (err) {
       console.error('Error processing video:', err);
-      toast.error(err.message || 'Failed to process video');
+      toast.error(err.message || 'Failed to process video', { id: 'processing' });
+      setProcessingStatus({
+        transcribe: 'error',
+        studyboard: 'error',
+        followup: 'error'
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -95,7 +172,28 @@ const YouTubePage = () => {
 
   const handleUrlSubmit = (e) => {
     e.preventDefault();
-    processUnifiedVideo();
+    processAllTools();
+  };
+
+  const resetAll = () => {
+    setUnifiedUrl('');
+    setProcessedData({ transcribe: null, studyboard: null, followup: null });
+    setProcessingStatus({ transcribe: 'pending', studyboard: 'pending', followup: 'pending' });
+    setVideoInfo(null);
+    setActiveTab('transcribe');
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-4 h-4 text-green-400" />;
+      case 'processing':
+        return <Loader2 className="w-4 h-4 animate-spin text-blue-400" />;
+      case 'error':
+        return <AlertCircle className="w-4 h-4 text-red-400" />;
+      default:
+        return <div className="w-4 h-4 rounded-full bg-gray-600" />;
+    }
   };
 
   // Show loading spinner while user data is being fetched
@@ -137,15 +235,15 @@ const YouTubePage = () => {
     );
   }
 
-  const ActiveComponent = components.find(comp => comp.id === activeComponent)?.component || YTTranscribe;
+  const ActiveComponent = components.find(comp => comp.id === activeTab)?.component || YTTranscribe;
 
   return (
     <div className="min-h-screen bg-black text-white flex">
       <MainSidebar />
       
       <div className="flex-1 overflow-auto">
-        <div className="max-w-6xl mx-auto px-6 py-8">
-          {/* Header with Component Selector */}
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -154,148 +252,254 @@ const YouTubePage = () => {
             <h1 className="text-5xl font-bold mb-6">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-purple-400">
                 YouTube
-              </span> AI Tools
+              </span> AI Suite
             </h1>
             <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-8">
-              Transform YouTube videos into powerful learning materials with our AI-powered tools.
+              One URL, Three Powerful Tools. Transform any YouTube video into summaries, study materials, and interactive chat sessions.
             </p>
+          </motion.div>
 
-            {/* Unified URL Input */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-gray-900 rounded-2xl p-6 border border-gray-800 mb-8 max-w-4xl mx-auto"
-            >
-              <div className="flex items-center justify-center mb-4">
-                <div className="bg-gradient-to-r from-red-500 to-purple-500 p-3 rounded-xl">
-                  <Youtube className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-xl font-bold ml-3">Universal YouTube Processor</h3>
+          {/* Unified URL Input */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-gray-900 rounded-2xl p-8 border border-gray-800 mb-8"
+          >
+            <div className="flex items-center justify-center mb-6">
+              <div className="bg-gradient-to-r from-red-500 to-purple-500 p-4 rounded-xl">
+                <Youtube className="w-8 h-8 text-white" />
               </div>
-              <p className="text-gray-400 mb-6 text-sm">
-                Paste any YouTube URL below to unlock all three AI tools simultaneously
-              </p>
+              <h3 className="text-2xl font-bold ml-4">Universal YouTube Processor</h3>
+            </div>
+            
+            <form onSubmit={handleUrlSubmit} className="space-y-6">
+              <div className="relative">
+                <Youtube className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="url"
+                  value={unifiedUrl}
+                  onChange={(e) => setUnifiedUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=... (Paste once, get everything!)"
+                  className="w-full pl-12 pr-4 py-4 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 text-lg"
+                  disabled={isProcessing}
+                />
+              </div>
               
-              <form onSubmit={handleUrlSubmit} className="space-y-4">
-                <div className="relative">
-                  <Youtube className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="url"
-                    value={unifiedUrl}
-                    onChange={(e) => setUnifiedUrl(e.target.value)}
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    className="w-full pl-12 pr-4 py-4 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200"
-                    disabled={isProcessing}
-                  />
-                </div>
-                
+              <div className="flex gap-4">
                 <motion.button
                   type="submit"
                   disabled={isProcessing || !unifiedUrl.trim()}
                   whileHover={{ scale: isProcessing ? 1 : 1.02 }}
                   whileTap={{ scale: isProcessing ? 1 : 0.98 }}
-                  className="w-full bg-gradient-to-r from-red-500 to-purple-500 hover:from-red-600 hover:to-purple-600 disabled:from-gray-600 disabled:to-gray-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+                  className="flex-1 bg-gradient-to-r from-red-500 to-purple-500 hover:from-red-600 hover:to-purple-600 disabled:from-gray-600 disabled:to-gray-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
                 >
                   {isProcessing ? (
                     <>
                       <Loader2 className="w-6 h-6 animate-spin" />
-                      <span>Processing Video...</span>
+                      <span>Processing All Tools...</span>
                     </>
                   ) : (
                     <>
                       <BrainCircuit className="w-6 h-6" />
-                      <span>Process Video for All Tools</span>
+                      <span>Generate All Three Tools</span>
                     </>
                   )}
                 </motion.button>
-              </form>
-
-              {unifiedVideoData && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 p-4 bg-green-900/20 border border-green-500/30 rounded-lg"
-                >
-                  <div className="flex items-center space-x-3 mb-2">
-                    <div className="bg-green-500 p-1 rounded-full">
-                      <Youtube className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="text-green-400 font-medium">Video Processed Successfully!</span>
-                  </div>
-                  <p className="text-sm text-gray-300">
-                    <strong>{unifiedVideoData.video.title}</strong> by {unifiedVideoData.video.channel}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    All tools now have access to this video's content. Switch between tabs to explore different features.
-                  </p>
-                </motion.div>
-              )}
-            </motion.div>
-
-            {/* Component Selector */}
-            <div className="flex justify-center space-x-4 mb-8">
-              {components.map((comp) => {
-                const Icon = comp.icon;
-                return (
+                
+                {(videoInfo || isProcessing) && (
                   <motion.button
-                    key={comp.id}
-                    onClick={() => setActiveComponent(comp.id)}
+                    type="button"
+                    onClick={resetAll}
+                    disabled={isProcessing}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`relative p-6 rounded-2xl border transition-all duration-300 ${
-                      activeComponent === comp.id
-                        ? 'bg-gradient-to-r from-red-500 to-purple-500 border-transparent text-white shadow-lg'
-                        : 'bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-600 hover:bg-gray-800'
-                    }`}
+                    className="px-6 py-4 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 text-white rounded-xl font-medium transition-all disabled:cursor-not-allowed"
                   >
-                    <div className="flex flex-col items-center space-y-3">
-                      <div className={`p-3 rounded-xl ${
-                        activeComponent === comp.id 
-                          ? 'bg-white/20' 
-                          : 'bg-gray-800'
-                      }`}>
-                        <Icon className="w-6 h-6" />
+                    Reset
+                  </motion.button>
+                )}
+              </div>
+            </form>
+
+            {/* Processing Status */}
+            {isProcessing || videoInfo && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-8 space-y-4"
+              >
+                {videoInfo && (
+                  <div className="bg-gray-800 rounded-lg p-4 mb-6">
+                    <div className="flex items-start space-x-4">
+                      <div className="bg-green-500 p-2 rounded-lg">
+                        <Play className="w-5 h-5 text-white" />
                       </div>
-                      <div className="text-center">
-                        <h3 className="font-semibold mb-1">{comp.label}</h3>
-                        <p className={`text-sm ${
-                          activeComponent === comp.id 
-                            ? 'text-white/80' 
-                            : 'text-gray-500'
-                        }`}>
-                          {comp.description}
-                        </p>
+                      <div className="flex-1">
+                        <h4 className="text-white font-semibold mb-1">{videoInfo.title}</h4>
+                        <p className="text-gray-400 text-sm mb-2">{videoInfo.channel} • {videoInfo.duration}</p>
+                        <a 
+                          href={videoInfo.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-red-400 hover:text-red-300 text-sm transition-colors"
+                        >
+                          Watch on YouTube →
+                        </a>
                       </div>
                     </div>
-                    
-                    {activeComponent === comp.id && (
-                      <motion.div
-                        layoutId="activeTab"
-                        className="absolute inset-0 bg-gradient-to-r from-red-500 to-purple-500 rounded-2xl"
-                        style={{ zIndex: -1 }}
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                      />
-                    )}
-                  </motion.button>
-                );
-              })}
-            </div>
+                  </div>
+                )}
+
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <h4 className="text-white font-semibold mb-4">Processing Status</h4>
+                  <div className="space-y-3">
+                    {components.map((comp) => (
+                      <div key={comp.id} className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <comp.icon className="w-5 h-5 text-gray-400" />
+                          <span className="text-white">{comp.label}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {getStatusIcon(processingStatus[comp.id])}
+                          <span className={`text-sm capitalize ${
+                            processingStatus[comp.id] === 'completed' ? 'text-green-400' :
+                            processingStatus[comp.id] === 'processing' ? 'text-blue-400' :
+                            processingStatus[comp.id] === 'error' ? 'text-red-400' : 'text-gray-500'
+                          }`}>
+                            {processingStatus[comp.id]}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
 
+          {/* Tool Navigation */}
+          {videoInfo && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8"
+            >
+              <div className="flex justify-center space-x-4">
+                {components.map((comp) => {
+                  const Icon = comp.icon;
+                  const isCompleted = processingStatus[comp.id] === 'completed';
+                  const isActive = activeTab === comp.id;
+                  
+                  return (
+                    <motion.button
+                      key={comp.id}
+                      onClick={() => isCompleted && setActiveTab(comp.id)}
+                      disabled={!isCompleted}
+                      whileHover={{ scale: isCompleted ? 1.02 : 1 }}
+                      whileTap={{ scale: isCompleted ? 0.98 : 1 }}
+                      className={`relative p-6 rounded-2xl border transition-all duration-300 ${
+                        isActive && isCompleted
+                          ? 'bg-gradient-to-r from-red-500 to-purple-500 border-transparent text-white shadow-lg'
+                          : isCompleted 
+                          ? 'bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-600 hover:bg-gray-800'
+                          : 'bg-gray-900 border-gray-800 text-gray-600 cursor-not-allowed opacity-50'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center space-y-3">
+                        <div className={`p-3 rounded-xl relative ${
+                          isActive && isCompleted
+                            ? 'bg-white/20' 
+                            : isCompleted
+                            ? 'bg-gray-800'
+                            : 'bg-gray-800'
+                        }`}>
+                          <Icon className="w-6 h-6" />
+                          {isCompleted && (
+                            <div className="absolute -top-1 -right-1">
+                              <CheckCircle className="w-4 h-4 text-green-400" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-center">
+                          <h3 className="font-semibold mb-1">{comp.label}</h3>
+                          <p className={`text-sm ${
+                            isActive && isCompleted
+                              ? 'text-white/80' 
+                              : 'text-gray-500'
+                          }`}>
+                            {comp.description}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {isActive && isCompleted && (
+                        <motion.div
+                          layoutId="activeTab"
+                          className="absolute inset-0 bg-gradient-to-r from-red-500 to-purple-500 rounded-2xl"
+                          style={{ zIndex: -1 }}
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+
           {/* Active Component */}
-          <motion.div
-            key={activeComponent}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <ActiveComponent 
-              videoData={unifiedVideoData} 
-              onVideoDataUpdate={setUnifiedVideoData}
-            />
-          </motion.div>
+          {videoInfo && processingStatus[activeTab] === 'completed' && (
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ActiveComponent 
+                preloadedData={processedData[activeTab]}
+                videoData={processedData.transcribe}
+                isPreloaded={true}
+              />
+            </motion.div>
+          )}
+
+          {/* Welcome Message */}
+          {!videoInfo && !isProcessing && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-center py-16"
+            >
+              <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                <div className="bg-gray-900 rounded-xl p-8 border border-gray-800">
+                  <div className="bg-red-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <FileText className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-4">Smart Summaries</h3>
+                  <p className="text-gray-400">Get brief, detailed, and bullet-point summaries powered by AI</p>
+                </div>
+
+                <div className="bg-gray-900 rounded-xl p-8 border border-gray-800">
+                  <div className="bg-purple-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <BrainCircuit className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-4">Study Materials</h3>
+                  <p className="text-gray-400">Create flashcards, quizzes, and comprehensive study guides</p>
+                </div>
+
+                <div className="bg-gray-900 rounded-xl p-8 border border-gray-800">
+                  <div className="bg-blue-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <MessageCircle className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-4">Interactive Chat</h3>
+                  <p className="text-gray-400">Ask follow-up questions and dive deeper into the content</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </div>

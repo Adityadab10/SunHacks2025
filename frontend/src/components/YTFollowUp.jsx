@@ -9,12 +9,12 @@ import {
 import toast from 'react-hot-toast';
 import { useUser } from '../context/UserContext';
 
-const YTFollowUp = ({ videoData, onVideoDataUpdate }) => {
+const YTFollowUp = ({ preloadedData, videoData, isPreloaded = false }) => {
   const { mongoUid, firebaseUid } = useUser();
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(false);
-  const [currentSession, setCurrentSession] = useState(null);
+  const [currentSession, setCurrentSession] = useState(preloadedData?.sessionData || null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
@@ -47,6 +47,15 @@ const YTFollowUp = ({ videoData, onVideoDataUpdate }) => {
       createChatSession(videoData.video.url, videoData.video.title, videoData.video.channel);
     }
   }, [videoData, mongoUid]);
+
+  // Update session when preloadedData changes
+  useEffect(() => {
+    if (preloadedData?.sessionData) {
+      setCurrentSession(preloadedData.sessionData);
+      setMessages([]);
+      loadUserSessions();
+    }
+  }, [preloadedData]);
 
   const loadUserSessions = async () => {
     try {
@@ -231,6 +240,256 @@ const YTFollowUp = ({ videoData, onVideoDataUpdate }) => {
     setError(null);
   };
 
+  const renderChatHeader = () => (
+    <div className="p-6 border-b border-gray-800">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-white">{currentSession.videoTitle}</h3>
+          <p className="text-gray-400 text-sm">{currentSession.videoChannel}</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <CheckCircle className="w-5 h-5 text-green-400" />
+          <span className="text-green-400 text-sm">Chat Ready</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderMessagesArea = () => (
+    <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      {messages.length === 0 ? (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-600" />
+            <h4 className="text-xl font-semibold text-white mb-2">Ready to Chat!</h4>
+            <p className="text-gray-400 max-w-md">
+              Ask anything about this video! I have access to the transcript and summary to help answer your questions.
+            </p>
+            <div className="mt-6 grid grid-cols-1 gap-2 max-w-md">
+              <button
+                onClick={() => setNewMessage("What are the main points covered in this video?")}
+                className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition-colors text-sm"
+              >
+                "What are the main points covered in this video?"
+              </button>
+              <button
+                onClick={() => setNewMessage("Can you explain the most important concept?")}
+                className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition-colors text-sm"
+              >
+                "Can you explain the most important concept?"
+              </button>
+              <button
+                onClick={() => setNewMessage("What should I remember from this video?")}
+                className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition-colors text-sm"
+              >
+                "What should I remember from this video?"
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {messages.map((message, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div className={`flex items-start space-x-3 max-w-[80%] ${
+                message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+              }`}>
+                <div className={`p-2 rounded-full ${
+                  message.role === 'user' 
+                    ? 'bg-blue-600' 
+                    : 'bg-gradient-to-r from-purple-500 to-pink-500'
+                }`}>
+                  {message.role === 'user' ? (
+                    <User className="w-5 h-5 text-white" />
+                  ) : (
+                    <Bot className="w-5 h-5 text-white" />
+                  )}
+                </div>
+                <div className={`p-4 rounded-2xl ${
+                  message.role === 'user'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-800 text-gray-100 border border-gray-700'
+                }`}>
+                  {message.role === 'user' ? (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  ) : (
+                    <div className="prose prose-invert max-w-none">
+                      <ReactMarkdown
+                        components={{
+                          p: ({children}) => <p className="text-gray-100 mb-2 last:mb-0">{children}</p>,
+                          strong: ({children}) => <strong className="font-semibold text-white">{children}</strong>,
+                          em: ({children}) => <em className="italic text-gray-300">{children}</em>,
+                          code: ({children}) => <code className="bg-gray-700 text-blue-400 px-2 py-1 rounded text-sm">{children}</code>,
+                          ul: ({children}) => <ul className="list-disc list-inside text-gray-100 space-y-1">{children}</ul>,
+                          ol: ({children}) => <ol className="list-decimal list-inside text-gray-100 space-y-1">{children}</ol>,
+                          li: ({children}) => <li className="text-gray-100">{children}</li>
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-end mt-2">
+                    <span className={`text-xs ${
+                      message.role === 'user' ? 'text-blue-200' : 'text-gray-500'
+                    }`}>
+                      {new Date(message.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+          {sendingMessage && (
+            <div className="flex justify-start">
+              <div className="flex items-start space-x-3">
+                <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-2 rounded-full">
+                  <Bot className="w-5 h-5 text-white" />
+                </div>
+                <div className="bg-gray-800 border border-gray-700 p-4 rounded-2xl">
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                    <span className="text-gray-400">AI is thinking...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </>
+      )}
+    </div>
+  );
+
+  const renderMessageInput = () => (
+    <div className="p-6 border-t border-gray-800">
+      <form onSubmit={sendMessage} className="flex space-x-4">
+        <div className="flex-1">
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Ask a question about this video..."
+            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
+            disabled={sendingMessage}
+          />
+        </div>
+        <motion.button
+          type="submit"
+          disabled={sendingMessage || !newMessage.trim()}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white p-3 rounded-xl transition-colors disabled:cursor-not-allowed"
+        >
+          <Send className="w-5 h-5" />
+        </motion.button>
+      </form>
+    </div>
+  );
+
+  if (isPreloaded && currentSession) {
+    return (
+      <div className="space-y-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h2 className="text-3xl font-bold mb-4">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+              Follow-up Chat
+            </span>
+          </h2>
+          <p className="text-gray-400">Ask questions about the video content with AI</p>
+        </motion.div>
+
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Sessions Sidebar - same as existing */}
+          <div className="lg:col-span-1">
+            <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 sticky top-8">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-white">Chat Sessions</h3>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={startNewChat}
+                  className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </motion.button>
+              </div>
+
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {sessions.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-4">No chat sessions yet</p>
+                ) : (
+                  sessions.map((session) => (
+                    <motion.div
+                      key={session.sessionId}
+                      whileHover={{ scale: 1.02 }}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                        currentSession?.sessionId === session.sessionId
+                          ? 'bg-blue-600 border-blue-500 text-white'
+                          : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+                      }`}
+                      onClick={() => loadChatHistory(session.sessionId)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {session.videoTitle}
+                          </p>
+                          <p className="text-xs opacity-70 truncate">
+                            {session.videoChannel}
+                          </p>
+                          <div className="flex items-center mt-1 text-xs opacity-60">
+                            <MessageCircle className="w-3 h-3 mr-1" />
+                            {session.messageCount} messages
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteSession(session.sessionId);
+                          }}
+                          className="text-red-400 hover:text-red-300 transition-colors ml-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))
+                )
+            }
+              </div>
+            </div>
+          </div>
+
+          {/* Main Chat Area - same as existing but with auto-started session */}
+          <div className="lg:col-span-3">
+            <div className="bg-gray-900 rounded-2xl border border-gray-800 h-[600px] flex flex-col">
+              {/* Chat Header */}
+              {renderChatHeader()}
+
+              {/* Messages Area */}
+              {renderMessagesArea()}
+
+              {/* Message Input - same as existing */}
+              {renderMessageInput()}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Return existing component code for non-preloaded use
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -310,7 +569,8 @@ const YTFollowUp = ({ videoData, onVideoDataUpdate }) => {
                     </div>
                   </motion.div>
                 ))
-              )}
+            )
+        }
             </div>
           </div>
         </div>
@@ -419,140 +679,13 @@ const YTFollowUp = ({ videoData, onVideoDataUpdate }) => {
           ) : (
             <div className="bg-gray-900 rounded-2xl border border-gray-800 h-[600px] flex flex-col">
               {/* Chat Header */}
-              <div className="p-6 border-b border-gray-800">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">{currentSession.videoTitle}</h3>
-                    <p className="text-gray-400 text-sm">{currentSession.videoChannel}</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                    <span className="text-green-400 text-sm">Connected</span>
-                  </div>
-                </div>
-              </div>
+              {renderChatHeader()}
 
               {/* Messages Area */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                {loading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-400" />
-                      <p className="text-gray-400">Loading chat history...</p>
-                    </div>
-                  </div>
-                ) : messages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                      <h4 className="text-xl font-semibold text-white mb-2">Start the Conversation</h4>
-                      <p className="text-gray-400 max-w-md">
-                        Ask anything about this video! I have access to the transcript and summary to help answer your questions.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {messages.map((message, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div className={`flex items-start space-x-3 max-w-[80%] ${
-                          message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                        }`}>
-                          <div className={`p-2 rounded-full ${
-                            message.role === 'user' 
-                              ? 'bg-blue-600' 
-                              : 'bg-gradient-to-r from-purple-500 to-pink-500'
-                          }`}>
-                            {message.role === 'user' ? (
-                              <User className="w-5 h-5 text-white" />
-                            ) : (
-                              <Bot className="w-5 h-5 text-white" />
-                            )}
-                          </div>
-                          <div className={`p-4 rounded-2xl ${
-                            message.role === 'user'
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-800 text-gray-100 border border-gray-700'
-                          }`}>
-                            {message.role === 'user' ? (
-                              <p className="whitespace-pre-wrap">{message.content}</p>
-                            ) : (
-                              <div className="prose prose-invert max-w-none">
-                                <ReactMarkdown
-                                  components={{
-                                    p: ({children}) => <p className="text-gray-100 mb-2 last:mb-0">{children}</p>,
-                                    strong: ({children}) => <strong className="font-semibold text-white">{children}</strong>,
-                                    em: ({children}) => <em className="italic text-gray-300">{children}</em>,
-                                    code: ({children}) => <code className="bg-gray-700 text-blue-400 px-2 py-1 rounded text-sm">{children}</code>,
-                                    ul: ({children}) => <ul className="list-disc list-inside text-gray-100 space-y-1">{children}</ul>,
-                                    ol: ({children}) => <ol className="list-decimal list-inside text-gray-100 space-y-1">{children}</ol>,
-                                    li: ({children}) => <li className="text-gray-100">{children}</li>
-                                  }}
-                                >
-                                  {message.content}
-                                </ReactMarkdown>
-                              </div>
-                            )}
-                            <div className="flex items-center justify-end mt-2">
-                              <span className={`text-xs ${
-                                message.role === 'user' ? 'text-blue-200' : 'text-gray-500'
-                              }`}>
-                                {new Date(message.timestamp).toLocaleTimeString()}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                    {sendingMessage && (
-                      <div className="flex justify-start">
-                        <div className="flex items-start space-x-3">
-                          <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-2 rounded-full">
-                            <Bot className="w-5 h-5 text-white" />
-                          </div>
-                          <div className="bg-gray-800 border border-gray-700 p-4 rounded-2xl">
-                            <div className="flex items-center space-x-2">
-                              <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
-                              <span className="text-gray-400">AI is thinking...</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                  </>
-                )}
-              </div>
+              {renderMessagesArea()}
 
-              {/* Message Input */}
-              <div className="p-6 border-t border-gray-800">
-                <form onSubmit={sendMessage} className="flex space-x-4">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Ask a question about this video..."
-                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
-                      disabled={sendingMessage}
-                    />
-                  </div>
-                  <motion.button
-                    type="submit"
-                    disabled={sendingMessage || !newMessage.trim()}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white p-3 rounded-xl transition-colors disabled:cursor-not-allowed"
-                  >
-                    <Send className="w-5 h-5" />
-                  </motion.button>
-                </form>
-              </div>
+              {/* Message Input - same as existing */}
+              {renderMessageInput()}
             </div>
           )}
         </div>

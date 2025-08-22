@@ -36,16 +36,6 @@ router.get("/user/:userId/history", getUserYoutubeHistory);
 // Get specific YouTube video summary by ID
 router.get("/summary/:id", getYoutubeSummary);
 
-// GET /api/youtube/health
-// Health check endpoint
-router.get("/health", (req, res) => {
-  res.json({
-    success: true,
-    message: "YouTube API service is running",
-    timestamp: new Date().toISOString(),
-  });
-});
-
 // Chat-related routes
 // POST /api/youtube/chat/session
 // Create or get existing chat session for a video
@@ -66,5 +56,15 @@ router.get("/chat/user/:userId/sessions", getUserChatSessions);
 // DELETE /api/youtube/chat/session/:sessionId
 // Delete a chat session
 router.delete("/chat/session/:sessionId", deleteChatSession);
+
+// GET /api/youtube/health
+// Health check endpoint
+router.get("/health", (req, res) => {
+  res.json({
+    success: true,
+    message: "YouTube API service is running",
+    timestamp: new Date().toISOString(),
+  });
+});
 
 export default router;
