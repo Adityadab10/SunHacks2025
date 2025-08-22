@@ -59,46 +59,31 @@ const Navbar = ({ isDarkMode = true }) => {
   };
 
   // Theme-aware styling - OPPOSITE to landing page for contrast
+  // Match hero section: dark background, green accent, border
   const navTheme = {
-    // When landing is dark, navbar should be light
-    // When landing is light, navbar should be dark
-    bg: isDarkMode 
-      ? "rgba(255, 255, 255, 0.95)" // Light navbar for dark background
-      : "rgba(0, 0, 0, 0.9)", // Dark navbar for light background
-    bgVisible: isDarkMode 
-      ? "rgba(255, 255, 255, 0.98)"
-      : "rgba(0, 0, 0, 0.95)",
-    text: isDarkMode ? "text-gray-900" : "text-white",
-    textSecondary: isDarkMode ? "text-gray-600" : "text-gray-300",
-    border: isDarkMode 
-      ? "border-gray-200" 
-      : "border-gray-700",
-    borderVisible: isDarkMode 
-      ? "border-gray-300"
-      : "border-gray-600",
-    hoverBg: isDarkMode 
-      ? "bg-gray-100 hover:bg-gray-200"
-      : "bg-gray-800 hover:bg-gray-700",
-    buttonPrimary: isDarkMode
-      ? "bg-gray-900 text-white hover:bg-gray-800"
-      : "bg-white text-gray-900 hover:bg-gray-100",
-    buttonSecondary: isDarkMode
-      ? "text-gray-700 hover:text-gray-900"
-      : "text-gray-300 hover:text-white"
+    bg: "#111827", // Tailwind's bg-gray-900
+    bgVisible: "#111827",
+    text: "text-white",
+    textSecondary: "text-gray-400",
+    border: "border-2 border-[#74AA9C]", // Green accent border
+    borderVisible: "border-2 border-[#74AA9C]",
+    hoverBg: "bg-gray-800 hover:bg-[#74AA9C]/20",
+    buttonPrimary: "bg-[#74AA9C] text-black hover:bg-[#74AA9C]/90",
+    buttonSecondary: "text-[#74AA9C] hover:text-white",
   };
 
   return (
     <motion.div
       ref={ref}
-      className="fixed inset-x-0 top-0 z-50 max-w-6xl mx-auto"
+  className="fixed inset-x-0 top-0 z-50 max-w-6xl mx-auto"
+  style={{ background: navTheme.bg, borderBottom: '2px solid #74AA9C', boxShadow: '0 2px 16px 0 rgba(116,170,156,0.10)' }}
     >
       {/* Desktop Navbar */}
       <motion.div
         animate={{
           backdropFilter: visible ? "blur(16px)" : "blur(8px)",
-          width: visible ? "65%" : "80%",
           y: visible ? 16 : 0,
-          backgroundColor: visible ? navTheme.bgVisible : navTheme.bg,
+          backgroundColor: navTheme.bg,
         }}
         transition={{
           type: "spring",
@@ -107,11 +92,11 @@ const Navbar = ({ isDarkMode = true }) => {
           duration: 0.3,
         }}
         style={{
-          minWidth: visible ? "700px" : "600px",
+          borderBottom: '2px solid #74AA9C',
+          boxShadow: '0 2px 16px 0 rgba(116,170,156,0.10)',
         }}
         className={cn(
-          "relative z-[60] mx-auto hidden w-full max-w-6xl flex-row items-center justify-between rounded-full px-8 py-3 md:flex border",
-          visible ? navTheme.borderVisible : navTheme.border,
+          "relative z-[60] mx-auto hidden w-full max-w-6xl flex-row items-center justify-between rounded-full px-8 py-3 md:flex border-2 border-[#74AA9C] bg-gray-900",
           "shadow-lg"
         )}
       >
@@ -233,16 +218,20 @@ const Navbar = ({ isDarkMode = true }) => {
         animate={{
           backdropFilter: visible ? "blur(16px)" : "blur(8px)",
           y: visible ? 16 : 0,
-          backgroundColor: visible ? navTheme.bgVisible : navTheme.bg,
+          backgroundColor: navTheme.bg,
         }}
         transition={{
           type: "spring",
           stiffness: 400,
           damping: 40,
         }}
+        style={{
+          borderBottom: '2px solid #74AA9C',
+          boxShadow: '0 2px 16px 0 rgba(116,170,156,0.10)',
+        }}
         className={cn(
-          "md:hidden flex items-center justify-between px-6 py-3 mx-6 rounded-full border shadow-lg",
-          visible ? navTheme.borderVisible : navTheme.border
+          "md:hidden flex items-center justify-between px-6 py-3 mx-6 rounded-full border-2 border-[#74AA9C] bg-gray-900",
+          "shadow-lg"
         )}
       >
         <motion.h1

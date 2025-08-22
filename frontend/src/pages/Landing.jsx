@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { LampContainer } from "../components/ui/lamp"
 import { Link } from "react-router-dom"
 import { useState } from "react"
-import ModernNavbar from "../components/ModernNavbar"
+import Navbar from "../components/Navbar"
 
 export default function Landing() {
   const { t } = useTranslation()
@@ -16,19 +16,20 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen pt-16 bg-black text-white">
-      <ModernNavbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+      {/* <ModernNavbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} /> */}
+      <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
 
       {/* Hero Section with Lamp Effect */}
       <LampContainer>
         <motion.div
           initial={{ opacity: 0.5, y: 100 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          whileInView={{ opacity: 1, y: 40 }}
           transition={{
             delay: 0.3,
             duration: 0.8,
             ease: "easeInOut",
           }}
-          className="text-center space-y-8 max-w-4xl mx-auto"
+          className="text-center space-y-8 max-w-4xl mx-auto mt-24"
         >
           <h1 className="bg-gradient-to-br from-slate-300 to-slate-500 py-4 bg-clip-text text-center text-5xl md:text-7xl font-bold tracking-tight text-transparent leading-tight">
             <span className="bg-gradient-to-br from-white to-[#74AA9C] bg-clip-text text-transparent">
