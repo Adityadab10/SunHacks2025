@@ -71,18 +71,20 @@ const Profile = () => {
       case 'overview':
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Quick Stats */}
+            {/* Quick Stats - unified glass/accent theme */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl p-6 text-white"
+              className="rounded-2xl p-6 text-white bg-gradient-to-br from-black via-[#222] to-black border border-[#74AA9C]/30 shadow-xl backdrop-blur-lg"
             >
               <div className="flex items-center justify-between mb-4">
-                <Clock className="w-8 h-8" />
-                <span className="text-2xl font-bold">{Math.floor(totalTime / 60)}m</span>
+                <div className="p-3 bg-[#74AA9C]/10 rounded-xl">
+                  <Clock className="w-8 h-8 text-[#74AA9C]" />
+                </div>
+                <span className="text-3xl font-bold font-mono">{Math.floor(totalTime / 60)}<span className="text-lg font-normal"> mins today</span></span>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Today's Study Time</h3>
+              <h3 className="text-lg font-semibold mb-2 text-[#74AA9C]">Today's Study Time</h3>
               <p className="text-white/80 text-sm">Keep up the great work!</p>
             </motion.div>
 
@@ -90,13 +92,15 @@ const Profile = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-gradient-to-br from-orange-600 to-red-600 rounded-xl p-6 text-white"
+              className="rounded-2xl p-6 text-white bg-gradient-to-br from-black via-[#222] to-black border border-[#74AA9C]/30 shadow-xl backdrop-blur-lg"
             >
               <div className="flex items-center justify-between mb-4">
-                <Flame className="w-8 h-8" />
-                <span className="text-2xl font-bold">{streak}</span>
+                <div className="p-3 bg-[#74AA9C]/10 rounded-xl">
+                  <Flame className="w-8 h-8 text-[#74AA9C]" />
+                </div>
+                <span className="text-3xl font-bold font-mono">{streak}</span>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Current Streak</h3>
+              <h3 className="text-lg font-semibold mb-2 text-[#74AA9C]">Current Streak</h3>
               <p className="text-white/80 text-sm">Days in a row</p>
             </motion.div>
 
@@ -104,13 +108,15 @@ const Profile = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-gradient-to-br from-green-600 to-teal-600 rounded-xl p-6 text-white"
+              className="rounded-2xl p-6 text-white bg-gradient-to-br from-black via-[#222] to-black border border-[#74AA9C]/30 shadow-xl backdrop-blur-lg"
             >
               <div className="flex items-center justify-between mb-4">
-                <Trophy className="w-8 h-8" />
-                <span className="text-2xl font-bold">{achievements.filter(a => a.earned).length}</span>
+                <div className="p-3 bg-[#74AA9C]/10 rounded-xl">
+                  <Trophy className="w-8 h-8 text-[#74AA9C]" />
+                </div>
+                <span className="text-3xl font-bold font-mono">{achievements.filter(a => a.earned).length}</span>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Achievements</h3>
+              <h3 className="text-lg font-semibold mb-2 text-[#74AA9C]">Achievements</h3>
               <p className="text-white/80 text-sm">Unlocked badges</p>
             </motion.div>
           </div>
@@ -299,78 +305,106 @@ const Profile = () => {
     }
   };
 
+
   return (
-    <div className="min-h-screen bg-black text-white flex">
+    <div className="min-h-screen bg-black text-white flex font-sans">
       <MainSidebar />
-      
       <div className="flex-1 overflow-auto">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          {/* Header Section */}
+          {/* Header Section - Glassmorphism, accent gradients, floating avatar */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-green-600 to-teal-600 rounded-2xl p-8 mb-8 relative overflow-hidden"
+            className="relative rounded-3xl p-10 mb-10 overflow-hidden shadow-2xl bg-gradient-to-br from-black via-[#222] to-[#222] border border-[#74AA9C]/30"
           >
-            <div className="absolute inset-0 bg-black/20"></div>
-            <div className="relative z-10 flex items-center justify-between">
-              <div className="flex items-center space-x-6">
-                {currentUser?.photoURL ? (
-                  <img 
-                    src={currentUser.photoURL} 
-                    alt="Profile" 
-                    className="w-24 h-24 rounded-full border-4 border-white/20 shadow-lg"
-                  />
-                ) : (
-                  <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center border-4 border-white/20">
-                    <User className="w-12 h-12 text-white" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#74AA9C]/10 via-black/30 to-transparent pointer-events-none"></div>
+            <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+              {[...Array(18)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-2 h-2 bg-[#74AA9C] rounded-full"
+                  style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
+                  animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, delay: Math.random() * 2 }}
+                />
+              ))}
+            </div>
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex items-center gap-8">
+                <div className="relative">
+                  {currentUser?.photoURL ? (
+                    <img 
+                      src={currentUser.photoURL} 
+                      alt="Profile" 
+                      className="w-28 h-28 rounded-2xl border-4 border-[#74AA9C]/40 shadow-2xl object-cover"
+                    />
+                  ) : (
+                    <div className="w-28 h-28 bg-gradient-to-br from-[#74AA9C]/20 to-black/30 rounded-2xl flex items-center justify-center border-4 border-[#74AA9C]/40 shadow-2xl">
+                      <User className="w-14 h-14 text-[#74AA9C]" />
+                    </div>
+                  )}
+                  <div className="absolute -bottom-3 -right-3 w-10 h-10 bg-[#74AA9C] rounded-full flex items-center justify-center shadow-lg border-2 border-black">
+                    <Zap className="w-5 h-5 text-white" />
                   </div>
-                )}
+                </div>
                 <div>
-                  <h1 className="text-4xl font-bold text-white mb-2">
+                  <h1 className="text-5xl font-extrabold text-white mb-2 bg-gradient-to-r from-white to-[#74AA9C] bg-clip-text text-transparent drop-shadow-lg">
                     {currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Student'}
                   </h1>
-                  <p className="text-white/80 text-lg mb-1">{currentUser?.email}</p>
-                  <div className="flex items-center space-x-4 text-white/70">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="w-4 h-4" />
+                  <p className="text-[#74AA9C]/80 text-lg mb-2 font-mono">{currentUser?.email}</p>
+                  <div className="flex items-center space-x-6 text-gray-400">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-5 h-5" />
                       <span>Joined {currentUser?.metadata?.creationTime ? new Date(currentUser.metadata.creationTime).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Unknown'}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Globe className="w-5 h-5" />
+                      <span className="font-bold text-[#74AA9C]">Level 7 Scholar</span>
                     </div>
                   </div>
                 </div>
               </div>
-              
-              <div className="text-right space-y-2">
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-                  <div className="text-2xl font-bold text-white">{streak}</div>
-                  <div className="text-white/80 text-sm">Day Streak</div>
+              <div className="flex flex-row md:flex-col gap-4 text-center">
+                <div className="p-5 bg-gradient-to-br from-[#74AA9C]/20 to-black/30 rounded-2xl border border-[#74AA9C]/30 shadow-lg min-w-[90px]">
+                  <div className="text-3xl font-bold text-white mb-1 font-mono">{streak}</div>
+                  <div className="text-[#74AA9C]/80 text-xs font-semibold">STREAK</div>
                 </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-                  <div className="text-2xl font-bold text-white">{Math.floor(totalTime / 60)}</div>
-                  <div className="text-white/80 text-sm">Minutes Today</div>
+                <div className="p-5 bg-gradient-to-br from-[#74AA9C]/20 to-black/30 rounded-2xl border border-[#74AA9C]/30 shadow-lg min-w-[90px]">
+                  <div className="text-3xl font-bold text-white mb-1 font-mono">{Math.floor(totalTime / 60)}<span className="text-lg font-normal"> mins today</span></div>
+                  <div className="text-[#74AA9C]/80 text-xs font-semibold">TODAY</div>
                 </div>
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-                  <div className="text-2xl font-bold text-white">{maxStreak}</div>
-                  <div className="text-white/80 text-sm">Best Streak</div>
+                <div className="p-5 bg-gradient-to-br from-[#74AA9C]/20 to-black/30 rounded-2xl border border-[#74AA9C]/30 shadow-lg min-w-[90px]">
+                  <div className="text-3xl font-bold text-white mb-1 font-mono">{maxStreak}</div>
+                  <div className="text-[#74AA9C]/80 text-xs font-semibold">BEST</div>
                 </div>
               </div>
             </div>
           </motion.div>
 
-          {/* Tab Navigation */}
-          <div className="mb-8">
-            <div className="flex space-x-1 bg-gray-800 p-1 rounded-xl">
+          {/* Tab Navigation - glass, accent, animated underline */}
+          <div className="mb-10">
+            <div className="flex space-x-2 bg-gradient-to-r from-black via-[#222] to-black p-2 rounded-2xl border border-[#74AA9C]/20 shadow-lg">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                  className={`relative flex items-center space-x-2 px-7 py-3 rounded-xl font-semibold transition-all duration-200 overflow-hidden ${
                     activeTab === tab.id
-                      ? 'bg-white text-black shadow-lg'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                      ? 'bg-gradient-to-r from-[#74AA9C] to-[#5a8a7d] text-white shadow-xl scale-105'
+                      : 'text-gray-400 hover:text-white hover:bg-[#74AA9C]/10'
                   }`}
+                  style={{ boxShadow: activeTab === tab.id ? '0 2px 16px #74AA9C44' : undefined }}
                 >
-                  <tab.icon className="w-4 h-4" />
+                  <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-white' : 'text-[#74AA9C]'}`} />
                   <span>{tab.label}</span>
+                  {activeTab === tab.id && (
+                    <motion.div
+                      layoutId="activeTabUnderline"
+                      className="absolute left-0 bottom-0 w-full h-1 bg-gradient-to-r from-[#74AA9C] to-[#5a8a7d] rounded-full"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  )}
                 </button>
               ))}
             </div>
@@ -387,6 +421,20 @@ const Profile = () => {
           </motion.div>
         </div>
       </div>
+      {/* Custom Styles for shimmer and glass */}
+      <style>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
+        }
+        .glass {
+          background: rgba(20, 20, 20, 0.7);
+          backdrop-filter: blur(12px);
+        }
+      `}</style>
     </div>
   );
 };
