@@ -30,6 +30,35 @@ const studyBoardSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  visibility: {
+    type: String,
+    enum: ['private', 'public', 'studygroup'],
+    default: 'private',
+    required: true
+  },
+  studyGroupId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'StudyGroup',
+    required: function() {
+      return this.visibility === 'studygroup';
+    }
+  },
+  likes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  dislikes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  likeCount: {
+    type: Number,
+    default: 0
+  },
+  dislikeCount: {
+    type: Number,
+    default: 0
+  },
   content: {
     tldr: {
       type: String,
@@ -90,5 +119,8 @@ const studyBoardSchema = new mongoose.Schema({
 studyBoardSchema.index({ userId: 1, createdAt: -1 });
 studyBoardSchema.index({ youtubeVideoId: 1 });
 studyBoardSchema.index({ userId: 1, youtubeVideoId: 1 });
+studyBoardSchema.index({ visibility: 1, createdAt: -1 });
+studyBoardSchema.index({ studyGroupId: 1, createdAt: -1 });
+studyBoardSchema.index({ likeCount: -1, createdAt: -1 });
 
 export default mongoose.model('StudyBoardYT', studyBoardSchema);

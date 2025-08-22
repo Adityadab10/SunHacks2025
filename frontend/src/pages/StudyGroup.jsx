@@ -30,13 +30,67 @@ const StudyGroup = () => {
       fetchUserGroups(userEmail);
     }
 
-    // Make sockepublic and it t globally available for chat component
+    // Make socket globally available for chat component
     window.socket = socket;
 
     // Socket event listeners
     socket.on('receiveMessage', ({ groupId, message }) => {
+      console.log('📨 RECEIVED MESSAGE:', {
+        groupId,
+        selectedGroupId: selectedGroup?._id,
+        messageType: message.messageType,
+        isPinned: message.isPinned,
+        isSystemMessage: message.isSystemMessage
+      });
+
       if (selectedGroup && groupId === selectedGroup._id) {
         setMessages((prev) => [...prev, message]);
+        
+        // Show toast for study board shares
+        if (message.isSystemMessage && message.messageType === 'studyboard_share') {
+          try {
+            const content = JSON.parse(message.content);
+            console.log('📚 STUDY BOARD SHARE RECEIVED:', {
+              type: content.type,
+              studyBoardName: content.studyBoardName,
+              sharedBy: content.sharedBy,
+              isPinned: message.isPinned
+            });
+
+            if (content.type === 'studyboard_share') {
+              if (message.isPinned) {
+                toast.success(`📌 ${content.sharedBy} pinned a study board: ${content.studyBoardName}`, {
+                  duration: 5000,
+                  icon: '📌'
+                });
+              } else {
+                toast.success(`📚 ${content.sharedBy} shared a study board: ${content.studyBoardName}`, {
+                  duration: 4000,
+                  icon: '📚'
+                });
+              }
+            }
+          } catch (e) {
+            console.error('❌ Error parsing study board share content:', e);
+          }
+        }
+      }
+    });
+
+    // Listen for pinned message events
+    socket.on('pinnedMessageAdded', ({ groupId, pinnedMessage }) => {
+      console.log('📌 PINNED MESSAGE ADDED EVENT:', {
+        groupId,
+        selectedGroupId: selectedGroup?._id,
+        pinnedMessage: pinnedMessage ? {
+          messageType: pinnedMessage.messageType,
+          isPinned: pinnedMessage.isPinned,
+          content: pinnedMessage.content ? JSON.parse(pinnedMessage.content)?.studyBoardName : 'No content'
+        } : null
+      });
+
+      if (selectedGroup && groupId === selectedGroup._id) {
+        console.log('✅ Pinned message event processed for current group');
       }
     });
 
@@ -63,6 +117,7 @@ const StudyGroup = () => {
       socket.off('memberJoined');
       socket.off('memberLeft');
       socket.off('userTyping');
+      socket.off('pinnedMessageAdded');
       delete window.socket;
     };
   }, [selectedGroup]);

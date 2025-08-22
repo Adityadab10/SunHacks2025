@@ -5,7 +5,7 @@ import cors from "cors";
 import path from "path";
 import authRoutes from "./routes/authRoutes.js";
 import youtubeRoutes from "./routes/youtubeRoutes.js";
-import studyBoardYTRoutes from "./routes/studyboard-ytRoutess.js";
+import studyBoardYTRoutes from "./routes/studyboard-ytRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js";
