@@ -307,9 +307,21 @@ const Profile = () => {
 
 
   return (
-    <div className="min-h-screen bg-black text-white flex font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-black via-[#111] to-[#222] text-white flex font-sans relative">
+      {/* Green accent floating shapes */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-6 h-6 bg-[#74AA9C]/30 rounded-full blur-2xl"
+            style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
+            animate={{ scale: [0.7, 1.2, 0.7], opacity: [0.5, 0.8, 0.5] }}
+            transition={{ duration: 6, repeat: Infinity, delay: Math.random() * 3 }}
+          />
+        ))}
+      </div>
       <MainSidebar />
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto relative z-10">
         <div className="max-w-7xl mx-auto px-6 py-8">
           {/* Header Section - Glassmorphism, accent gradients, floating avatar */}
           <motion.div
@@ -317,7 +329,7 @@ const Profile = () => {
             animate={{ opacity: 1, y: 0 }}
             className="relative rounded-3xl p-10 mb-10 overflow-hidden shadow-2xl bg-gradient-to-br from-black via-[#222] to-[#222] border border-[#74AA9C]/30"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-[#74AA9C]/10 via-black/30 to-transparent pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-[#74AA9C]/20 via-black/30 to-transparent pointer-events-none"></div>
             <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
               {[...Array(18)].map((_, i) => (
                 <motion.div
@@ -339,7 +351,7 @@ const Profile = () => {
                       className="w-28 h-28 rounded-2xl border-4 border-[#74AA9C]/40 shadow-2xl object-cover"
                     />
                   ) : (
-                    <div className="w-28 h-28 bg-gradient-to-br from-[#74AA9C]/20 to-black/30 rounded-2xl flex items-center justify-center border-4 border-[#74AA9C]/40 shadow-2xl">
+                    <div className="w-28 h-28 bg-gradient-to-br from-[#74AA9C]/30 to-black/30 rounded-2xl flex items-center justify-center border-4 border-[#74AA9C]/40 shadow-2xl">
                       <User className="w-14 h-14 text-[#74AA9C]" />
                     </div>
                   )}
@@ -354,27 +366,27 @@ const Profile = () => {
                   <p className="text-[#74AA9C]/80 text-lg mb-2 font-mono">{currentUser?.email}</p>
                   <div className="flex items-center space-x-6 text-gray-400">
                     <div className="flex items-center space-x-2">
-                      <Calendar className="w-5 h-5" />
+                      <Calendar className="w-5 h-5 text-[#74AA9C]" />
                       <span>Joined {currentUser?.metadata?.creationTime ? new Date(currentUser.metadata.creationTime).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Unknown'}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Globe className="w-5 h-5" />
+                      <Globe className="w-5 h-5 text-[#74AA9C]" />
                       <span className="font-bold text-[#74AA9C]">Level 7 Scholar</span>
                     </div>
                   </div>
                 </div>
               </div>
               <div className="flex flex-row md:flex-col gap-4 text-center">
-                <div className="p-5 bg-gradient-to-br from-[#74AA9C]/20 to-black/30 rounded-2xl border border-[#74AA9C]/30 shadow-lg min-w-[90px]">
-                  <div className="text-3xl font-bold text-white mb-1 font-mono">{streak}</div>
+                <div className="p-5 bg-gradient-to-br from-[#74AA9C]/40 to-black/30 rounded-2xl border border-[#74AA9C]/50 shadow-lg min-w-[90px]">
+                  <div className="text-3xl font-bold text-[#74AA9C] mb-1 font-mono">{streak}</div>
                   <div className="text-[#74AA9C]/80 text-xs font-semibold">STREAK</div>
                 </div>
-                <div className="p-5 bg-gradient-to-br from-[#74AA9C]/20 to-black/30 rounded-2xl border border-[#74AA9C]/30 shadow-lg min-w-[90px]">
-                  <div className="text-3xl font-bold text-white mb-1 font-mono">{Math.floor(totalTime / 60)}<span className="text-lg font-normal"> mins today</span></div>
+                <div className="p-5 bg-gradient-to-br from-[#74AA9C]/40 to-black/30 rounded-2xl border border-[#74AA9C]/50 shadow-lg min-w-[90px]">
+                  <div className="text-3xl font-bold text-[#74AA9C] mb-1 font-mono">{Math.floor(totalTime / 60)}<span className="text-lg font-normal"> mins today</span></div>
                   <div className="text-[#74AA9C]/80 text-xs font-semibold">TODAY</div>
                 </div>
-                <div className="p-5 bg-gradient-to-br from-[#74AA9C]/20 to-black/30 rounded-2xl border border-[#74AA9C]/30 shadow-lg min-w-[90px]">
-                  <div className="text-3xl font-bold text-white mb-1 font-mono">{maxStreak}</div>
+                <div className="p-5 bg-gradient-to-br from-[#74AA9C]/40 to-black/30 rounded-2xl border border-[#74AA9C]/50 shadow-lg min-w-[90px]">
+                  <div className="text-3xl font-bold text-[#74AA9C] mb-1 font-mono">{maxStreak}</div>
                   <div className="text-[#74AA9C]/80 text-xs font-semibold">BEST</div>
                 </div>
               </div>
