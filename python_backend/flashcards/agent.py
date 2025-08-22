@@ -17,9 +17,9 @@ from .teachers import anil_prompt, kavita_prompt, raghav_prompt, mary_prompt
 from typing import TypedDict, List, Literal, Annotated, Optional, Dict, Any, AsyncGenerator
 from pdfminer.high_level import extract_text
 import os
-import asyncio
 import logging
-from datetime import datetime
+from pptx import Presentation
+from docx import Document
 
 # Load environment variables FIRST
 load_dotenv()
@@ -63,21 +63,6 @@ def create_google_llm():
         logger.error(f"Failed to initialize Google LLM: {e}")
         raise
 
-
-async def process_pdf(pdf_path: str) -> str:
-    """Process PDF and return text content"""
-    try:
-        # Run in thread pool to avoid blocking
-        def extract():
-            return extract_text(pdf_path)
-        
-        loop = asyncio.get_running_loop()
-        text = await loop.run_in_executor(None, extract)
-        return text
-    except Exception as e:
-        logger.error(f"Error extracting PDF text: {e}")
-        raise
-
 @tool
 def search(query: str) -> str:
     """Search for information on the internet."""
@@ -93,19 +78,47 @@ def search(query: str) -> str:
 tools = [search]
 tool_node = ToolNode(tools)
 
+def extract_pptx(pptx_path):
+    prs = Presentation(pptx_path)
+    text_runs = []
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            if hasattr(shape, "text") and shape.text:
+                text_runs.append(shape.text)
+    return "\n".join(text_runs)
+
+def extract_docx(docx_path):
+    doc = Document(docx_path)
+    full_text = []
+    for para in doc.paragraphs:
+        if para.text:
+            full_text.append(para.text)
+    return "\n".join(full_text)
+
+
 async def prepare_pdf_rag(pdf_path: str, user_id: str) -> Chroma:
     """Extract PDF text, split into chunks, create/retrieve vector DB, return relevant docs for last query."""
     try:
         print("started process...")
         # Extract entire text
-        text = await process_pdf(pdf_path)
+        content = ""
+        if pdf_path.endswith('.pdf'):
+            content = extract_text(pdf_path)
+        elif pdf_path.endswith('.txt'):
+            with open(pdf_path, 'r') as file:
+                content = file.read()
+        elif pdf_path.endswith('.pptx'):
+            content = extract_pptx(pdf_path)
+        elif pdf_path.endswith('.docx'):
+            content = extract_docx(pdf_path)
+
         print("text extracted")
         # Split into chunks
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200
         )
-        chunks = splitter.split_text(text)
+        chunks = splitter.split_text(content)
         print("text split")
         # Prepare vector DB directory path (unique per user for demo simplicity)
         vector_db_dir = f"./vector_db/{user_id}"
