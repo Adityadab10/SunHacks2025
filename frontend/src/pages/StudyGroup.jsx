@@ -30,7 +30,7 @@ const StudyGroup = () => {
       fetchUserGroups(userEmail);
     }
 
-    // Make socket globally available for chat component
+    // Make sockepublic and it t globally available for chat component
     window.socket = socket;
 
     // Socket event listeners
