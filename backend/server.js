@@ -55,7 +55,7 @@ app.use("/api/extension", extensionRoutes);
 app.get("/api/health", (req, res) => {
   res.json({
     success: true,
-    message: "StudyGenie API is running",
+    message: "PadhAI API is running",
     timestamp: new Date().toISOString(),
     services: {
       youtube: "active",

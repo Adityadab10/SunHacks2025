@@ -364,7 +364,7 @@ Generated on: ${new Date().toLocaleString()}
 
                           <div className="flex items-center justify-between text-sm text-gray-500">
                             <span>Generated on {new Date(activeSummary.generatedAt).toLocaleString()}</span>
-                            <span>Powered by StudyGenie AI</span>
+                            <span>Powered by PadhAI AI</span>
                           </div>
                         </>
                       );
@@ -649,7 +649,7 @@ Generated on: ${new Date().toLocaleString()}
 
                         <div className="flex items-center justify-between text-sm text-gray-500">
                           <span>Generated on {new Date(activeSummary.generatedAt).toLocaleString()}</span>
-                          <span>Powered by StudyGenie AI</span>
+                          <span>Powered by PadhAI AI</span>
                         </div>
                       </>
                     );

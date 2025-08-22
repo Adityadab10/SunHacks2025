@@ -52,7 +52,8 @@ const YTFollowUp = ({ preloadedData, videoData, isPreloaded = false }) => {
   useEffect(() => {
     if (preloadedData?.sessionData) {
       setCurrentSession(preloadedData.sessionData);
-      setMessages([]);
+      // Load chat history instead of clearing messages
+      loadChatHistory(preloadedData.sessionData.sessionId);
       loadUserSessions();
     }
   }, [preloadedData]);
@@ -136,17 +137,37 @@ const YTFollowUp = ({ preloadedData, videoData, isPreloaded = false }) => {
     await createChatSession(url);
   };
 
+  // Helper function to normalize messages from backend format to frontend format
+  const normalizeMessages = (msgs) => {
+    if (!Array.isArray(msgs)) return [];
+    return msgs.map((m) => ({
+      role: m.sender === "user" ? "user" : "assistant",
+      content: m.message || m.content,
+      timestamp: m.timestamp
+    }));
+  };
+
   const loadChatHistory = async (sessionId) => {
     try {
       setLoading(true);
+      console.log('Loading chat history for session:', sessionId);
       const response = await fetch(`http://localhost:5000/api/youtube/chat/session/${sessionId}`);
       const data = await response.json();
 
+      console.log('Chat history response:', data);
+
       if (data.success) {
-        setCurrentSession(data.data);
-        setMessages(data.data.messages || []);
+        setCurrentSession(data.data.session);
+        const messagesArray = data.data.messages || [];
+        console.log('Raw messages from backend:', messagesArray);
+        
+        const normalizedMessages = normalizeMessages(messagesArray);
+        console.log('Normalized messages for frontend:', normalizedMessages);
+        
+        setMessages(normalizedMessages);
         setError(null);
       } else {
+        console.error('Failed to load chat history:', data.error);
         toast.error('Failed to load chat history');
       }
     } catch (error) {
@@ -188,14 +209,16 @@ const YTFollowUp = ({ preloadedData, videoData, isPreloaded = false }) => {
       });
 
       const data = await response.json();
+      console.log('Send message response:', data);
 
       if (response.ok && data.success) {
-        // Add AI response to messages
+        // Add AI response to messages - handle both possible response formats
         const aiMessage = {
           role: 'assistant',
-          content: data.data.message,
-          timestamp: data.data.timestamp
+          content: data.data.aiResponse || data.data.message,
+          timestamp: data.data.timestamp || new Date().toISOString()
         };
+        console.log('Adding AI message:', aiMessage);
         setMessages(prev => [...prev, aiMessage]);
       } else {
         toast.error(data.error || 'Failed to send message');
