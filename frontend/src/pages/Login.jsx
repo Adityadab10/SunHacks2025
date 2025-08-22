@@ -44,7 +44,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center px-4 py-8">
+    <div className="h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center px-4">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-gradient-to-br from-[#74AA9C] to-transparent opacity-10 blur-3xl"></div>
@@ -53,20 +53,20 @@ const Login = () => {
 
       <div className="relative w-full max-w-md">
         {/* Main card */}
-        <div className="bg-black/60 backdrop-blur-xl border border-gray-800/50 rounded-2xl shadow-2xl p-8 space-y-8">
+        <div className="bg-black/60 backdrop-blur-xl border border-gray-800/50 rounded-2xl shadow-2xl p-6 space-y-4">
           {/* Header */}
-          <div className="text-center space-y-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#74AA9C] to-[#5a8a7e] rounded-2xl mb-4">
-              <Sparkles className="w-8 h-8 text-white" />
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-[#74AA9C] to-[#5a8a7e] rounded-xl mb-2">
+              <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Welcome back</h1>
-              <p className="text-gray-400">Sign in to continue your journey with PadhAI</p>
+              <h1 className="text-2xl font-bold text-white mb-1">Welcome back</h1>
+              <p className="text-sm text-gray-400">Sign in to continue your journey with PadhAI</p>
             </div>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleEmailLogin} className="space-y-6">
+          <form onSubmit={handleEmailLogin} className="space-y-4">
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-300">
                 Email Address
