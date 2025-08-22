@@ -3,6 +3,7 @@ import { useUser } from '../context/UserContext';
 import { auth } from '../../firebase.config';
 import MainSidebar from '../components/Sidebar';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   BrainCircuit, 
   Youtube, 
@@ -21,6 +22,7 @@ import {
 const Dashboard = () => {
   const { firebaseUid, mongoUid } = useUser();
   const currentUser = auth.currentUser;
+  const navigate = useNavigate();
   const [minutesSpent, setMinutesSpent] = useState(0);
   const [streak, setStreak] = useState(1);
   const [studyBoards, setStudyBoards] = useState([]);
@@ -81,10 +83,14 @@ const Dashboard = () => {
       if (mongoUid) {
         setLoadingStudyBoards(true);
         try {
+          console.log('Fetching study boards for mongoUid:', mongoUid);
           const response = await fetch(`http://localhost:5000/api/studyboard-yt/user/${mongoUid}`);
           const data = await response.json();
+          console.log('Study boards response:', data);
           if (data.success) {
             setStudyBoards(data.data.studyBoards.slice(0, 3)); // Show only recent 3
+          } else {
+            console.error('Failed to fetch study boards:', data.error);
           }
         } catch (error) {
           console.error('Error fetching study boards:', error);
@@ -269,7 +275,16 @@ const Dashboard = () => {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
                       className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50 hover:border-purple-500/30 hover:bg-gray-800/70 transition-all duration-200 cursor-pointer group"
-                      onClick={() => window.open(`/youtube`, '_self')}
+                      onClick={() => {
+                        console.log('Navigating to study board:', board);
+                        // Try different possible ID fields
+                        const boardId = board._id || board.id || board.studyBoardId;
+                        if (boardId) {
+                          navigate(`/studyboard/${boardId}`);
+                        } else {
+                          console.error('No valid ID found for board:', board);
+                        }
+                      }}
                     >
                       <div className="flex items-start space-x-3">
                         <div className="bg-purple-500/20 p-2 rounded-lg shrink-0">
@@ -346,7 +361,7 @@ const Dashboard = () => {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
                       className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50 hover:border-cyan-500/30 hover:bg-gray-800/70 transition-all duration-200 cursor-pointer group"
-                      onClick={() => window.open(`/youtube`, '_self')}
+                      onClick={() => navigate(`/chat/${session.sessionId}`)}
                     >
                       <div className="flex items-start space-x-3">
                         <div className="bg-cyan-500/20 p-2 rounded-lg shrink-0">

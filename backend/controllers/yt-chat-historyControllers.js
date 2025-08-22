@@ -96,13 +96,59 @@ export const createOrGetChatSession = async (req, res) => {
   }
 };
 
+// Get chat history for a session
+export const getChatHistory = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    const chatSession = await YTChatHistory.findById(sessionId);
+    if (!chatSession) {
+      return res.status(404).json({
+        success: false,
+        error: "Chat session not found"
+      });
+    }
+
+    // Transform messages to match frontend expectations
+    const transformedMessages = chatSession.messages.map(msg => ({
+      id: msg._id || Math.random().toString(36),
+      message: msg.content,
+      sender: msg.role === 'user' ? 'user' : 'ai',
+      timestamp: msg.timestamp
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        session: {
+          sessionId: chatSession._id,
+          videoId: chatSession.videoId,
+          videoTitle: chatSession.videoTitle,
+          videoChannel: chatSession.videoChannel,
+          videoUrl: chatSession.videoUrl
+        },
+        messages: transformedMessages
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching chat history:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch chat history'
+    });
+  }
+};
+
 // Send message and get AI response
 export const sendMessage = async (req, res) => {
   try {
     initializeAI();
     
     const { sessionId } = req.params;
-    const { message } = req.body;
+    const { message, userId } = req.body;
+
+    console.log('Received message request:', { sessionId, message, userId });
 
     if (!message || !message.trim()) {
       return res.status(400).json({
@@ -120,6 +166,8 @@ export const sendMessage = async (req, res) => {
       });
     }
 
+    console.log('Found chat session:', chatSession.videoTitle);
+
     // Get video transcript and summary
     let transcript = '';
     let summary = '';
@@ -133,10 +181,12 @@ export const sendMessage = async (req, res) => {
       
       if (existingVideo) {
         summary = existingVideo.briefSummary || '';
+        console.log('Found existing summary');
       }
       
       // Get fresh transcript
       transcript = await getVideoTranscript(chatSession.videoId);
+      console.log('Fetched transcript, length:', transcript.length);
     } catch (error) {
       console.warn('Could not fetch transcript or summary:', error.message);
     }
@@ -144,7 +194,8 @@ export const sendMessage = async (req, res) => {
     // Add user message to chat history
     chatSession.messages.push({
       role: 'user',
-      content: message.trim()
+      content: message.trim(),
+      timestamp: new Date()
     });
 
     // Prepare context for AI
@@ -164,6 +215,8 @@ User's current question: ${message}
 
 Please provide a helpful, informative response about the video content. If the user asks about specific topics, use the transcript and summary to provide accurate information. Be conversational and engaging.`;
 
+    console.log('Sending request to Gemini API...');
+
     // Get AI response
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.0-flash",
@@ -179,20 +232,25 @@ Please provide a helpful, informative response about the video content. If the u
     const aiResponse = await result.response;
     const responseText = aiResponse.text().trim();
 
+    console.log('Received AI response, length:', responseText.length);
+
     // Add AI response to chat history
     chatSession.messages.push({
       role: 'assistant',
-      content: responseText
+      content: responseText,
+      timestamp: new Date()
     });
 
     // Update last active time
     chatSession.lastActiveAt = new Date();
     await chatSession.save();
 
+    console.log('Chat session updated and saved');
+
     res.json({
       success: true,
       data: {
-        message: responseText,
+        aiResponse: responseText,
         timestamp: new Date().toISOString()
       }
     });
@@ -202,42 +260,6 @@ Please provide a helpful, informative response about the video content. If the u
     res.status(500).json({
       success: false,
       error: 'Failed to process message'
-    });
-  }
-};
-
-// Get chat history for a session
-export const getChatHistory = async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-
-    const chatSession = await YTChatHistory.findById(sessionId);
-    if (!chatSession) {
-      return res.status(404).json({
-        success: false,
-        error: "Chat session not found"
-      });
-    }
-
-    res.json({
-      success: true,
-      data: {
-        sessionId: chatSession._id,
-        videoId: chatSession.videoId,
-        videoTitle: chatSession.videoTitle,
-        videoChannel: chatSession.videoChannel,
-        sessionName: chatSession.sessionName,
-        messages: chatSession.messages,
-        lastActiveAt: chatSession.lastActiveAt,
-        createdAt: chatSession.createdAt
-      }
-    });
-
-  } catch (error) {
-    console.error('Error fetching chat history:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch chat history'
     });
   }
 };

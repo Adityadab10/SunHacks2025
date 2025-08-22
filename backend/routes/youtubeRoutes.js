@@ -13,6 +13,7 @@ import {
   getUserChatSessions,
   deleteChatSession
 } from "../controllers/yt-chat-historyControllers.js";
+import ytChatRoutes from './yt-chat-historyRoutes.js';
 
 const router = express.Router();
 
@@ -36,27 +37,6 @@ router.get("/user/:userId/history", getUserYoutubeHistory);
 // Get specific YouTube video summary by ID
 router.get("/summary/:id", getYoutubeSummary);
 
-// Chat-related routes
-// POST /api/youtube/chat/session
-// Create or get existing chat session for a video
-router.post("/chat/session", createOrGetChatSession);
-
-// POST /api/youtube/chat/session/:sessionId/message
-// Send message and get AI response
-router.post("/chat/session/:sessionId/message", sendMessage);
-
-// GET /api/youtube/chat/session/:sessionId
-// Get chat history for a specific session
-router.get("/chat/session/:sessionId", getChatHistory);
-
-// GET /api/youtube/chat/user/:userId/sessions
-// Get all chat sessions for a user
-router.get("/chat/user/:userId/sessions", getUserChatSessions);
-
-// DELETE /api/youtube/chat/session/:sessionId
-// Delete a chat session
-router.delete("/chat/session/:sessionId", deleteChatSession);
-
 // GET /api/youtube/health
 // Health check endpoint
 router.get("/health", (req, res) => {
@@ -67,4 +47,13 @@ router.get("/health", (req, res) => {
   });
 });
 
+// Mount chat routes under /chat
+router.use('/chat', ytChatRoutes);
+
+// Add a test route to verify chat routes are working
+router.get('/chat/test', (req, res) => {
+  res.json({ success: true, message: 'Chat routes are connected' });
+});
+
 export default router;
+
