@@ -1,6 +1,7 @@
 import express from "express";
 import UserStats from "../models/UserStats.js";
-import { searchUserByEmail } from '../controllers/userSearchController.js';
+import { searchUserByEmail, searchUsersByQuery } from '../controllers/userSearchController.js';
+import { getAllUsers, searchUsers, getUserById, updateUserProfile } from '../controllers/userController.js';
 
 const router = express.Router();
 
@@ -80,5 +81,20 @@ router.get("/user/:uid/session", async (req, res) => {
 
 // Search user by email
 router.get('/search-user', searchUserByEmail);
+
+// Search users by query (name or email)
+router.get('/search-users', searchUsersByQuery);
+
+// Get all users
+router.get('/users/all', getAllUsers);
+
+// Search users (alternative endpoint)
+router.get('/users/search', searchUsers);
+
+// Get user by ID
+router.get('/users/:userId', getUserById);
+
+// Update user profile
+router.put('/users/:userId', updateUserProfile);
 
 export default router;

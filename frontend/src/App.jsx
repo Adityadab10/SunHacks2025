@@ -2,6 +2,7 @@ import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { UserProvider, useUser } from './context/UserContext';
+import { SocketProvider } from './context/SocketContext';
 import Navbar from './components/Navbar';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -13,6 +14,9 @@ import UploadAndChat from './pages/MainkTrial';
 import YouTubePage from './pages/Youtube';
 import FlashCards from './pages/FlashCards';
 import StudyGroup from './pages/StudyGroup';
+import { io } from 'socket.io-client';
+
+window.socket = io('http://localhost:5000');
 
 const AppContent = () => {
   const { firebaseUid, loading } = useUser();
@@ -70,9 +74,11 @@ const AppContent = () => {
 const App = () => {
   return (
     <UserProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <SocketProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </SocketProvider>
     </UserProvider>
   );
 };
