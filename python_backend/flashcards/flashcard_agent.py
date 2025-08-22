@@ -1,15 +1,8 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph, END, START
 from langgraph.graph.message import add_messages
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.prebuilt import ToolNode, tools_condition
-from langchain_community.utilities import SerpAPIWrapper
-from langchain_community.vectorstores import Chroma
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.tools import tool
-from langchain_core.messages import HumanMessage, AIMessage
 from dotenv import load_dotenv
 from typing import TypedDict, List, Literal, Annotated, Optional, Dict, Any, AsyncGenerator
 from pdfminer.high_level import extract_text
@@ -138,19 +131,15 @@ async def chat(state: State):
     except Exception as e:
         raise Exception(f"Error in chat aggregation: {str(e)}")
 
-
-# Create a streaming version of the graph
 graph_builder = StateGraph(State)
 graph_builder.add_node("quiz", generate_quiz)
 graph_builder.add_node("flashcards", generate_flashcards)
-graph_builder.set_entry_point("start")
 graph_builder.add_node("chat", chat)
-graph_builder.add_edge("start", "quiz")
-graph_builder.add_edge("start", "flashcards")
+graph_builder.add_edge(START, "quiz")
+graph_builder.add_edge(START, "flashcards")
 graph_builder.add_edge("quiz", "chat")
 graph_builder.add_edge("flashcards", "chat")
 graph_builder.set_finish_point("chat")
 graph = graph_builder.compile()
 
-# Add this after your existing graph print
 print(graph.get_graph().draw_mermaid())
