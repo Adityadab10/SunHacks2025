@@ -3,14 +3,19 @@ import { motion } from 'framer-motion';
 import MainSidebar from '../components/Sidebar';
 import YTTranscribe from '../components/YTTranscribe';
 import YTStudyBoard from '../components/YTStudyBoard';
+import YTFollowUp from '../components/YTFollowUp';
 import { useUser } from '../context/UserContext';
 import {
-  Loader2, AlertCircle, BrainCircuit, FileText
+  Loader2, AlertCircle, BrainCircuit, FileText, MessageCircle, Youtube
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const YouTubePage = () => {
   const { mongoUid, firebaseUid, loading: userLoading } = useUser();
   const [activeComponent, setActiveComponent] = useState('transcribe');
+  const [unifiedUrl, setUnifiedUrl] = useState('');
+  const [unifiedVideoData, setUnifiedVideoData] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const components = [
     {
@@ -26,8 +31,72 @@ const YouTubePage = () => {
       icon: BrainCircuit,
       description: 'Create comprehensive study materials',
       component: YTStudyBoard
+    },
+    {
+      id: 'followup',
+      label: 'Follow-up Chat',
+      icon: MessageCircle,
+      description: 'Ask questions about the video content',
+      component: YTFollowUp
     }
   ];
+
+  const validateYouTubeUrl = (url) => {
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    return regex.test(url);
+  };
+
+  const processUnifiedVideo = async () => {
+    if (!unifiedUrl.trim()) {
+      toast.error('Please enter a YouTube URL');
+      return;
+    }
+
+    if (!validateYouTubeUrl(unifiedUrl)) {
+      toast.error('Please enter a valid YouTube URL');
+      return;
+    }
+
+    if (!firebaseUid || !mongoUid) {
+      toast.error('Please log in to use this feature');
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    try {
+      // First, get the summary data
+      const summaryResponse = await fetch('http://localhost:5000/api/youtube/summarize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          youtubeUrl: unifiedUrl.trim(),
+          userId: mongoUid
+        }),
+      });
+
+      const summaryData = await summaryResponse.json();
+
+      if (summaryResponse.ok && summaryData.success) {
+        setUnifiedVideoData(summaryData.data);
+        toast.success('Video processed successfully! All tools are now ready to use.');
+      } else {
+        throw new Error(summaryData.error || 'Failed to process video');
+      }
+    } catch (err) {
+      console.error('Error processing video:', err);
+      toast.error(err.message || 'Failed to process video');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleUrlSubmit = (e) => {
+    e.preventDefault();
+    processUnifiedVideo();
+  };
 
   // Show loading spinner while user data is being fetched
   if (userLoading) {
@@ -91,6 +160,79 @@ const YouTubePage = () => {
               Transform YouTube videos into powerful learning materials with our AI-powered tools.
             </p>
 
+            {/* Unified URL Input */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-gray-900 rounded-2xl p-6 border border-gray-800 mb-8 max-w-4xl mx-auto"
+            >
+              <div className="flex items-center justify-center mb-4">
+                <div className="bg-gradient-to-r from-red-500 to-purple-500 p-3 rounded-xl">
+                  <Youtube className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-xl font-bold ml-3">Universal YouTube Processor</h3>
+              </div>
+              <p className="text-gray-400 mb-6 text-sm">
+                Paste any YouTube URL below to unlock all three AI tools simultaneously
+              </p>
+              
+              <form onSubmit={handleUrlSubmit} className="space-y-4">
+                <div className="relative">
+                  <Youtube className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="url"
+                    value={unifiedUrl}
+                    onChange={(e) => setUnifiedUrl(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    className="w-full pl-12 pr-4 py-4 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200"
+                    disabled={isProcessing}
+                  />
+                </div>
+                
+                <motion.button
+                  type="submit"
+                  disabled={isProcessing || !unifiedUrl.trim()}
+                  whileHover={{ scale: isProcessing ? 1 : 1.02 }}
+                  whileTap={{ scale: isProcessing ? 1 : 0.98 }}
+                  className="w-full bg-gradient-to-r from-red-500 to-purple-500 hover:from-red-600 hover:to-purple-600 disabled:from-gray-600 disabled:to-gray-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                      <span>Processing Video...</span>
+                    </>
+                  ) : (
+                    <>
+                      <BrainCircuit className="w-6 h-6" />
+                      <span>Process Video for All Tools</span>
+                    </>
+                  )}
+                </motion.button>
+              </form>
+
+              {unifiedVideoData && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6 p-4 bg-green-900/20 border border-green-500/30 rounded-lg"
+                >
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="bg-green-500 p-1 rounded-full">
+                      <Youtube className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-green-400 font-medium">Video Processed Successfully!</span>
+                  </div>
+                  <p className="text-sm text-gray-300">
+                    <strong>{unifiedVideoData.video.title}</strong> by {unifiedVideoData.video.channel}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    All tools now have access to this video's content. Switch between tabs to explore different features.
+                  </p>
+                </motion.div>
+              )}
+            </motion.div>
+
             {/* Component Selector */}
             <div className="flex justify-center space-x-4 mb-8">
               {components.map((comp) => {
@@ -149,7 +291,10 @@ const YouTubePage = () => {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <ActiveComponent />
+            <ActiveComponent 
+              videoData={unifiedVideoData} 
+              onVideoDataUpdate={setUnifiedVideoData}
+            />
           </motion.div>
         </div>
       </div>
