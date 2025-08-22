@@ -41,12 +41,14 @@ app.get("/", (req, res) => {
   res.send("PadhAI API is running...");
 });
 
+import translateRoutes from "./routes/translateRoutes.js";
 app.use("/api/auth", authRoutes);
 app.use("/api/youtube", youtubeRoutes);
 app.use("/api/studyboard-yt", studyBoardYTRoutes);
 app.use("/api/video", videoRoutes);
 app.use("/api", userRoutes);
 app.use("/api/group", groupRoutes);
+app.use("/api/translate", translateRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

@@ -10,7 +10,7 @@ const cn = (...classes) => {
   return classes.filter(Boolean).join(" ");
 };
 
-const Navbar = () => {
+const Navbar = ({ isDarkMode = true }) => {
   const ref = useRef(null);
   const { scrollY } = useScroll({
     target: ref,
@@ -58,6 +58,35 @@ const Navbar = () => {
     setMobileMenuOpen(false);
   };
 
+  // Theme-aware styling - OPPOSITE to landing page for contrast
+  const navTheme = {
+    // When landing is dark, navbar should be light
+    // When landing is light, navbar should be dark
+    bg: isDarkMode 
+      ? "rgba(255, 255, 255, 0.95)" // Light navbar for dark background
+      : "rgba(0, 0, 0, 0.9)", // Dark navbar for light background
+    bgVisible: isDarkMode 
+      ? "rgba(255, 255, 255, 0.98)"
+      : "rgba(0, 0, 0, 0.95)",
+    text: isDarkMode ? "text-gray-900" : "text-white",
+    textSecondary: isDarkMode ? "text-gray-600" : "text-gray-300",
+    border: isDarkMode 
+      ? "border-gray-200" 
+      : "border-gray-700",
+    borderVisible: isDarkMode 
+      ? "border-gray-300"
+      : "border-gray-600",
+    hoverBg: isDarkMode 
+      ? "bg-gray-100 hover:bg-gray-200"
+      : "bg-gray-800 hover:bg-gray-700",
+    buttonPrimary: isDarkMode
+      ? "bg-gray-900 text-white hover:bg-gray-800"
+      : "bg-white text-gray-900 hover:bg-gray-100",
+    buttonSecondary: isDarkMode
+      ? "text-gray-700 hover:text-gray-900"
+      : "text-gray-300 hover:text-white"
+  };
+
   return (
     <motion.div
       ref={ref}
@@ -66,13 +95,10 @@ const Navbar = () => {
       {/* Desktop Navbar */}
       <motion.div
         animate={{
-          backdropFilter: visible ? "blur(16px)" : "none",
-          border: visible ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
+          backdropFilter: visible ? "blur(16px)" : "blur(8px)",
           width: visible ? "65%" : "80%",
           y: visible ? 16 : 0,
-          backgroundColor: visible
-            ? "rgba(0, 0, 0, 0.8)"
-            : "transparent",
+          backgroundColor: visible ? navTheme.bgVisible : navTheme.bg,
         }}
         transition={{
           type: "spring",
@@ -83,7 +109,11 @@ const Navbar = () => {
         style={{
           minWidth: visible ? "700px" : "600px",
         }}
-        className="relative z-[60] mx-auto hidden w-full max-w-6xl flex-row items-center justify-between rounded-full px-8 py-3 md:flex"
+        className={cn(
+          "relative z-[60] mx-auto hidden w-full max-w-6xl flex-row items-center justify-between rounded-full px-8 py-3 md:flex border",
+          visible ? navTheme.borderVisible : navTheme.border,
+          "shadow-lg"
+        )}
       >
         <div className="flex w-full items-center justify-between">
           <motion.h1
@@ -95,10 +125,10 @@ const Navbar = () => {
               stiffness: 400,
               damping: 30,
             }}
-            className="text-lg font-bold text-white tracking-wider"
+            className={cn("text-lg font-bold tracking-wider", navTheme.text)}
           >
             <Link to={firebaseUid ? "/dashboard" : "/"}>
-              {visible ? "PadhAI" : "PadhAI"}
+              {visible ? "StudyGenie" : "StudyGenie"}
             </Link>
           </motion.h1>
 
@@ -115,7 +145,13 @@ const Navbar = () => {
             className="absolute left-1/2 flex -translate-x-1/2 items-center space-x-1"
           >
             {navItems.map((item, idx) => (
-              <NavItem key={idx} item={item} onNavigate={scrollToSection} />
+              <NavItem 
+                key={idx} 
+                item={item} 
+                onNavigate={scrollToSection}
+                textColor={navTheme.text}
+                isDarkMode={isDarkMode}
+              />
             ))}
           </motion.nav>
 
@@ -134,14 +170,14 @@ const Navbar = () => {
                     className="w-8 h-8 rounded-full"
                   />
                 ) : (
-                  <User className="w-6 h-6 text-white" />
+                  <User className={cn("w-6 h-6", navTheme.text)} />
                 )}
-                <span className="text-white text-sm">
+                <span className={cn("text-sm", navTheme.text)}>
                   {currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User'}
                 </span>
                 <button
                   onClick={logout}
-                  className="text-red-400 hover:text-red-300 transition-colors"
+                  className="text-red-500 hover:text-red-600 transition-colors"
                 >
                   <LogOut className="w-5 h-5" />
                 </button>
@@ -159,7 +195,10 @@ const Navbar = () => {
                 >
                   <Link 
                     to="/login" 
-                    className="px-4 py-2 text-white hover:text-gray-300 transition-colors text-sm font-medium"
+                    className={cn(
+                      "px-4 py-2 transition-colors text-sm font-medium",
+                      navTheme.buttonSecondary
+                    )}
                   >
                     Login
                   </Link>
@@ -175,7 +214,10 @@ const Navbar = () => {
                 >
                   <Link 
                     to="/register" 
-                    className="px-4 py-2 rounded-full bg-white text-black text-sm font-medium inline-block tracking-wide hover:bg-gray-200 transition-colors"
+                    className={cn(
+                      "px-4 py-2 rounded-full text-sm font-medium inline-block tracking-wide transition-colors",
+                      navTheme.buttonPrimary
+                    )}
                   >
                     Register
                   </Link>
@@ -189,19 +231,19 @@ const Navbar = () => {
       {/* Mobile navbar */}
       <motion.div
         animate={{
-          backdropFilter: visible ? "blur(16px)" : "none",
-          border: visible ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
+          backdropFilter: visible ? "blur(16px)" : "blur(8px)",
           y: visible ? 16 : 0,
-          backgroundColor: visible
-            ? "rgba(0, 0, 0, 0.8)"
-            : "transparent",
+          backgroundColor: visible ? navTheme.bgVisible : navTheme.bg,
         }}
         transition={{
           type: "spring",
           stiffness: 400,
           damping: 40,
         }}
-        className="md:hidden flex items-center justify-between px-6 py-3 mx-6 rounded-full"
+        className={cn(
+          "md:hidden flex items-center justify-between px-6 py-3 mx-6 rounded-full border shadow-lg",
+          visible ? navTheme.borderVisible : navTheme.border
+        )}
       >
         <motion.h1
           animate={{
@@ -212,16 +254,16 @@ const Navbar = () => {
             stiffness: 400,
             damping: 30,
           }}
-          className="text-lg font-bold text-white tracking-wider"
+          className={cn("text-lg font-bold tracking-wider", navTheme.text)}
         >
           <Link to={firebaseUid ? "/dashboard" : "/"}>
-            PadhAI
+            StudyGenie
           </Link>
         </motion.h1>
 
         <motion.button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="text-white text-xl p-1"
+          className={cn("text-xl p-1", navTheme.text)}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           transition={{
@@ -256,13 +298,23 @@ const Navbar = () => {
             }}
             className="md:hidden absolute top-full left-0 right-0 mt-2 mx-6"
           >
-            <div className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 space-y-2 shadow-2xl">
+            <div 
+              className="backdrop-blur-xl border rounded-2xl p-4 space-y-2 shadow-2xl"
+              style={{ 
+                backgroundColor: navTheme.bgVisible,
+                borderColor: isDarkMode ? 'rgba(229, 231, 235, 0.2)' : 'rgba(75, 85, 99, 0.2)'
+              }}
+            >
               {navItems.map((item, idx) => (
                 <motion.a
                   key={idx}
                   href={item.link}
                   onClick={() => scrollToSection(item.link)}
-                  className="block w-full text-left text-white py-2 px-3 rounded-xl hover:bg-white/10 transition-colors tracking-wide"
+                  className={cn(
+                    "block w-full text-left py-2 px-3 rounded-xl transition-colors tracking-wide",
+                    navTheme.text,
+                    isDarkMode ? "hover:bg-gray-100" : "hover:bg-gray-800"
+                  )}
                   whileTap={{ scale: 0.95 }}
                   whileHover={{ x: 4 }}
                   transition={{
@@ -276,7 +328,10 @@ const Navbar = () => {
               ))}
 
               {firebaseUid ? (
-                <motion.div className="flex items-center justify-between p-3 mt-3 bg-white/5 rounded-xl">
+                <motion.div 
+                  className="flex items-center justify-between p-3 mt-3 rounded-xl"
+                  style={{ backgroundColor: isDarkMode ? 'rgba(243, 244, 246, 0.5)' : 'rgba(31, 41, 55, 0.5)' }}
+                >
                   <div className="flex items-center space-x-3">
                     {currentUser?.photoURL ? (
                       <img 
@@ -285,9 +340,9 @@ const Navbar = () => {
                         className="w-8 h-8 rounded-full"
                       />
                     ) : (
-                      <User className="w-6 h-6 text-white" />
+                      <User className={cn("w-6 h-6", navTheme.text)} />
                     )}
-                    <span className="text-white text-sm">
+                    <span className={cn("text-sm", navTheme.text)}>
                       {currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User'}
                     </span>
                   </div>
@@ -296,7 +351,7 @@ const Navbar = () => {
                       logout();
                       setMobileMenuOpen(false);
                     }}
-                    className="text-red-400 hover:text-red-300 transition-colors"
+                    className="text-red-500 hover:text-red-600 transition-colors"
                   >
                     <LogOut className="w-5 h-5" />
                   </button>
@@ -311,7 +366,11 @@ const Navbar = () => {
                     <Link
                       to="/login"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block w-full px-4 py-2 rounded-xl text-center text-white border border-white/20 font-medium tracking-wide hover:bg-white/10 transition-colors"
+                      className={cn(
+                        "block w-full px-4 py-2 rounded-xl text-center font-medium tracking-wide transition-colors border",
+                        navTheme.text,
+                        isDarkMode ? "border-gray-300 hover:bg-gray-100" : "border-gray-600 hover:bg-gray-800"
+                      )}
                     >
                       Login
                     </Link>
@@ -324,7 +383,10 @@ const Navbar = () => {
                     <Link
                       to="/register"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block w-full px-4 py-2 rounded-xl text-center text-black bg-white font-medium tracking-wide hover:bg-gray-200 transition-colors"
+                      className={cn(
+                        "block w-full px-4 py-2 rounded-xl text-center font-medium tracking-wide transition-colors",
+                        navTheme.buttonPrimary
+                      )}
                     >
                       Register
                     </Link>
@@ -340,7 +402,7 @@ const Navbar = () => {
 };
 
 // Navigation Item with hover effect
-const NavItem = ({ item, onNavigate }) => {
+const NavItem = ({ item, onNavigate, textColor, isDarkMode }) => {
   return (
     <motion.a
       href={item.link}
@@ -353,7 +415,7 @@ const NavItem = ({ item, onNavigate }) => {
           onNavigate(item.link);
         }
       }}
-      className="relative px-3 py-2 text-sm font-medium text-white tracking-wide"
+      className={cn("relative px-3 py-2 text-sm font-medium tracking-wide", textColor)}
       whileHover="hover"
       initial="initial"
       whileTap={{ scale: 0.95 }}
@@ -365,7 +427,10 @@ const NavItem = ({ item, onNavigate }) => {
     >
       <span className="relative z-10">{item.name}</span>
       <motion.span 
-        className="absolute inset-0 rounded-full bg-white/20"
+        className={cn(
+          "absolute inset-0 rounded-full",
+          isDarkMode ? "bg-gray-200" : "bg-gray-700"
+        )}
         initial={{ scale: 0.8, opacity: 0 }}
         variants={{
           initial: { scale: 0.8, opacity: 0 },

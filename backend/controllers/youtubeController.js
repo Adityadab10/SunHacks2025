@@ -276,6 +276,7 @@ ${transcript}`
         channel: metadata.channel,
         duration: metadata.duration,
         url: videoUrl,
+        transcript: transcript, // Add transcript to saved data
         briefSummary: briefSummary.text().trim(),
         detailedSummary: detailedSummary.text().trim(),
         bulletPointsSummary: bulletPointsSummary.text().trim()
@@ -295,6 +296,7 @@ ${transcript}`
             duration: metadata.duration,
             url: videoUrl,
           },
+          transcript: transcript, // Include transcript in response
           summaries: {
             brief: {
               type: "brief",

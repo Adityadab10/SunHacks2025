@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Youtube, Loader2, CheckCircle, AlertCircle, 
@@ -7,11 +7,11 @@ import {
 import toast from 'react-hot-toast';
 import { useUser } from '../context/UserContext';
 
-const YTStudyBoard = () => {
+const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
   const { mongoUid, firebaseUid } = useUser();
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(preloadedData || null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('summary');
   const [isNameModalOpen, setIsNameModalOpen] = useState(false);
@@ -224,6 +224,236 @@ const YTStudyBoard = () => {
     );
   };
 
+  // Update result when preloadedData changes
+  useEffect(() => {
+    if (preloadedData) {
+      setResult(preloadedData);
+      setActiveTab('summary');
+      setSaved(true); // Mark as saved since it was auto-generated
+    }
+  }, [preloadedData]);
+
+  // Don't show the input form if data is preloaded
+  if (isPreloaded && result) {
+    return (
+      <div className="space-y-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h2 className="text-3xl font-bold mb-4">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">
+              Study Board
+            </span>
+          </h2>
+          <p className="text-gray-400">Comprehensive study materials with flashcards and quizzes</p>
+        </motion.div>
+
+        {/* Results Display - same as existing */}
+        <AnimatePresence>
+          {result && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-gray-900 rounded-2xl p-8 border border-gray-800"
+            >
+              {/* Study Board Header - modified to show as ready */}
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-gradient-to-r from-purple-500 to-indigo-500 p-2 rounded-lg">
+                    <BrainCircuit className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Study Board Ready</h3>
+                    <p className="text-gray-400 text-sm">{result.studyBoardName}</p>
+                  </div>
+                </div>
+                
+                <div className="text-green-400 flex items-center gap-2 bg-green-900/20 px-4 py-2 rounded-lg border border-green-500/30">
+                  <CheckCircle className="w-5 h-5" />
+                  Auto-Generated & Saved
+                </div>
+              </div>
+
+              {/* Video Info */}
+              {result.videoTitle && (
+                <div className="grid md:grid-cols-3 gap-6 mb-6 p-4 bg-gray-800 rounded-lg">
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Play className="w-4 h-4 text-purple-400" />
+                      <span className="text-gray-400 text-sm">Title</span>
+                    </div>
+                    <p className="text-white font-medium">{result.videoTitle}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <User className="w-4 h-4 text-purple-400" />
+                      <span className="text-gray-400 text-sm">Channel</span>
+                    </div>
+                    <p className="text-white font-medium">{result.videoChannel || 'Unknown'}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Clock className="w-4 h-4 text-purple-400" />
+                      <span className="text-gray-400 text-sm">Duration</span>
+                    </div>
+                    <p className="text-white font-medium">{result.videoDuration || 'Unknown'}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Tabs */}
+              <div className="flex gap-2 mb-6 overflow-x-auto">
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-4 py-2 rounded-lg transition-colors whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? "bg-purple-600 text-white"
+                        : "text-gray-400 hover:text-white hover:bg-gray-800"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Content */}
+              <div className="prose prose-invert max-w-none">
+                {activeTab === "summary" && result.content.summary?.length > 0 && (
+                  <ul className="list-disc pl-4 space-y-2">
+                    {result.content.summary.map((point, idx) => (
+                      <li key={idx} className="text-gray-200">
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {activeTab === "tldr" && result.content.tldr && (
+                  <p className="text-lg text-gray-200">{result.content.tldr}</p>
+                )}
+
+                {activeTab === "detailed" && result.content.detailedSummary && (
+                  <div className="text-gray-200 whitespace-pre-wrap">
+                    {result.content.detailedSummary}
+                  </div>
+                )}
+
+                {activeTab === "flashcards" && result.content.flashcards?.length > 0 && (
+                  <div className="space-y-6">
+                    {result.content.flashcards.map((card, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => toggleCard(idx)}
+                        className={`bg-gray-800 backdrop-blur-sm rounded-xl border border-gray-700 p-6 transition-all hover:bg-gray-750 cursor-pointer relative min-h-[150px] ${
+                          flippedCards[idx] ? "shadow-lg" : ""
+                        }`}
+                      >
+                        <div
+                          className={`transition-all duration-300 ${
+                            flippedCards[idx] ? "opacity-0" : "opacity-100"
+                          }`}
+                        >
+                          <h3 className="text-xl font-semibold mb-3 text-white">Question:</h3>
+                          <p className="text-gray-200">{card.question}</p>
+                        </div>
+
+                        <div
+                          className={`absolute inset-0 p-6 transition-all duration-300 rounded-xl ${
+                            flippedCards[idx]
+                              ? "opacity-100 transform translate-y-0 bg-gray-800 backdrop-blur-sm border border-gray-700"
+                              : "opacity-0 transform translate-y-4"
+                          }`}
+                        >
+                          <h3 className="text-xl font-semibold mb-3 text-purple-400">
+                            Answer:
+                          </h3>
+                          <p className="text-gray-200">{card.answer}</p>
+                        </div>
+
+                        <div className="absolute bottom-4 right-4">
+                          <span className="text-sm text-gray-500">
+                            {flippedCards[idx]
+                              ? "Click to hide answer"
+                              : "Click to reveal answer"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {activeTab === "quiz" && result.content.quiz?.length > 0 && (
+                  <div className="space-y-8">
+                    {result.content.quiz.map((question, qIndex) => (
+                      <div
+                        key={qIndex}
+                        className="border border-gray-700 rounded-lg p-6"
+                      >
+                        <h3 className="text-xl font-semibold text-white mb-4">
+                          {qIndex + 1}. {question.question}
+                        </h3>
+                        <div className="space-y-3">
+                          {question.options.map((option, oIndex) => (
+                            <button
+                              key={oIndex}
+                              onClick={() => handleAnswerSelect(qIndex, oIndex)}
+                              disabled={showExplanations[qIndex]}
+                              className={`w-full text-left p-3 rounded-lg text-white transition-colors ${
+                                selectedAnswers[qIndex] === oIndex
+                                  ? option.isCorrect
+                                    ? "bg-green-500/20 border-green-500/50"
+                                    : "bg-red-500/20 border-red-500/50"
+                                  : showExplanations[qIndex] && option.isCorrect
+                                  ? "bg-green-500/20 border-green-500/50"
+                                  : "bg-gray-800 hover:bg-gray-700"
+                              } border border-gray-600`}
+                            >
+                              <span className="font-semibold mr-2">
+                                {option.label}.
+                              </span>
+                              {option.text}
+                              {showExplanations[qIndex] && option.isCorrect && (
+                                <span className="ml-2 text-green-400">✓</span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+
+                        {showExplanations[qIndex] && (
+                          <div
+                            className={`mt-4 p-4 rounded-lg ${
+                              question.options[selectedAnswers[qIndex]]?.isCorrect
+                                ? "bg-green-500/10 border-green-500/30"
+                                : "bg-red-500/10 border-red-500/30"
+                            } border`}
+                          >
+                            <p className="text-sm font-semibold mb-2 text-white">
+                              Correct Answer: {question.correctAnswer}
+                            </p>
+                            <p className="text-sm text-gray-300">
+                              {question.explanation}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // Return existing component code for non-preloaded use
   return (
     <div className="space-y-8">
       {/* Header */}

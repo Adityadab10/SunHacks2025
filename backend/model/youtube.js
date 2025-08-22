@@ -4,11 +4,13 @@ const youtubeSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true
   },
   videoId: {
     type: String,
-    required: true
+    required: true,
+    index: true
   },
   title: {
     type: String,
@@ -16,15 +18,19 @@ const youtubeSchema = new mongoose.Schema({
   },
   channel: {
     type: String,
-    required: true
+    default: 'Unknown Channel'
   },
   duration: {
     type: String,
-    required: true
+    default: 'Unknown'
   },
   url: {
     type: String,
     required: true
+  },
+  transcript: {
+    type: String,
+    default: ''
   },
   briefSummary: {
     type: String,
@@ -32,11 +38,11 @@ const youtubeSchema = new mongoose.Schema({
   },
   detailedSummary: {
     type: String,
-    required: false
+    default: ''
   },
   bulletPointsSummary: {
     type: String,
-    required: false
+    default: ''
   }
 }, {
   timestamps: true
