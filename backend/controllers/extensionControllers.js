@@ -143,7 +143,7 @@ export const summarizeVideoExtension = async (req, res) => {
 
     // Generate simple summary with Gemini
     console.log("Generating simple summary with Gemini for extension...");
-    const model = genAI.getGenerativeModel({ 
+    const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
       generationConfig: {
         temperature: 0.7,
@@ -157,7 +157,7 @@ Video Title: ${metadata.title}
 Channel: ${metadata.channel}
 
 Transcript:
-${transcript.slice(0, 8000)} ${transcript.length > 8000 ? '...(truncated)' : ''}
+${transcript.slice(0, 8000)} ${transcript.length > 8000 ? "...(truncated)" : ""}
 
 Summary:`;
 
@@ -173,21 +173,21 @@ Summary:`;
       success: true,
       summary: summary.trim(),
       title: metadata.title,
-      videoId: videoId
+      videoId: videoId,
     });
-
   } catch (error) {
     console.error("Error summarizing video for extension:", error);
-    
+
     let errorMessage = "Failed to summarize video";
     if (error.message.includes("transcript")) {
-      errorMessage = "Could not fetch video transcript. The video might not have captions available or may be private.";
+      errorMessage =
+        "Could not fetch video transcript. The video might not have captions available or may be private.";
     } else if (error.message.includes("GEMINI_API_KEY")) {
       errorMessage = "AI service configuration error. Please check API key.";
     } else if (error.message.includes("Invalid YouTube URL")) {
       errorMessage = "Invalid YouTube URL provided.";
     }
-    
+
     res.status(500).json({
       success: false,
       error: errorMessage,
@@ -232,7 +232,7 @@ export const getTranscriptExtension = async (req, res) => {
           url: videoUrl,
         },
         transcript: transcript,
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
       },
     });
   } catch (error) {
@@ -243,4 +243,4 @@ export const getTranscriptExtension = async (req, res) => {
     });
   }
 };
-// 
+//

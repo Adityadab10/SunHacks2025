@@ -1,103 +1,111 @@
-import React, { useState, useEffect } from 'react';
-import { Play, Save, Loader2, AlertCircle } from './Icons';
-import { ApiClient, isYouTubeUrl, getYouTubeVideoId } from '../utils/api';
-import { StorageManager } from '../utils/storage';
-import { generateExtensionUserId } from '../utils/user';
-import type { Summary } from '../types';
+import React, { useEffect, useState } from "react"
+
+import type { Summary } from "../types"
+import { ApiClient, getYouTubeVideoId, isYouTubeUrl } from "../utils/api"
+import { StorageManager } from "../utils/storage"
+import { generateExtensionUserId } from "../utils/user"
+import { AlertCircle, Loader2, Play, Save } from "./Icons"
 
 interface YouTubeSummaryProps {
-  onSaveNote: (note: Summary) => void;
+  onSaveNote: (note: Summary) => void
 }
 
-export const YouTubeSummary: React.FC<YouTubeSummaryProps> = ({ onSaveNote }) => {
-  const [currentUrl, setCurrentUrl] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [summary, setSummary] = useState<string>('');
-  const [error, setError] = useState<string>('');
-  const [videoTitle, setVideoTitle] = useState<string>('');
-  const [isYouTubePage, setIsYouTubePage] = useState(false);
+export const YouTubeSummary: React.FC<YouTubeSummaryProps> = ({
+  onSaveNote
+}) => {
+  const [currentUrl, setCurrentUrl] = useState<string>("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [summary, setSummary] = useState<string>("")
+  const [error, setError] = useState<string>("")
+  const [videoTitle, setVideoTitle] = useState<string>("")
+  const [isYouTubePage, setIsYouTubePage] = useState(false)
 
   useEffect(() => {
     // Get current tab URL
     const getCurrentTab = async () => {
       try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const [tab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true
+        })
         if (tab.url) {
-          setCurrentUrl(tab.url);
-          setIsYouTubePage(isYouTubeUrl(tab.url));
+          setCurrentUrl(tab.url)
+          setIsYouTubePage(isYouTubeUrl(tab.url))
         }
       } catch (error) {
-        console.error('Failed to get current tab:', error);
+        console.error("Failed to get current tab:", error)
       }
-    };
+    }
 
-    getCurrentTab();
-  }, []);
+    getCurrentTab()
+  }, [])
 
   const handleSummarize = async () => {
     if (!isYouTubePage) {
-      setError('Please navigate to a YouTube video page');
-      return;
+      setError("Please navigate to a YouTube video page")
+      return
     }
 
-    setIsLoading(true);
-    setError('');
-    setSummary('');
+    setIsLoading(true)
+    setError("")
+    setSummary("")
 
     try {
       // Get or generate a userId for this extension user
-      const userId = await generateExtensionUserId();
-      
-      const response = await ApiClient.summarizeYoutube({ 
+      const userId = await generateExtensionUserId()
+
+      const response = await ApiClient.summarizeYoutube({
         youtubeUrl: currentUrl,
         userId: userId
-      });
-      
+      })
+
       if (response.success && response.data) {
-        setSummary(response.data.summary);
-        setVideoTitle(response.data.title);
+        setSummary(response.data.summary)
+        setVideoTitle(response.data.title)
       } else {
-        setError(response.error || 'Failed to summarize video');
+        setError(response.error || "Failed to summarize video")
       }
     } catch (error) {
-      setError('Network error occurred. Please check your connection.');
+      setError("Network error occurred. Please check your connection.")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleSaveToNotes = async () => {
-    if (!summary) return;
+    if (!summary) return
 
     try {
-      const videoId = getYouTubeVideoId(currentUrl);
+      const videoId = getYouTubeVideoId(currentUrl)
       const note: Summary = {
         id: `youtube_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        title: videoTitle || `YouTube Video ${videoId || 'Summary'}`,
+        title: videoTitle || `YouTube Video ${videoId || "Summary"}`,
         content: summary,
-        type: 'youtube',
+        type: "youtube",
         timestamp: Date.now(),
-        source: currentUrl,
-      };
+        source: currentUrl
+      }
 
-      await StorageManager.saveNote(note);
-      onSaveNote(note);
-      
+      await StorageManager.saveNote(note)
+      onSaveNote(note)
+
       // Show success feedback
-      const originalText = 'Save to Notes';
-      const button = document.querySelector('[data-save-button]') as HTMLButtonElement;
+      const originalText = "Save to Notes"
+      const button = document.querySelector(
+        "[data-save-button]"
+      ) as HTMLButtonElement
       if (button) {
-        button.textContent = 'Saved!';
-        button.disabled = true;
+        button.textContent = "Saved!"
+        button.disabled = true
         setTimeout(() => {
-          button.textContent = originalText;
-          button.disabled = false;
-        }, 2000);
+          button.textContent = originalText
+          button.disabled = false
+        }, 2000)
       }
     } catch (error) {
-      setError('Failed to save note');
+      setError("Failed to save note")
     }
-  };
+  }
 
   return (
     <div className="space-y-4">
@@ -106,10 +114,10 @@ export const YouTubeSummary: React.FC<YouTubeSummaryProps> = ({ onSaveNote }) =>
           <Play className="w-5 h-5 text-red-500" />
           <h3 className="text-lg font-semibold">YouTube Summary</h3>
         </div>
-        
+
         {currentUrl && (
           <div className="text-xs text-gray-500 mb-3 break-all">
-            {isYouTubePage ? '✅ ' : '❌ '}
+            {isYouTubePage ? "✅ " : "❌ "}
             {currentUrl.slice(0, 60)}...
           </div>
         )}
@@ -129,8 +137,7 @@ export const YouTubeSummary: React.FC<YouTubeSummaryProps> = ({ onSaveNote }) =>
       <button
         onClick={handleSummarize}
         disabled={!isYouTubePage || isLoading}
-        className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
-      >
+        className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2">
         {isLoading ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -161,17 +168,16 @@ export const YouTubeSummary: React.FC<YouTubeSummaryProps> = ({ onSaveNote }) =>
               {summary}
             </div>
           </div>
-          
+
           <button
             onClick={handleSaveToNotes}
             data-save-button
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
-          >
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2">
             <Save className="w-4 h-4" />
             <span>Save to Notes</span>
           </button>
         </div>
       )}
     </div>
-  );
-};
+  )
+}

@@ -1,74 +1,86 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, Download, Trash2, Calendar, ExternalLink, AlertCircle } from './Icons';
-import { StorageManager } from '../utils/storage';
-import type { Summary } from '../types';
+import React, { useEffect, useState } from "react"
+
+import type { Summary } from "../types"
+import { StorageManager } from "../utils/storage"
+import {
+  AlertCircle,
+  BookOpen,
+  Calendar,
+  Download,
+  ExternalLink,
+  Trash2
+} from "./Icons"
 
 interface NotesWorkspaceProps {
-  refreshTrigger: number;
+  refreshTrigger: number
 }
 
-export const NotesWorkspace: React.FC<NotesWorkspaceProps> = ({ refreshTrigger }) => {
-  const [notes, setNotes] = useState<Summary[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+export const NotesWorkspace: React.FC<NotesWorkspaceProps> = ({
+  refreshTrigger
+}) => {
+  const [notes, setNotes] = useState<Summary[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string>("")
 
   const loadNotes = async () => {
     try {
-      setIsLoading(true);
-      const savedNotes = await StorageManager.getNotes();
-      setNotes(savedNotes.sort((a, b) => b.timestamp - a.timestamp));
+      setIsLoading(true)
+      const savedNotes = await StorageManager.getNotes()
+      setNotes(savedNotes.sort((a, b) => b.timestamp - a.timestamp))
     } catch (error) {
-      setError('Failed to load notes');
-      console.error('Failed to load notes:', error);
+      setError("Failed to load notes")
+      console.error("Failed to load notes:", error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    loadNotes();
-  }, [refreshTrigger]);
+    loadNotes()
+  }, [refreshTrigger])
 
   const handleDeleteNote = async (noteId: string) => {
     try {
-      await StorageManager.deleteNote(noteId);
-      setNotes(prev => prev.filter(note => note.id !== noteId));
+      await StorageManager.deleteNote(noteId)
+      setNotes((prev) => prev.filter((note) => note.id !== noteId))
     } catch (error) {
-      setError('Failed to delete note');
+      setError("Failed to delete note")
     }
-  };
+  }
 
   const handleExportNotes = () => {
     if (notes.length === 0) {
-      setError('No notes to export');
-      return;
+      setError("No notes to export")
+      return
     }
 
-    const exportText = StorageManager.exportNotesAsText(notes);
-    const filename = `study-notes-${new Date().toISOString().split('T')[0]}.txt`;
-    StorageManager.downloadTextFile(exportText, filename);
-  };
+    const exportText = StorageManager.exportNotesAsText(notes)
+    const filename = `study-notes-${new Date().toISOString().split("T")[0]}.txt`
+    StorageManager.downloadTextFile(exportText, filename)
+  }
 
   const handleOpenSource = (source: string) => {
-    if (source.startsWith('http')) {
-      chrome.tabs.create({ url: source });
+    if (source.startsWith("http")) {
+      chrome.tabs.create({ url: source })
     }
-  };
+  }
 
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleString();
-  };
+    return new Date(timestamp).toLocaleString()
+  }
 
   const truncateContent = (content: string, maxLength: number = 150) => {
-    return content.length > maxLength ? content.slice(0, maxLength) + '...' : content;
-  };
+    return content.length > maxLength
+      ? content.slice(0, maxLength) + "..."
+      : content
+  }
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
-    );
+    )
   }
 
   return (
@@ -93,8 +105,7 @@ export const NotesWorkspace: React.FC<NotesWorkspaceProps> = ({ refreshTrigger }
       {notes.length > 0 && (
         <button
           onClick={handleExportNotes}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
-        >
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2">
           <Download className="w-4 h-4" />
           <span>Export All Notes</span>
         </button>
@@ -113,18 +124,20 @@ export const NotesWorkspace: React.FC<NotesWorkspaceProps> = ({ refreshTrigger }
           {notes.map((note) => (
             <div
               key={note.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
-            >
+              className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-gray-900 truncate">{note.title}</h4>
+                  <h4 className="font-medium text-gray-900 truncate">
+                    {note.title}
+                  </h4>
                   <div className="flex items-center space-x-2 mt-1">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      note.type === 'youtube' 
-                        ? 'bg-red-100 text-red-800' 
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {note.type === 'youtube' ? 'YouTube' : 'PDF'}
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        note.type === "youtube"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-blue-100 text-blue-800"
+                      }`}>
+                      {note.type === "youtube" ? "YouTube" : "PDF"}
                     </span>
                     <div className="flex items-center text-xs text-gray-500">
                       <Calendar className="w-3 h-3 mr-1" />
@@ -133,30 +146,28 @@ export const NotesWorkspace: React.FC<NotesWorkspaceProps> = ({ refreshTrigger }
                   </div>
                 </div>
                 <div className="flex items-center space-x-1 ml-2">
-                  {note.source && note.source.startsWith('http') && (
+                  {note.source && note.source.startsWith("http") && (
                     <button
                       onClick={() => handleOpenSource(note.source!)}
                       className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                      title="Open source"
-                    >
+                      title="Open source">
                       <ExternalLink className="w-4 h-4" />
                     </button>
                   )}
                   <button
                     onClick={() => handleDeleteNote(note.id)}
                     className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                    title="Delete note"
-                  >
+                    title="Delete note">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-              
+
               <p className="text-sm text-gray-700 whitespace-pre-wrap">
                 {truncateContent(note.content)}
               </p>
 
-              {note.source && !note.source.startsWith('http') && (
+              {note.source && !note.source.startsWith("http") && (
                 <p className="text-xs text-gray-500 mt-2 truncate">
                   Source: {note.source}
                 </p>
@@ -166,5 +177,5 @@ export const NotesWorkspace: React.FC<NotesWorkspaceProps> = ({ refreshTrigger }
         </div>
       )}
     </div>
-  );
-};
+  )
+}
