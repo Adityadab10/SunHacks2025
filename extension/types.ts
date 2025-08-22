@@ -30,7 +30,13 @@ export interface PdfSummaryResponse {
 }
 
 export interface TabData {
-  id: "youtube" | "pdf" | "notes"
+  id: "youtube" | "pdf" | "notes" | "focus"
   label: string
-  icon: React.ComponentType
+  icon: React.ComponentType<{ className?: string }>
+}
+
+export interface FocusSession {
+  duration: number // in minutes
+  startTime: number // timestamp
+  isActive: boolean
 }

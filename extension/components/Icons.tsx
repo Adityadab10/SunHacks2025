@@ -178,3 +178,37 @@ export const ExternalLink: React.FC<IconProps> = ({
     />
   </svg>
 )
+
+export const Focus: React.FC<IconProps> = ({ className = "w-4 h-4" }) => (
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" />
+  </svg>
+)
+
+export const Timer: React.FC<IconProps> = ({ className = "w-4 h-4" }) => (
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24">
+    <circle cx="12" cy="13" r="8" />
+    <path d="M12 9v4l2 2" />
+    <path d="M5 3L19 3" />
+  </svg>
+)
+
+export const Close: React.FC<IconProps> = ({ className = "w-4 h-4" }) => (
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+)
