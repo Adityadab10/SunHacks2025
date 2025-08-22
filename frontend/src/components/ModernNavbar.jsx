@@ -31,7 +31,7 @@ const ModernNavbar = ({ isDarkMode, toggleTheme }) => {
               whileHover={{ scale: 1.05 }}
               className="text-2xl font-bold bg-gradient-to-r from-white to-[#74AA9C] bg-clip-text text-transparent"
             >
-              StudyGenie
+              {t('PadhAI')}
             </motion.div>
           </Link>
 

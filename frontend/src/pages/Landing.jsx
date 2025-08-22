@@ -3,12 +3,21 @@ import { Upload, Target, MessageCircle, Play, UserPlus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { LampContainer } from "../components/ui/lamp"
 import { Link } from "react-router-dom"
+import { useState } from "react"
+import ModernNavbar from "../components/ModernNavbar"
 
 export default function Landing() {
   const { t } = useTranslation()
+  const [isDarkMode, setIsDarkMode] = useState(true)
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode)
+  }
 
   return (
-    <div className="min-h-screen bg-black pt-20 text-white">
+    <div className="min-h-screen pt-16 bg-black text-white">
+      <ModernNavbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+
       {/* Hero Section with Lamp Effect */}
       <LampContainer>
         <motion.div
