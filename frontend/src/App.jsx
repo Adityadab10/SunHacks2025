@@ -9,7 +9,9 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import Profile from './pages/Profile';
+import UploadAndChat from './pages/MainkTrial';
 import YouTubePage from './pages/Youtube';
+import FlashCards from './pages/FlashCards';
 
 const AppContent = () => {
   const { firebaseUid, loading } = useUser();
@@ -44,6 +46,9 @@ const AppContent = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path='/mainktrial' element={<UploadAndChat />} />
+            <Route path='/mainktrial2' element={<FlashCards />} />
+            
           </>
         )}
       </Routes>

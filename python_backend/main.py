@@ -1,5 +1,5 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
@@ -10,32 +10,24 @@ import os
 import uuid
 import logging
 from datetime import datetime
+from flashcards.flashcard_agent import graph
+from flashcards.agent import agent
+from langchain_core.messages import HumanMessage
 
-# Import your existing modules
-from flashcards.agent import (
-    chat_with_teacher, 
-    get_conversation_history, 
-    cleanup_conversation,
-    create_user_input,
-    stream_graph_updates
-)
 
 app = FastAPI(title="Teacher Agent API", version="1.0.0")
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=["*"],  # Configure for production as needed
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Pydantic models
 class ChatRequest(BaseModel):
     message: str
     teacher: str = "Anil Deshmukh"
@@ -55,294 +47,216 @@ class HistoryResponse(BaseModel):
     thread_id: str
     messages: List[dict]
 
-# In-memory storage for uploaded files (use proper storage in production)
 uploaded_files = {}
-
-@app.get("/")
-async def root():
-    """Root endpoint"""
-    return {
-        "message": "Teacher Agent API",
-        "version": "1.0.0",
-        "endpoints": {
-            "chat": "/chat",
-            "upload_and_chat": "/upload-and-chat",
-            "stream_chat": "/stream/chat",
-            "stream_upload_chat": "/stream/upload-and-chat",
-            "history": "/history/{thread_id}",
-            "cleanup": "/cleanup/{thread_id}"
-        }
-    }
 
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
-    """Simple chat endpoint without streaming"""
+    """Simple chat endpoint"""
     try:
-        responses = []
-        async for response in chat_with_teacher(
-            message=request.message,
-            teacher=request.teacher,
-            thread_id=request.thread_id
-        ):
-            if response.get("content"):
-                responses.append(response)
-        
-        return {
-            "thread_id": request.thread_id,
-            "responses": responses,
-            "status": "success"
+        # Build state for chat
+        state = {
+            "messages": [HumanMessage(content=request.message)],
+            "teacher": request.teacher,
+            "pdf_path": None
         }
-    
+
+        # Execute graph directly
+        result = await agent.ainvoke(state)
+        
+        # Extract response from result
+        if isinstance(result, dict) and 'messages' in result:
+            response = result['messages'][-1].content
+            return JSONResponse({
+                "status": "success",
+                "thread_id": request.thread_id,
+                "response": response
+            })
+        else:
+            raise ValueError("Invalid response format from graph")
+
     except Exception as e:
         logger.error(f"Error in chat endpoint: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return JSONResponse(
+            {"status": "error", "detail": str(e)},
+            status_code=500
+        )
 
 @app.post("/upload-and-chat")
 async def upload_and_chat_endpoint(
     file: UploadFile = File(...),
     message: str = "What is this document about?",
     teacher: str = "Anil Deshmukh",
-    thread_id: Optional[str] = None
+    user_id: Optional[str] = None
 ):
-    """Upload PDF and chat endpoint without streaming"""
-    if thread_id is None:
-        thread_id = str(uuid.uuid4())
-    
+    """Upload PDF and chat endpoint"""
+    if user_id is None:
+        user_id = str(uuid.uuid4())
+
+    temp_file_path = None
     try:
-        # Validate file type
+        # Validate PDF
         if not file.filename.lower().endswith('.pdf'):
-            raise HTTPException(status_code=400, detail="Only PDF files are supported")
-        
-        # Save uploaded file temporarily
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+            return JSONResponse(
+                {"status": "error", "detail": "Only PDF files supported"},
+                status_code=400
+            )
+
+        # Save uploaded file
         content = await file.read()
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
         temp_file.write(content)
         temp_file.close()
-        
-        # Store file info
-        uploaded_files[thread_id] = temp_file.name
-        
-        responses = []
-        async for response in chat_with_teacher(
-            message=message,
-            teacher=teacher,
-            pdf_path=temp_file.name,
-            thread_id=thread_id
-        ):
-            if response.get("content"):
-                responses.append(response)
-        
-        return {
-            "thread_id": thread_id,
-            "filename": file.filename,
-            "responses": responses,
-            "status": "success"
+        temp_file_path = temp_file.name
+
+        uploaded_files[user_id] = temp_file_path
+
+        # Build state for chat with PDF
+        state = {
+            "messages": [HumanMessage(content=message)],
+            "teacher": teacher,
+            "pdf_path": temp_file_path
         }
-    
+
+        # Execute graph directly
+        result = await agent.ainvoke(state)
+        
+        # Extract response from result
+        if isinstance(result, dict) and 'messages' in result:
+            response = result['messages'][-1].content
+            return JSONResponse({
+                "status": "success",
+                "thread_id": user_id,
+                "filename": file.filename,
+                "response": response
+            })
+        else:
+            raise ValueError("Invalid response format from graph")
+
     except Exception as e:
         logger.error(f"Error in upload and chat endpoint: {e}")
-        # Clean up temp file on error
-        if thread_id in uploaded_files:
+        return JSONResponse(
+            {"status": "error", "detail": str(e)},
+            status_code=500
+        )
+    finally:
+        if temp_file_path and os.path.exists(temp_file_path):
             try:
-                os.unlink(uploaded_files[thread_id])
-                del uploaded_files[thread_id]
-            except:
-                pass
-        raise HTTPException(status_code=500, detail=str(e))
+                os.unlink(temp_file_path)
+                uploaded_files.pop(user_id, None)
+            except Exception as e:
+                logger.error(f"Error cleaning up temp file: {e}")
 
-@app.post("/stream/chat")
-async def stream_chat_endpoint(request: ChatRequest):
-    """Streaming chat endpoint"""
-    
-    async def generate_stream():
-        try:
-            async for response in chat_with_teacher(
-                message=request.message,
-                teacher=request.teacher,
-                thread_id=request.thread_id
-            ):
-                # Format for Server-Sent Events
-                yield f"data: {json.dumps(response)}\n\n"
-                
-                # Add a small delay to prevent overwhelming the client
-                await asyncio.sleep(0.1)
-                
-        except Exception as e:
-            error_response = {
-                "type": "error",
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
-            yield f"data: {json.dumps(error_response)}\n\n"
-        
-        # Send completion signal
-        yield f"data: {json.dumps({'type': 'complete', 'timestamp': datetime.now().isoformat()})}\n\n"
-    
-    return StreamingResponse(
-        generate_stream(),
-        media_type="text/plain",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "Content-Type": "text/event-stream"
-        }
-    )
-
-@app.post("/stream/upload-and-chat")
-async def stream_upload_and_chat_endpoint(
-    file: UploadFile = File(...),
-    message: str = "What is this document about?",
+@app.post("/flashcards")
+async def flashcard_generation(
+    file: Optional[UploadFile] = None,
+    message: str = "Generate flashcards from the following content",
     teacher: str = "Anil Deshmukh",
     thread_id: Optional[str] = None
 ):
-    """Streaming upload and chat endpoint"""
+    """Direct flashcard generation endpoint"""
     if thread_id is None:
         thread_id = str(uuid.uuid4())
-    
-    async def generate_stream():
-        temp_file_path = None
-        try:
-            # Validate file type
-            if not file.filename.lower().endswith('.pdf'):
-                error_response = {
-                    "type": "error",
-                    "error": "Only PDF files are supported",
-                    "timestamp": datetime.now().isoformat()
-                }
-                yield f"data: {json.dumps(error_response)}\n\n"
-                return
-            
-            # Save uploaded file temporarily
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-            content = await file.read()
-            temp_file.write(content)
-            temp_file.close()
-            temp_file_path = temp_file.name
-            
-            # Store file info
-            uploaded_files[thread_id] = temp_file_path
-            
-            # Send upload confirmation
-            upload_response = {
-                "type": "upload_complete",
-                "filename": file.filename,
-                "thread_id": thread_id,
-                "timestamp": datetime.now().isoformat()
-            }
-            yield f"data: {json.dumps(upload_response)}\n\n"
-            
-            # Start chat with PDF
-            async for response in chat_with_teacher(
-                message=message,
-                teacher=teacher,
-                pdf_path=temp_file_path,
-                thread_id=thread_id
-            ):
-                yield f"data: {json.dumps(response)}\n\n"
-                await asyncio.sleep(0.1)
-                
-        except Exception as e:
-            error_response = {
-                "type": "error",
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
-            yield f"data: {json.dumps(error_response)}\n\n"
-            
-            # Clean up on error
-            if temp_file_path and os.path.exists(temp_file_path):
-                try:
-                    os.unlink(temp_file_path)
-                    if thread_id in uploaded_files:
-                        del uploaded_files[thread_id]
-                except:
-                    pass
-        
-        # Send completion signal
-        yield f"data: {json.dumps({'type': 'complete', 'timestamp': datetime.now().isoformat()})}\n\n"
-    
-    return StreamingResponse(
-        generate_stream(),
-        media_type="text/plain",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "Content-Type": "text/event-stream"
+
+    temp_dir = None
+    temp_file_path = None
+
+    try:
+        # Handle PDF file if provided
+        if file:
+            if not file.filename.lower().endswith(".pdf"):
+                return JSONResponse(
+                    {"status": "error", "detail": "Only PDF files supported"},
+                    status_code=400,
+                )
+
+            temp_dir = tempfile.mkdtemp()
+            temp_file_path = os.path.join(temp_dir, f"{thread_id}.pdf")
+
+            file_content = await file.read()
+            with open(temp_file_path, "wb") as f:
+                f.write(file_content)
+
+            await file.close()
+
+        # Build state for flashcard generation
+        state = {
+            "messages": [HumanMessage(content=message)],
+            "teacher": teacher,
+            "pdf_path": temp_file_path,
         }
-    )
 
-@app.get("/history/{thread_id}")
-async def get_history_endpoint(thread_id: str):
-    """Get conversation history for a thread"""
-    try:
-        messages = get_conversation_history(thread_id)
-        return HistoryResponse(thread_id=thread_id, messages=messages)
-    
+        # Generate flashcards
+        try:
+            result = await graph.ainvoke(state)
+            print()
+
+            result = result['result']
+        
+            flashcards = []
+            for i in range(1, 11):
+                question_key = f"question_{i}"
+                answer_key = f"answer_{i}"
+                
+                if result[question_key] and result[answer_key]:
+                    flashcards.append({
+                        "question": result[question_key],
+                        "answer": result[answer_key]
+                    })
+
+            if not flashcards:
+                return JSONResponse(
+                    {"status": "error", "detail": "No flashcards were generated"},
+                    status_code=500
+                )
+
+            return JSONResponse({
+                "status": "success",
+                "flashcards": flashcards
+            })
+
+        except Exception as e:
+            logger.error(f"Error in graph invocation: {e}")
+            return JSONResponse(
+                {"status": "error", "detail": str(e)},
+                status_code=500
+            )
+
     except Exception as e:
-        logger.error(f"Error getting history for {thread_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/cleanup/{thread_id}")
-async def cleanup_endpoint(thread_id: str, background_tasks: BackgroundTasks):
-    """Clean up conversation and resources"""
-    try:
-        # Clean up uploaded file
-        if thread_id in uploaded_files:
-            file_path = uploaded_files[thread_id]
-            background_tasks.add_task(cleanup_file, file_path)
-            del uploaded_files[thread_id]
-        
-        # Clean up conversation
-        cleanup_conversation(thread_id)
-        
-        return ThreadResponse(
-            thread_id=thread_id,
-            status="success",
-            message="Conversation and resources cleaned up"
+        logger.error(f"Error in flashcard generation: {e}")
+        return JSONResponse(
+            {"status": "error", "detail": str(e)},
+            status_code=500
         )
-    
-    except Exception as e:
-        logger.error(f"Error cleaning up {thread_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/teachers")
-async def get_teachers():
-    """Get available teachers"""
-    return {
-        "teachers": [
-            "Anil Deshmukh",
-            "Kavita Iyer", 
-            "Raghav Sharma",
-            "Mary Fernandes"
-        ]
-    }
+    finally:
+        # Cleanup temp files
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+            except Exception as e:
+                logger.error(f"Error removing temp file: {e}")
 
+        if temp_dir and os.path.exists(temp_dir):
+            try:
+                os.rmdir(temp_dir)
+            except Exception as e:
+                logger.error(f"Error removing temp directory: {e}")
+                
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
-def cleanup_file(file_path: str):
-    """Background task to clean up uploaded files"""
-    try:
-        if os.path.exists(file_path):
-            os.unlink(file_path)
-            logger.info(f"Cleaned up file: {file_path}")
-    except Exception as e:
-        logger.error(f"Error cleaning up file {file_path}: {e}")
 
-# Startup event
 @app.on_event("startup")
 async def startup_event():
     logger.info("Teacher Agent API starting up...")
 
-# Shutdown event
+
 @app.on_event("shutdown")
 async def shutdown_event():
     logger.info("Teacher Agent API shutting down...")
-    # Clean up all uploaded files
-    for thread_id, file_path in uploaded_files.items():
-        cleanup_file(file_path)
+
 
 if __name__ == "__main__":
     import uvicorn
