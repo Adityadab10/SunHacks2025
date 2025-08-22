@@ -35,7 +35,7 @@ const AppContent = () => {
   return (
     <div className="min-h-screen">
       {/* Only show Navbar for non-dashboard routes */}
-      {!firebaseUid && <Navbar />}
+      {!firebaseUid }
       <Routes>
         {firebaseUid ? (
           // User is logged in - show all authenticated pages
