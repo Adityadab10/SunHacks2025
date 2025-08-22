@@ -113,6 +113,13 @@ io.on('connection', (socket) => {
 
   socket.on('joinGroup', (groupId) => {
     socket.join(groupId);
+    // Notify others that user is online
+    socket.to(groupId).emit('userOnlineStatus', {
+      groupId,
+      userId: socket.userId,
+      userName: socket.userName,
+      isOnline: true
+    });
   });
 
   socket.on('sendMessage', async ({ groupId, senderId, content }) => {
@@ -122,13 +129,41 @@ io.on('connection', (socket) => {
     // Convert senderId (firebaseUid) to MongoDB ObjectId
     const senderUser = await User.findOne({ firebaseUid: senderId });
     if (!senderUser) return;
-    const message = { sender: senderUser._id, content, timestamp: new Date() };
+    
+    socket.userId = senderUser._id;
+    socket.userName = senderUser.displayName;
+    
+    const message = { 
+      sender: senderUser._id, 
+      content, 
+      timestamp: new Date() 
+    };
+    
     await Group.findByIdAndUpdate(groupId, { $push: { messages: message } });
     io.to(groupId).emit('receiveMessage', { groupId, message });
   });
 
+  // Handle typing indicators
+  socket.on('typing', ({ groupId, userId, userName, isTyping }) => {
+    socket.to(groupId).emit('userTyping', {
+      groupId,
+      userId,
+      userName,
+      isTyping
+    });
+  });
+
   socket.on('disconnect', () => {
     console.log('Socket disconnected:', socket.id);
+    // Notify others that user is offline
+    if (socket.groupId && socket.userId) {
+      socket.to(socket.groupId).emit('userOnlineStatus', {
+        groupId: socket.groupId,
+        userId: socket.userId,
+        userName: socket.userName,
+        isOnline: false
+      });
+    }
   });
 });
 

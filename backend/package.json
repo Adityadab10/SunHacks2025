@@ -21,6 +21,7 @@
     "node-fetch": "^3.3.2",
     "pdf-poppler": "^0.2.1",
     "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "tesseract.js": "^6.0.1",
     "youtube-transcript": "^1.2.1",
     "ytdl-core": "^4.11.5"
