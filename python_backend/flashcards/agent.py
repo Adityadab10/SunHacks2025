@@ -43,6 +43,7 @@ class State(TypedDict):
     teacher: Literal['Anil Deshmukh', 'Kavita Iyer', 'Raghav Sharma', 'Mary Fernandes']
     chain: Any
     pdf_path: Optional[str]
+    user_id: str
 
 def create_google_llm():
     """Create Google LLM with proper error handling"""
@@ -52,7 +53,7 @@ def create_google_llm():
             raise ValueError("GOOGLE_API_KEY environment variable is not set")
         
         llm = ChatGoogleGenerativeAI(
-            model='gemini-2.0-flash-exp',
+            model='gemini-2.0-flash',
             google_api_key=api_key,
             temperature=0.7
         )
@@ -95,16 +96,17 @@ tool_node = ToolNode(tools)
 async def prepare_pdf_rag(pdf_path: str, user_id: str) -> Chroma:
     """Extract PDF text, split into chunks, create/retrieve vector DB, return relevant docs for last query."""
     try:
+        print("started process...")
         # Extract entire text
         text = await process_pdf(pdf_path)
-
+        print("text extracted")
         # Split into chunks
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200
         )
         chunks = splitter.split_text(text)
-
+        print("text split")
         # Prepare vector DB directory path (unique per user for demo simplicity)
         vector_db_dir = f"./vector_db/{user_id}"
         os.makedirs(vector_db_dir, exist_ok=True)
@@ -158,27 +160,27 @@ def initialise_teacher(state: State):
         logger.error(f"Error initializing teacher: {e}")
         raise
 
-async def chat(state: State, user_id: str = "default"):
+async def chat(state: State):
     """Modified chat handler with RAG support"""
     try:
         chain = state['chain']
         
         # Get the last message
         last_message = state['messages'][-1].content if state['messages'] else ""
-        
+        print(last_message)
         if not last_message:
             return {"messages": [AIMessage(content="I didn't receive any message. Please try again.")]}
 
         # If PDF provided, use retriever to get relevant chunks
         if state.get('pdf_path'):
-            vector_db = await prepare_pdf_rag(state['pdf_path'], user_id)
+            vector_db = await prepare_pdf_rag(state['pdf_path'], state['user_id'])
             relevant_docs = vector_db.similarity_search(last_message, k=3)
+
             context = "\n\n".join([doc.page_content for doc in relevant_docs])
             
             # Format input with context
             input_text = f"Context from PDF:\n{context}\n\nQuestion: {last_message}"
         else:
-            # No PDF, use message directly
             input_text = last_message
 
         # Invoke chain with simplified input

@@ -17,13 +17,7 @@ from pydantic import BaseModel
 
 load_dotenv()
 
-class State(TypedDict):
-    messages: Annotated[List, add_messages]
-    teacher: Literal['Anil Deshmukh', 'Kavita Iyer', 'Raghav Sharma', 'Mary Fernandes']
-    pdf_path: Optional[str]
-    result: Dict[str, str]
-
-class FlashCard(BaseModel):
+class Questions(BaseModel):
     question_1: str
     answer_1: str
     question_2: str
@@ -44,10 +38,58 @@ class FlashCard(BaseModel):
     answer_9: str
     question_10: str
     answer_10: str
+class State(TypedDict):
+    messages: Annotated[List, add_messages]
+    teacher: Literal['Anil Deshmukh', 'Kavita Iyer', 'Raghav Sharma', 'Mary Fernandes']
+    pdf_path: Optional[str]
+    flashcards: Questions
+    quiz: Questions
+    
 
 def extract_pdf(pdf_path: str):
     text = extract_text(pdf_path)
     return text
+
+
+async def generate_quiz(state: State):
+    """
+    Generate a quiz from the provided state.
+    """
+    try: 
+        llm = ChatGoogleGenerativeAI(
+            model='gemini-2.0-flash-exp',
+            temperature=0.7
+        ).with_structured_output(Questions)
+        
+        # Get content from PDF or message
+        content = ""
+        if state['pdf_path']:
+            content = extract_pdf(state['pdf_path'])
+        else:
+            content = state['messages'][-1]
+    
+        print(content)
+        # Create a fixed prompt without template variables
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", """
+                You are an expert educator. The user will provide a topic, and you must generate questions on that topic using Bloom’s Taxonomy. 
+                Create questions at different cognitive levels: Remember, Understand, Apply, Analyze, Evaluate, and Create. 
+                Label each question with its Bloom’s level. Provide 2–3 questions per level. 
+                Ensure progression from simple factual recall to higher-order critical thinking and creativity.
+            """),
+            ("human", "{content}")
+        ])
+        
+        # Execute the chain
+        chain = prompt | llm
+        result = await chain.ainvoke({"content": content})
+        # Return the FlashCard object directly
+        flashcard_dict = result.model_dump()
+        print(flashcard_dict)
+        return {"result": flashcard_dict}
+
+    except Exception as e:
+        raise Exception(f"Error generating flashcards: {str(e)}")
 
 async def generate_flashcards(state: State) -> Dict:
     """Direct flashcard generation without streaming"""
@@ -55,7 +97,7 @@ async def generate_flashcards(state: State) -> Dict:
         llm = ChatGoogleGenerativeAI(
             model='gemini-2.0-flash-exp',
             temperature=0.7
-        ).with_structured_output(FlashCard)
+        ).with_structured_output(Questions)
         
         # Get content from PDF or message
         content = ""
@@ -82,13 +124,33 @@ async def generate_flashcards(state: State) -> Dict:
     except Exception as e:
         raise Exception(f"Error generating flashcards: {str(e)}")
 
+async def chat(state: State):
+    """
+    Aggregates quiz and flashcards results after both are generated.
+    """
+    try:
+        return {
+            "result": {
+                "flashcards": state.get("flashcards"),
+                "quiz": state.get("quiz"),
+            }
+        }
+    except Exception as e:
+        raise Exception(f"Error in chat aggregation: {str(e)}")
+
 
 # Create a streaming version of the graph
-graph_builder_stream = StateGraph(State)
-graph_builder_stream.add_node("chat", generate_flashcards)
-graph_builder_stream.set_entry_point("chat")
-graph_builder_stream.set_finish_point("chat")
-graph = graph_builder_stream.compile()
+graph_builder = StateGraph(State)
+graph_builder.add_node("quiz", generate_quiz)
+graph_builder.add_node("flashcards", generate_flashcards)
+graph_builder.set_entry_point("start")
+graph_builder.add_node("chat", chat)
+graph_builder.add_edge("start", "quiz")
+graph_builder.add_edge("start", "flashcards")
+graph_builder.add_edge("quiz", "chat")
+graph_builder.add_edge("flashcards", "chat")
+graph_builder.set_finish_point("chat")
+graph = graph_builder.compile()
 
 # Add this after your existing graph print
 print(graph.get_graph().draw_mermaid())
