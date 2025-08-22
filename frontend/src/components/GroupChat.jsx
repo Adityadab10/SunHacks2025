@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, MessageCircle, User, Circle } from 'lucide-react';
+import { useSocket } from '../context/SocketContext';
 
 const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = [] }) => {
   const [chatInput, setChatInput] = useState('');
@@ -9,6 +10,7 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
   const [onlineUsers, setOnlineUsers] = useState([]);
   const chatEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const socket = useSocket();
 
   useEffect(() => {
     if (chatEndRef.current) {
@@ -29,12 +31,11 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
   // Handle typing indicator
   const handleInputChange = (e) => {
     setChatInput(e.target.value);
-    
     if (!isTyping) {
       setIsTyping(true);
       // Emit typing start event
-      if (typeof window !== 'undefined' && window.socket) {
-        window.socket.emit('typing', {
+      if (socket) {
+        socket.emit('typing', {
           groupId: group._id,
           userId: currentUserId,
           userName: getCurrentUser()?.displayName || 'Unknown User',
@@ -42,17 +43,15 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
         });
       }
     }
-
     // Clear existing timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-
     // Set new timeout to stop typing
     typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false);
-      if (typeof window !== 'undefined' && window.socket) {
-        window.socket.emit('typing', {
+      if (socket) {
+        socket.emit('typing', {
           groupId: group._id,
           userId: currentUserId,
           userName: getCurrentUser()?.displayName || 'Unknown User',
@@ -64,21 +63,19 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
 
   // Socket event listeners for typing
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.socket) {
-      const socket = window.socket;
+    const handleTyping = ({ groupId, userId, userName, isTyping: userIsTyping }) => {
+      if (groupId === group._id && userId !== currentUserId) {
+        setTypingUsers(prev => {
+          if (userIsTyping) {
+            return prev.includes(userName) ? prev : [...prev, userName];
+          } else {
+            return prev.filter(name => name !== userName);
+          }
+        });
+      }
+    };
 
-      const handleTyping = ({ groupId, userId, userName, isTyping: userIsTyping }) => {
-        if (groupId === group._id && userId !== currentUserId) {
-          setTypingUsers(prev => {
-            if (userIsTyping) {
-              return prev.includes(userName) ? prev : [...prev, userName];
-            } else {
-              return prev.filter(name => name !== userName);
-            }
-          });
-        }
-      };
-
+      if (!socket) return;
       const handleUserOnline = ({ groupId, userId, userName, isOnline }) => {
         if (groupId === group._id) {
           setOnlineUsers(prev => {
@@ -98,26 +95,23 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
         socket.off('userTyping', handleTyping);
         socket.off('userOnlineStatus', handleUserOnline);
       };
-    }
-  }, [group._id, currentUserId]);
+    }, [socket, group._id, currentUserId]);
 
   const handleSendMessage = () => {
     if (!chatInput.trim()) return;
-    
     // Stop typing indicator
     setIsTyping(false);
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    if (typeof window !== 'undefined' && window.socket) {
-      window.socket.emit('typing', {
+    if (socket) {
+      socket.emit('typing', {
         groupId: group._id,
         userId: currentUserId,
         userName: getCurrentUser()?.displayName || 'Unknown User',
         isTyping: false
       });
     }
-
     onSendMessage(chatInput.trim());
     setChatInput('');
   };
@@ -143,6 +137,12 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
       return date.toLocaleDateString();
     }
   };
+
+  useEffect(() => {
+    if (socket && group?._id) {
+      socket.emit('joinGroup', group._id);
+    }
+  }, [socket, group?._id]);
 
   return (
     <div className="bg-gray-800 rounded-xl border border-gray-700 flex flex-col h-96">
