@@ -4,9 +4,10 @@ import MainSidebar from '../components/Sidebar';
 import YTTranscribe from '../components/YTTranscribe';
 import YTStudyBoard from '../components/YTStudyBoard';
 import YTFollowUp from '../components/YTFollowUp';
+import YTActive from '../components/YTActive';
 import { useUser } from '../context/UserContext';
 import {
-  Loader2, AlertCircle, BrainCircuit, FileText, MessageCircle, Youtube, CheckCircle, Play
+  Loader2, AlertCircle, BrainCircuit, FileText, MessageCircle, Youtube, CheckCircle, Play, Brain
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -18,12 +19,14 @@ const YouTubePage = () => {
   const [processedData, setProcessedData] = useState({
     transcribe: null,
     studyboard: null,
-    followup: null
+    followup: null,
+    active: null
   });
   const [processingStatus, setProcessingStatus] = useState({
     transcribe: 'pending',
     studyboard: 'pending', 
-    followup: 'pending'
+    followup: 'pending',
+    active: 'pending'
   });
   const [videoInfo, setVideoInfo] = useState(null);
 
@@ -48,6 +51,13 @@ const YouTubePage = () => {
       icon: MessageCircle,
       description: 'Ask questions about content',
       component: YTFollowUp
+    },
+    {
+      id: 'active',
+      label: 'Active Recall',
+      icon: Brain,
+      description: 'Test understanding with Feynman Technique',
+      component: YTActive
     }
   ];
 
@@ -76,7 +86,8 @@ const YouTubePage = () => {
     setProcessingStatus({
       transcribe: 'processing',
       studyboard: 'pending',
-      followup: 'pending'
+      followup: 'pending',
+      active: 'pending'
     });
 
     try {
@@ -146,8 +157,83 @@ const YouTubePage = () => {
                 videoData: transcribeData.data
               }
             }));
-            setProcessingStatus(prev => ({ ...prev, followup: 'completed' }));
-            toast.success('All tools ready! 🎉', { id: 'processing' });
+            setProcessingStatus(prev => ({ ...prev, followup: 'completed', active: 'processing' }));
+            toast.loading('Generating active recall questions...', { id: 'processing' });
+
+            // Step 4: Generate Active Recall Questions
+            try {
+              const questionsResponse = await fetch('http://localhost:5000/api/youtube/active-recall/questions', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  transcript: transcribeData.data.transcript || transcribeData.data.summaries.detailed.content,
+                  videoTitle: transcribeData.data.video.title
+                }),
+              });
+
+              const questionsData = await questionsResponse.json();
+
+              if (questionsResponse.ok && questionsData.success) {
+                // Generate questions with IDs
+                const questionsWithIds = questionsData.data.questions.map((q, index) => ({
+                  id: `q${index + 1}`,
+                  question: q,
+                  difficulty: questionsData.data.difficulties?.[index] || 'medium'
+                }));
+
+                setProcessedData(prev => ({ 
+                  ...prev, 
+                  active: {
+                    questions: questionsWithIds,
+                    transcript: transcribeData.data.transcript,
+                    videoData: transcribeData.data
+                  }
+                }));
+                setProcessingStatus(prev => ({ ...prev, active: 'completed' }));
+                toast.success('All tools ready! 🎉', { id: 'processing' });
+              } else {
+                // Fallback questions if API fails
+                const fallbackQuestions = [
+                  { id: 'q1', question: 'What are the main concepts explained in this video?', difficulty: 'easy' },
+                  { id: 'q2', question: 'How would you explain the key ideas to someone who hasn\'t watched this video?', difficulty: 'medium' },
+                  { id: 'q3', question: 'What examples or analogies can you use to clarify the main points?', difficulty: 'medium' },
+                  { id: 'q4', question: 'How do these concepts connect to what you already know?', difficulty: 'hard' }
+                ];
+
+                setProcessedData(prev => ({ 
+                  ...prev, 
+                  active: {
+                    questions: fallbackQuestions,
+                    transcript: transcribeData.data.transcript,
+                    videoData: transcribeData.data
+                  }
+                }));
+                setProcessingStatus(prev => ({ ...prev, active: 'completed' }));
+                toast.success('All tools ready with default questions! 🎉', { id: 'processing' });
+              }
+            } catch (questionsError) {
+              console.error('Error generating questions:', questionsError);
+              // Use fallback questions
+              const fallbackQuestions = [
+                { id: 'q1', question: 'What are the main concepts explained in this video?', difficulty: 'easy' },
+                { id: 'q2', question: 'How would you explain the key ideas to someone who hasn\'t watched this video?', difficulty: 'medium' },
+                { id: 'q3', question: 'What examples or analogies can you use to clarify the main points?', difficulty: 'medium' },
+                { id: 'q4', question: 'How do these concepts connect to what you already know?', difficulty: 'hard' }
+              ];
+
+              setProcessedData(prev => ({ 
+                ...prev, 
+                active: {
+                  questions: fallbackQuestions,
+                  transcript: transcribeData.data.transcript,
+                  videoData: transcribeData.data
+                }
+              }));
+              setProcessingStatus(prev => ({ ...prev, active: 'completed' }));
+              toast.success('All tools ready with default questions! 🎉', { id: 'processing' });
+            }
           } else {
             throw new Error('Failed to create chat session');
           }
@@ -163,7 +249,8 @@ const YouTubePage = () => {
       setProcessingStatus({
         transcribe: 'error',
         studyboard: 'error',
-        followup: 'error'
+        followup: 'error',
+        active: 'error'
       });
     } finally {
       setIsProcessing(false);
@@ -177,8 +264,8 @@ const YouTubePage = () => {
 
   const resetAll = () => {
     setUnifiedUrl('');
-    setProcessedData({ transcribe: null, studyboard: null, followup: null });
-    setProcessingStatus({ transcribe: 'pending', studyboard: 'pending', followup: 'pending' });
+    setProcessedData({ transcribe: null, studyboard: null, followup: null, active: null });
+    setProcessingStatus({ transcribe: 'pending', studyboard: 'pending', followup: 'pending', active: 'pending' });
     setVideoInfo(null);
     setActiveTab('transcribe');
   };
@@ -473,29 +560,37 @@ const YouTubePage = () => {
               transition={{ delay: 0.4 }}
               className="text-center py-16"
             >
-              <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                <div className="bg-gray-900 rounded-xl p-8 border border-gray-800">
-                  <div className="bg-red-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <FileText className="w-8 h-8 text-white" />
+              <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                  <div className="bg-red-500 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FileText className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold mb-4">Smart Summaries</h3>
-                  <p className="text-gray-400">Get brief, detailed, and bullet-point summaries powered by AI</p>
+                  <h3 className="text-lg font-bold mb-3">Smart Summaries</h3>
+                  <p className="text-gray-400 text-sm">Get brief, detailed, and bullet-point summaries powered by AI</p>
                 </div>
 
-                <div className="bg-gray-900 rounded-xl p-8 border border-gray-800">
-                  <div className="bg-purple-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <BrainCircuit className="w-8 h-8 text-white" />
+                <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                  <div className="bg-purple-500 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <BrainCircuit className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold mb-4">Study Materials</h3>
-                  <p className="text-gray-400">Create flashcards, quizzes, and comprehensive study guides</p>
+                  <h3 className="text-lg font-bold mb-3">Study Materials</h3>
+                  <p className="text-gray-400 text-sm">Create flashcards, quizzes, and comprehensive study guides</p>
                 </div>
 
-                <div className="bg-gray-900 rounded-xl p-8 border border-gray-800">
-                  <div className="bg-blue-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <MessageCircle className="w-8 h-8 text-white" />
+                <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                  <div className="bg-blue-500 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MessageCircle className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold mb-4">Interactive Chat</h3>
-                  <p className="text-gray-400">Ask follow-up questions and dive deeper into the content</p>
+                  <h3 className="text-lg font-bold mb-3">Interactive Chat</h3>
+                  <p className="text-gray-400 text-sm">Ask follow-up questions and dive deeper into the content</p>
+                </div>
+
+                <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                  <div className="bg-green-500 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Brain className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-3">Active Recall</h3>
+                  <p className="text-gray-400 text-sm">Test understanding using the Feynman Technique</p>
                 </div>
               </div>
             </motion.div>
