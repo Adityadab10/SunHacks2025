@@ -8,10 +8,20 @@ import youtubeRoutes from "./routes/youtubeRoutes.js";
 import studyBoardYTRoutes from "./routes/studyboard-ytRoutess.js";
 import videoRoutes from "./routes/videoRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import groupRoutes from "./routes/groupRoutes.js";
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
 
 // Middleware
 app.use(
@@ -36,6 +46,7 @@ app.use("/api/youtube", youtubeRoutes);
 app.use("/api/studyboard-yt", studyBoardYTRoutes);
 app.use("/api/video", videoRoutes);
 app.use("/api", userRoutes);
+app.use("/api/group", groupRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -84,8 +95,8 @@ mongoose
   })
   .then(() => {
     console.log("MongoDB connected...");
-    app.listen(process.env.PORT, () => {
-      console.log(`Server running on port ${process.env.PORT}`);
+    server.listen(process.env.PORT || 5000, () => {
+      console.log(`Server running on port ${process.env.PORT || 5000}`);
       console.log(`🚀 Server running on http://localhost:${process.env.PORT}`);
       console.log(
         `📊 Health check: http://localhost:${process.env.PORT}/api/health`
@@ -96,4 +107,29 @@ mongoose
     });
   })
   .catch((err) => console.error(err));
+
+io.on('connection', (socket) => {
+  console.log('Socket connected:', socket.id);
+
+  socket.on('joinGroup', (groupId) => {
+    socket.join(groupId);
+  });
+
+  socket.on('sendMessage', async ({ groupId, senderId, content }) => {
+    // Save message to DB
+    const Group = (await import('./model/group.js')).default;
+    const User = (await import('./model/user.js')).default;
+    // Convert senderId (firebaseUid) to MongoDB ObjectId
+    const senderUser = await User.findOne({ firebaseUid: senderId });
+    if (!senderUser) return;
+    const message = { sender: senderUser._id, content, timestamp: new Date() };
+    await Group.findByIdAndUpdate(groupId, { $push: { messages: message } });
+    io.to(groupId).emit('receiveMessage', { groupId, message });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected:', socket.id);
+  });
+});
+
 export default app;

@@ -54,6 +54,7 @@ export const UserProvider = ({ children }) => {
           if (data.success && data.user) {
             console.log('✅ User found in MongoDB');
             setMongoUid(data.user._id);
+            window.localStorage.setItem('userEmail', data.user.email);
             console.log('💾 MongoDB UID set:', data.user._id);
           } else {
             console.log('❌ User not found, creating new user...');
@@ -88,6 +89,7 @@ export const UserProvider = ({ children }) => {
             if (registerData.success && registerData.user) {
               console.log('✅ User created successfully');
               setMongoUid(registerData.user._id);
+              window.localStorage.setItem('userEmail', registerData.user.email);
               console.log('💾 MongoDB UID set after creation:', registerData.user._id);
             } else {
               throw new Error('Failed to create user in MongoDB');

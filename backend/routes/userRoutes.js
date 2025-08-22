@@ -1,5 +1,6 @@
 import express from "express";
 import UserStats from "../models/UserStats.js";
+import { searchUserByEmail } from '../controllers/userSearchController.js';
 
 const router = express.Router();
 
@@ -64,7 +65,6 @@ router.post("/user/:uid/login", async (req, res) => {
   }
 });
 
-
 // Get session time for a user on a specific date
 router.get("/user/:uid/session", async (req, res) => {
   try {
@@ -77,5 +77,8 @@ router.get("/user/:uid/session", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Search user by email
+router.get('/search-user', searchUserByEmail);
 
 export default router;
