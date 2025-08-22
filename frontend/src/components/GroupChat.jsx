@@ -251,34 +251,34 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
       
       return (
         <motion.div
-          whileHover={{ scale: 1.02 }}
+          whileHover={{ scale: 1.02, y: -2 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => handleStudyBoardClick(content.studyBoardId)}
           className={`${
             isPinned 
-              ? 'bg-gradient-to-r from-purple-700/30 to-indigo-700/30 border-2 border-purple-500/50' 
-              : 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 border border-purple-500/30'
-          } rounded-lg p-4 cursor-pointer hover:border-purple-400/50 transition-all`}
+              ? 'bg-gradient-to-br from-[#74AA9C]/20 to-[#74AA9C]/10 border-2 border-[#74AA9C]/60 shadow-lg shadow-[#74AA9C]/20' 
+              : 'bg-gradient-to-br from-[#74AA9C]/15 to-[#74AA9C]/5 border border-[#74AA9C]/40 hover:border-[#74AA9C]/60'
+          } rounded-xl p-4 cursor-pointer hover:shadow-lg hover:shadow-[#74AA9C]/10 transition-all duration-300 backdrop-blur-sm`}
         >
           <div className="flex items-start gap-3">
-            <div className="bg-purple-500/30 p-2 rounded-lg shrink-0">
-              <BrainCircuit className="w-5 h-5 text-purple-400" />
+            <div className={`${isPinned ? 'bg-[#74AA9C]/30' : 'bg-[#74AA9C]/20'} p-3 rounded-lg shrink-0 shadow-sm`}>
+              <BrainCircuit className="w-5 h-5 text-[#74AA9C]" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
-                {isPinned && <Pin className="w-4 h-4 text-purple-400" />}
-                <span className="text-purple-400 font-medium text-sm">
+              <div className="flex items-center gap-2 mb-3">
+                {isPinned && <Pin className="w-4 h-4 text-[#74AA9C]" />}
+                <span className="text-[#74AA9C] font-semibold text-sm">
                   📚 Study Board {isPinned ? '(Pinned)' : 'Shared'}
                 </span>
-                <ExternalLink className="w-3 h-3 text-purple-400" />
+                <ExternalLink className="w-3 h-3 text-[#74AA9C]" />
               </div>
-              <h4 className="text-white font-medium text-sm mb-2 line-clamp-1">
+              <h4 className="text-white font-semibold text-sm mb-3 line-clamp-1">
                 {content.studyBoardName}
               </h4>
-              <div className="bg-gray-800/50 rounded-lg p-3">
+              <div className="bg-black/30 backdrop-blur-sm rounded-lg p-3 border border-gray-800/50">
                 <div className="flex items-center gap-2 mb-2">
                   <Youtube className="w-4 h-4 text-red-400" />
-                  <span className="text-gray-300 text-xs font-medium line-clamp-1">
+                  <span className="text-gray-200 text-xs font-medium line-clamp-1">
                     {content.videoTitle}
                   </span>
                 </div>
@@ -296,13 +296,13 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
               <div className="flex items-center justify-between mt-3">
                 <div className="flex items-center gap-2">
                   {content.sharedByPhoto && (
-                    <img src={content.sharedByPhoto} alt="User" className="w-4 h-4 rounded-full" />
+                    <img src={content.sharedByPhoto} alt="User" className="w-5 h-5 rounded-full border-2 border-[#74AA9C]/30" />
                   )}
                   <span className="text-xs text-gray-400">
                     Shared by {content.sharedBy}
                   </span>
                 </div>
-                <span className="text-xs text-purple-400 font-medium">
+                <span className="text-xs text-[#74AA9C] font-semibold px-2 py-1 bg-[#74AA9C]/10 rounded-md">
                   Click to view →
                 </span>
               </div>
@@ -312,9 +312,9 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
       );
     } catch (e) {
       console.error('❌ Error parsing study board message content:', e, messageContent);
-      return <span className="text-sm">{messageContent}</span>;
+      return <span className="text-sm text-white">{messageContent}</span>;
     }
-    return <span className="text-sm">{messageContent}</span>;
+    return <span className="text-sm text-white">{messageContent}</span>;
   };
 
   // Render team study board item
@@ -322,30 +322,30 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
     return (
       <motion.div
         key={studyBoard._id}
-        whileHover={{ scale: 1.02 }}
+        whileHover={{ scale: 1.02, y: -2 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => handleStudyBoardClick(studyBoard._id)}
-        className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30 rounded-lg p-3 cursor-pointer hover:border-blue-400/50 transition-all"
+        className="bg-gradient-to-br from-[#74AA9C]/15 to-[#74AA9C]/5 border border-[#74AA9C]/40 rounded-xl p-4 cursor-pointer hover:border-[#74AA9C]/60 hover:shadow-lg hover:shadow-[#74AA9C]/10 transition-all duration-300 backdrop-blur-sm"
       >
         <div className="flex items-start gap-3">
-          <div className="bg-blue-500/30 p-2 rounded-lg shrink-0">
-            <BookOpen className="w-4 h-4 text-blue-400" />
+          <div className="bg-[#74AA9C]/20 p-3 rounded-lg shrink-0 shadow-sm">
+            <BookOpen className="w-4 h-4 text-[#74AA9C]" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-blue-400 font-medium text-xs">
+              <span className="text-[#74AA9C] font-semibold text-xs">
                 📖 Team Study Board
               </span>
-              <ExternalLink className="w-3 h-3 text-blue-400" />
+              <ExternalLink className="w-3 h-3 text-[#74AA9C]" />
             </div>
-            <h4 className="text-white font-medium text-sm mb-2 line-clamp-1">
+            <h4 className="text-white font-semibold text-sm mb-2 line-clamp-1">
               {studyBoard.studyBoardName || studyBoard.name || studyBoard.title || 'Untitled Study Board'}
             </h4>
             {studyBoard.videoTitle && (
-              <div className="bg-gray-800/50 rounded-lg p-2 mb-2">
+              <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 mb-2 border border-gray-800/50">
                 <div className="flex items-center gap-2">
                   <Youtube className="w-3 h-3 text-red-400" />
-                  <span className="text-gray-300 text-xs line-clamp-1">
+                  <span className="text-gray-200 text-xs line-clamp-1">
                     {studyBoard.videoTitle}
                   </span>
                 </div>
@@ -357,14 +357,14 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
                   <img 
                     src={studyBoard.userId.photoURL} 
                     alt="Creator" 
-                    className="w-4 h-4 rounded-full" 
+                    className="w-4 h-4 rounded-full border-2 border-[#74AA9C]/30" 
                   />
                 )}
                 <span className="text-xs text-gray-400">
                   Created by {studyBoard.userId?.displayName || studyBoard.createdBy?.displayName || 'Unknown'}
                 </span>
               </div>
-              <span className="text-xs text-blue-400 font-medium">
+              <span className="text-xs text-[#74AA9C] font-semibold px-2 py-1 bg-[#74AA9C]/10 rounded-md">
                 View →
               </span>
             </div>
@@ -378,23 +378,25 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
   const regularMessages = messages.filter(msg => !msg.isPinned);
 
   return (
-    <div className="bg-gray-800 rounded-xl border border-gray-700 flex flex-col h-96">
+    <div className="bg-black rounded-2xl border border-gray-800/50 shadow-2xl flex flex-col h-96 backdrop-blur-sm">
       {/* Chat Header */}
-      <div className="p-4 border-b border-gray-700">
+      <div className="p-6 border-b border-gray-800/50 bg-gradient-to-r from-black/50 to-[#74AA9C]/5 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <MessageCircle className="w-5 h-5 text-purple-400" />
+            <h3 className="text-xl font-bold text-white flex items-center gap-3">
+              <div className="p-2 bg-[#74AA9C]/20 rounded-lg">
+                <MessageCircle className="w-6 h-6 text-[#74AA9C]" />
+              </div>
               Group Chat
             </h3>
-            <p className="text-gray-400 text-sm">Real-time messaging with group members</p>
+            <p className="text-gray-400 text-sm mt-1">Real-time messaging with group members</p>
           </div>
           
           {/* Online Members Indicator */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <Circle className="w-2 h-2 text-green-400 fill-current" />
-              <span className="text-gray-400 text-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-[#74AA9C]/10 px-3 py-2 rounded-full border border-[#74AA9C]/30">
+              <Circle className="w-2 h-2 text-[#74AA9C] fill-current animate-pulse" />
+              <span className="text-white text-sm font-medium">
                 {onlineUsers.length} online
               </span>
             </div>
@@ -404,27 +406,32 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
 
       {/* Team Study Boards Section */}
       {(teamStudyBoards.length > 0 || loadingStudyBoards) && (
-        <div className="border-b border-gray-700 bg-gray-900/50">
-          <div className="p-3">
-            <button
+        <div className="border-b border-gray-800/50 bg-gradient-to-r from-black/30 to-[#74AA9C]/5">
+          <div className="p-4">
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               onClick={() => setShowTeamStudyBoards(!showTeamStudyBoards)}
-              className="flex items-center justify-between w-full text-left hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
+              className="flex items-center justify-between w-full text-left hover:bg-[#74AA9C]/10 rounded-xl p-3 transition-all duration-300 border border-transparent hover:border-[#74AA9C]/20"
             >
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-blue-400" />
-                <span className="text-sm font-medium text-blue-400">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-[#74AA9C]/20 rounded-lg">
+                  <BookOpen className="w-4 h-4 text-[#74AA9C]" />
+                </div>
+                <span className="text-sm font-semibold text-white">
                   Team Study Boards {!loadingStudyBoards && `(${teamStudyBoards.length})`}
                 </span>
                 {loadingStudyBoards && (
-                  <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-[#74AA9C]/30 border-t-[#74AA9C] rounded-full animate-spin" />
                 )}
               </div>
-              {showTeamStudyBoards ? (
-                <ChevronUp className="w-4 h-4 text-gray-400" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              )}
-            </button>
+              <motion.div
+                animate={{ rotate: showTeamStudyBoards ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ChevronDown className="w-5 h-5 text-[#74AA9C]" />
+              </motion.div>
+            </motion.button>
             
             <AnimatePresence>
               {showTeamStudyBoards && (
@@ -432,26 +439,29 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="mt-3"
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="mt-4"
                 >
                   {loadingStudyBoards ? (
-                    <div className="text-center py-4">
-                      <div className="w-6 h-6 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin mx-auto mb-2" />
-                      <p className="text-xs text-gray-400">Loading study boards...</p>
+                    <div className="text-center py-8">
+                      <div className="w-8 h-8 border-3 border-[#74AA9C]/30 border-t-[#74AA9C] rounded-full animate-spin mx-auto mb-3" />
+                      <p className="text-sm text-gray-400">Loading study boards...</p>
                     </div>
                   ) : teamStudyBoards.length === 0 ? (
-                    <div className="text-center py-4">
-                      <BookOpen className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                      <p className="text-xs text-gray-400">No study boards created for this team yet.</p>
+                    <div className="text-center py-8">
+                      <div className="p-4 bg-[#74AA9C]/10 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                        <BookOpen className="w-8 h-8 text-[#74AA9C]" />
+                      </div>
+                      <p className="text-sm text-gray-400">No study boards created for this team yet.</p>
                     </div>
                   ) : (
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                    <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
                       {teamStudyBoards.map((studyBoard, idx) => (
                         <motion.div
                           key={studyBoard._id}
-                          initial={{ opacity: 0, y: 10 }}
+                          initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.1 }}
+                          transition={{ delay: idx * 0.1, duration: 0.3 }}
                         >
                           {renderTeamStudyBoard(studyBoard)}
                         </motion.div>
@@ -467,24 +477,29 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
 
       {/* Pinned Study Boards Section */}
       {pinnedMessages.length > 0 && (
-        <div className="border-b border-gray-700 bg-gray-900/50">
-          <div className="p-3">
-            <button
+        <div className="border-b border-gray-800/50 bg-gradient-to-r from-black/30 to-[#74AA9C]/5">
+          <div className="p-4">
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               onClick={() => setShowPinnedMessages(!showPinnedMessages)}
-              className="flex items-center justify-between w-full text-left hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
+              className="flex items-center justify-between w-full text-left hover:bg-[#74AA9C]/10 rounded-xl p-3 transition-all duration-300 border border-transparent hover:border-[#74AA9C]/20"
             >
-              <div className="flex items-center gap-2">
-                <Pin className="w-4 h-4 text-purple-400" />
-                <span className="text-sm font-medium text-purple-400">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-[#74AA9C]/20 rounded-lg">
+                  <Pin className="w-4 h-4 text-[#74AA9C]" />
+                </div>
+                <span className="text-sm font-semibold text-white">
                   Pinned Study Boards ({pinnedMessages.length})
                 </span>
               </div>
-              {showPinnedMessages ? (
-                <ChevronUp className="w-4 h-4 text-gray-400" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              )}
-            </button>
+              <motion.div
+                animate={{ rotate: showPinnedMessages ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ChevronDown className="w-5 h-5 text-[#74AA9C]" />
+              </motion.div>
+            </motion.button>
             
             <AnimatePresence>
               {showPinnedMessages && (
@@ -492,14 +507,15 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="mt-3 space-y-2 max-h-48 overflow-y-auto"
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="mt-4 space-y-3 max-h-64 overflow-y-auto custom-scrollbar"
                 >
                   {pinnedMessages.map((message, idx) => (
                     <motion.div
                       key={`pinned-${idx}`}
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.1 }}
+                      transition={{ delay: idx * 0.1, duration: 0.3 }}
                     >
                       {renderStudyBoardMessage(message.content, true)}
                     </motion.div>
@@ -512,11 +528,13 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
       )}
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-gradient-to-b from-black/20 to-black/40">
         {regularMessages.length === 0 ? (
-          <div className="text-center py-8">
-            <MessageCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400">
+          <div className="text-center py-12">
+            <div className="p-6 bg-[#74AA9C]/10 rounded-full w-24 h-24 mx-auto mb-4 flex items-center justify-center">
+              <MessageCircle className="w-12 h-12 text-[#74AA9C]" />
+            </div>
+            <p className="text-gray-400 text-lg">
               {pinnedMessages.length > 0 
                 ? "Check out the pinned study boards above! Start chatting about them."
                 : "No messages yet. Start the conversation!"
@@ -536,9 +554,10 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
                 return (
                   <motion.div
                     key={idx}
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex justify-center mb-4"
+                    transition={{ duration: 0.3 }}
+                    className="flex justify-center mb-6"
                   >
                     <div className="max-w-md w-full">
                       {renderStudyBoardMessage(message.content, false)}
@@ -550,52 +569,54 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
               return (
                 <motion.div
                   key={idx}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
                   className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
                 >
                   {/* Avatar for other users */}
                   {!isCurrentUser && !isSystemMessage && (
-                    <div className="w-8 h-8 mr-2 flex-shrink-0">
+                    <div className="w-10 h-10 mr-3 flex-shrink-0">
                       {showAvatar && sender?.photoURL ? (
                         <img 
                           src={sender.photoURL} 
                           alt={sender.displayName || 'User'} 
-                          className="w-8 h-8 rounded-full"
+                          className="w-10 h-10 rounded-full border-2 border-[#74AA9C]/30 shadow-lg"
                         />
                       ) : showAvatar ? (
-                        <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
-                          <User className="w-4 h-4 text-gray-300" />
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#74AA9C]/20 to-[#74AA9C]/10 border-2 border-[#74AA9C]/30 flex items-center justify-center shadow-lg">
+                          <User className="w-5 h-5 text-[#74AA9C]" />
                         </div>
                       ) : null}
                     </div>
                   )}
 
-                  <div className={`max-w-xs lg:max-w-md ${isCurrentUser ? 'ml-8' : 'mr-8'}`}>
+                  <div className={`max-w-xs lg:max-w-md ${isCurrentUser ? 'ml-12' : 'mr-12'}`}>
                     {/* Sender name for other users */}
                     {!isCurrentUser && !isSystemMessage && showAvatar && (
-                      <p className="text-xs text-gray-400 mb-1 ml-2">
+                      <p className="text-xs text-gray-400 mb-2 ml-3 font-medium">
                         {sender?.displayName || 'Unknown User'}
                       </p>
                     )}
                     
-                    <div
-                      className={`px-4 py-2 rounded-lg ${
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      className={`px-4 py-3 rounded-2xl shadow-lg backdrop-blur-sm ${
                         isCurrentUser
-                          ? 'bg-purple-600 text-white rounded-br-sm'
-                          : 'bg-gray-700 text-gray-200 rounded-bl-sm'
+                          ? 'bg-gradient-to-br from-[#74AA9C] to-[#74AA9C]/80 text-white rounded-br-md border border-[#74AA9C]/50'
+                          : 'bg-gradient-to-br from-gray-800/80 to-gray-700/80 text-white rounded-bl-md border border-gray-700/50'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                      <p className={`text-xs mt-1 ${
-                        isCurrentUser ? 'text-purple-200' : 'text-gray-400'
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                      <p className={`text-xs mt-2 flex items-center gap-1 ${
+                        isCurrentUser ? 'text-white/70' : 'text-gray-400'
                       }`}>
                         {formatTimestamp(message.timestamp)}
                         {isCurrentUser && (
-                          <span className="ml-1">✓</span>
+                          <span className="ml-1 text-white/70">✓</span>
                         )}
                       </p>
-                    </div>
+                    </motion.div>
                   </div>
                 </motion.div>
               );
@@ -605,19 +626,20 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
             <AnimatePresence>
               {typingUsers.length > 0 && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
                   className="flex justify-start"
                 >
-                  <div className="bg-gray-700 px-4 py-2 rounded-lg max-w-xs">
-                    <div className="flex items-center gap-2">
+                  <div className="bg-gradient-to-r from-gray-800/80 to-gray-700/80 backdrop-blur-sm px-4 py-3 rounded-2xl rounded-bl-md max-w-xs border border-gray-700/50 shadow-lg">
+                    <div className="flex items-center gap-3">
                       <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        <div className="w-2 h-2 bg-[#74AA9C] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-[#74AA9C] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 bg-[#74AA9C] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-300 font-medium">
                         {typingUsers.length === 1 
                           ? `${typingUsers[0]} is typing...`
                           : `${typingUsers.slice(0, 2).join(', ')}${typingUsers.length > 2 ? ` and ${typingUsers.length - 2} others` : ''} are typing...`
@@ -635,28 +657,53 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t border-gray-700">
-        <div className="flex gap-2">
-          <textarea
-            value={chatInput}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Type your message..."
-            className="flex-1 p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-purple-500/30 focus:border-purple-500/30 focus:outline-none resize-none"
-            rows="1"
-            style={{ minHeight: '44px', maxHeight: '100px' }}
-          />
+      <div className="p-6 border-t border-gray-800/50 bg-gradient-to-r from-black/50 to-[#74AA9C]/5 backdrop-blur-sm">
+        <div className="flex gap-3">
+          <div className="flex-1 relative">
+            <textarea
+              value={chatInput}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Type your message..."
+              className="w-full p-4 bg-gradient-to-r from-gray-900/80 to-gray-800/80 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-[#74AA9C]/50 focus:border-[#74AA9C]/50 focus:outline-none resize-none transition-all duration-300 backdrop-blur-sm shadow-inner"
+              rows="1"
+              style={{ minHeight: '52px', maxHeight: '120px' }}
+            />
+          </div>
           <motion.button
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(116, 170, 156, 0.3)" }}
             whileTap={{ scale: 0.95 }}
             onClick={handleSendMessage}
             disabled={!chatInput.trim()}
-            className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 px-4 py-2 rounded-lg text-white transition-colors flex items-center gap-2"
+            className="bg-gradient-to-r from-[#74AA9C] to-[#74AA9C]/80 hover:from-[#74AA9C]/90 hover:to-[#74AA9C]/70 disabled:from-[#74AA9C]/50 disabled:to-[#74AA9C]/30 disabled:cursor-not-allowed px-6 py-3 rounded-xl text-white font-medium transition-all duration-300 flex items-center gap-2 shadow-lg border border-[#74AA9C]/30"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-5 h-5" />
           </motion.button>
         </div>
       </div>
+
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.1);
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(116, 170, 156, 0.3);
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(116, 170, 156, 0.5);
+        }
+        .line-clamp-1 {
+          display: -webkit-box;
+          -webkit-line-clamp: 1;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
     </div>
   );
 };

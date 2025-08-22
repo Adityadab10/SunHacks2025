@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, Plus, Trash2, Users, UserCheck } from 'lucide-react';
+import { X, Search, Plus, Trash2, Users, UserCheck, RefreshCw, Mail, Eye, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const CreateGroupModal = ({ isOpen, onClose, onCreateGroup, currentUserEmail }) => {
@@ -108,247 +108,367 @@ const CreateGroupModal = ({ isOpen, onClose, onCreateGroup, currentUserEmail }) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+    >
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-gray-900 rounded-xl border border-gray-700 p-6 w-[700px] max-w-[90vw] max-h-[80vh] overflow-y-auto"
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 shadow-2xl w-[800px] max-w-[95vw] max-h-[90vh] overflow-hidden backdrop-blur-lg"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Users className="w-6 h-6 text-purple-400" />
-            Create Study Group
-          </h2>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* Group Name */}
-        <div className="mb-6">
-          <label className="block text-white font-semibold mb-2">Group Name</label>
-          <input
-            type="text"
-            value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
-            placeholder="Enter group name..."
-            className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-purple-500/30 focus:border-purple-500/30 focus:outline-none"
-            autoFocus
-          />
-        </div>
-
-        {/* Add Members Section */}
-        <div className="mb-6">
-          <label className="block text-white font-semibold mb-4">Add Members</label>
-          
-          {/* Tab Navigation */}
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => setActiveTab('browse')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                activeTab === 'browse'
-                  ? 'bg-purple-600 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
-              }`}
-            >
-              Browse Users
-            </button>
-            <button
-              onClick={() => setActiveTab('search')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                activeTab === 'search'
-                  ? 'bg-purple-600 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
-              }`}
-            >
-              Search by Email
-            </button>
-          </div>
-
-          {/* Browse Users Tab */}
-          {activeTab === 'browse' && (
-            <div className="bg-gray-800 rounded-lg p-4 mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-white font-semibold">Available Users</h3>
-                <button
-                  onClick={fetchAllUsers}
-                  disabled={isLoadingUsers}
-                  className="text-purple-400 hover:text-purple-300 text-sm"
-                >
-                  {isLoadingUsers ? 'Refreshing...' : 'Refresh'}
-                </button>
+        {/* Enhanced Header */}
+        <div className="relative bg-gradient-to-r from-[#74AA9C]/10 to-transparent p-8 border-b border-gray-700/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#74AA9C] to-[#5a8a7d] rounded-xl flex items-center justify-center shadow-lg">
+                <Users className="w-6 h-6 text-white" />
               </div>
-              
-              {isLoadingUsers ? (
-                <div className="text-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto"></div>
-                  <p className="text-gray-400 mt-2">Loading users...</p>
-                </div>
-              ) : allUsers.length === 0 ? (
-                <div className="text-center py-4">
-                  <Users className="w-12 h-12 text-gray-600 mx-auto mb-2" />
-                  <p className="text-gray-400">No other users found</p>
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {allUsers.map(user => (
-                    <div key={user._id} className="flex items-center justify-between p-3 bg-gray-700 rounded">
-                      <div className="flex items-center gap-3">
-                        {user.photoURL && (
-                          <img src={user.photoURL} alt="Profile" className="w-10 h-10 rounded-full" />
-                        )}
-                        <div>
-                          <p className="text-white font-medium">{user.displayName}</p>
-                          <p className="text-gray-400 text-sm">{user.email}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => isUserAdded(user._id) ? removeUserFromGroup(user._id) : addUserToGroup(user)}
-                        className={`px-3 py-1 rounded text-white transition-colors flex items-center gap-1 ${
-                          isUserAdded(user._id)
-                            ? 'bg-red-600 hover:bg-red-700'
-                            : 'bg-green-600 hover:bg-green-700'
-                        }`}
-                      >
-                        {isUserAdded(user._id) ? (
-                          <>
-                            <Trash2 className="w-3 h-3" />
-                            Remove
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="w-3 h-3" />
-                            Add
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div>
+                <h2 className="text-2xl font-bold text-white">Create Study Group</h2>
+                <p className="text-gray-400 text-sm mt-1">Set up a new collaborative learning space</p>
+              </div>
             </div>
-          )}
+            <motion.button
+              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={handleClose}
+              className="w-10 h-10 bg-gray-800/80 hover:bg-red-600/20 rounded-xl flex items-center justify-center text-gray-400 hover:text-red-400 transition-all duration-300 border border-gray-700/50"
+            >
+              <X className="w-5 h-5" />
+            </motion.button>
+          </div>
+        </div>
 
-          {/* Search by Email Tab */}
-          {activeTab === 'search' && (
-            <div>
-              <div className="flex gap-2 mb-4">
-                <input
-                  type="email"
-                  value={searchEmail}
-                  onChange={(e) => setSearchEmail(e.target.value)}
-                  placeholder="Search by email..."
-                  className="flex-1 p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-purple-500/30 focus:border-purple-500/30 focus:outline-none"
-                  onKeyDown={(e) => e.key === 'Enter' && searchUser()}
-                />
+        <div className="p-8 max-h-[calc(90vh-140px)] overflow-y-auto scrollbar-thin scrollbar-thumb-[#74AA9C]/30 scrollbar-track-transparent">
+          {/* Enhanced Group Name Input */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            <label className="block text-white font-semibold mb-3 flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#74AA9C]" />
+              Group Name
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                placeholder="Enter an engaging group name..."
+                className="w-full p-4 bg-gray-800/60 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-[#74AA9C]/30 focus:border-[#74AA9C]/50 focus:outline-none transition-all duration-300 backdrop-blur-sm"
+                autoFocus
+              />
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#74AA9C]/5 to-transparent pointer-events-none"></div>
+            </div>
+          </motion.div>
+
+          {/* Enhanced Add Members Section */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mb-8"
+          >
+            <label className="block text-white font-semibold mb-6 flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-[#74AA9C]" />
+              Add Members
+            </label>
+            
+            {/* Enhanced Tab Navigation */}
+            <div className="flex gap-2 mb-6">
+              {[
+                { id: 'browse', icon: Eye, label: 'Browse Users' },
+                { id: 'search', icon: Mail, label: 'Search by Email' }
+              ].map(tab => (
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={searchUser}
-                  disabled={isSearching || !searchEmail.trim()}
-                  className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 px-4 py-3 rounded-lg text-white transition-colors flex items-center gap-2"
+                  key={tab.id}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                    activeTab === tab.id
+                      ? 'bg-gradient-to-r from-[#74AA9C] to-[#5a8a7d] text-white shadow-lg'
+                      : 'bg-gray-800/60 text-gray-400 hover:text-white hover:bg-gray-700/60 border border-gray-600/30'
+                  }`}
                 >
-                  <Search className="w-4 h-4" />
-                  {isSearching ? 'Searching...' : 'Search'}
+                  <tab.icon className="w-4 h-4" />
+                  {tab.label}
                 </motion.button>
-              </div>
+              ))}
+            </div>
 
-              {/* Search Results */}
-              {searchResults.length > 0 && (
-                <div className="bg-gray-800 rounded-lg p-4">
-                  <h3 className="text-white font-semibold mb-3">Search Results</h3>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {searchResults.map(user => (
-                      <div key={user._id} className="flex items-center justify-between p-2 bg-gray-700 rounded">
-                        <div className="flex items-center gap-2">
-                          {user.photoURL && (
-                            <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full" />
-                          )}
-                          <div>
-                            <p className="text-white font-medium">{user.displayName}</p>
-                            <p className="text-gray-400 text-sm">{user.email}</p>
+            {/* Enhanced Browse Users Tab */}
+            {activeTab === 'browse' && (
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-gradient-to-br from-gray-800/60 to-gray-700/40 rounded-2xl p-6 border border-gray-600/30 backdrop-blur-sm"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-white font-semibold flex items-center gap-2">
+                    <Users className="w-5 h-5 text-[#74AA9C]" />
+                    Available Users
+                  </h3>
+                  <motion.button
+                    whileHover={{ scale: 1.1, rotate: 180 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={fetchAllUsers}
+                    disabled={isLoadingUsers}
+                    className="flex items-center gap-2 text-[#74AA9C] hover:text-[#5a8a7d] text-sm font-medium transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isLoadingUsers ? 'animate-spin' : ''}`} />
+                    {isLoadingUsers ? 'Refreshing...' : 'Refresh'}
+                  </motion.button>
+                </div>
+                
+                {isLoadingUsers ? (
+                  <div className="text-center py-12">
+                    <div className="w-12 h-12 border-4 border-[#74AA9C]/30 border-t-[#74AA9C] rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-400 font-medium">Loading users...</p>
+                  </div>
+                ) : allUsers.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-[#74AA9C]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Users className="w-8 h-8 text-[#74AA9C]" />
+                    </div>
+                    <p className="text-gray-400 font-medium">No other users found</p>
+                    <p className="text-gray-500 text-sm mt-1">Try refreshing or check back later</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-[#74AA9C]/30 scrollbar-track-transparent">
+                    {allUsers.map((user, index) => (
+                      <motion.div 
+                        key={user._id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="group flex items-center justify-between p-4 bg-gradient-to-r from-gray-700/60 to-gray-800/40 rounded-xl border border-gray-600/30 hover:border-[#74AA9C]/40 transition-all duration-300"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="relative">
+                            {user.photoURL ? (
+                              <img src={user.photoURL} alt="Profile" className="w-12 h-12 rounded-full border-2 border-[#74AA9C]/30 shadow-lg" />
+                            ) : (
+                              <div className="w-12 h-12 bg-gradient-to-br from-[#74AA9C] to-[#5a8a7d] rounded-full flex items-center justify-center shadow-lg">
+                                <span className="text-white font-semibold">
+                                  {user.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-white font-semibold truncate">{user.displayName}</p>
+                            <p className="text-gray-400 text-sm truncate">{user.email}</p>
                           </div>
                         </div>
-                        <button
-                          onClick={() => addUserToGroup(user)}
-                          className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-white transition-colors flex items-center gap-1"
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => isUserAdded(user._id) ? removeUserFromGroup(user._id) : addUserToGroup(user)}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all duration-300 shadow-lg ${
+                            isUserAdded(user._id)
+                              ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
+                              : 'bg-gradient-to-r from-[#74AA9C] to-[#5a8a7d] hover:from-[#5a8a7d] hover:to-[#74AA9C] text-white'
+                          }`}
                         >
-                          <Plus className="w-3 h-3" />
-                          Add
-                        </button>
-                      </div>
+                          {isUserAdded(user._id) ? (
+                            <>
+                              <Trash2 className="w-4 h-4" />
+                              Remove
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="w-4 h-4" />
+                              Add
+                            </>
+                          )}
+                        </motion.button>
+                      </motion.div>
                     ))}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Added Members */}
-          {addedMembers.length > 0 && (
-            <div className="bg-gray-800 rounded-lg p-4 mt-4">
-              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-                <UserCheck className="w-4 h-4 text-green-400" />
-                Selected Members ({addedMembers.length})
-              </h3>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {addedMembers.map(member => (
-                  <div key={member._id} className="flex items-center justify-between p-2 bg-gray-700 rounded">
-                    <div className="flex items-center gap-2">
-                      {member.photoURL && (
-                        <img src={member.photoURL} alt="Profile" className="w-8 h-8 rounded-full" />
-                      )}
-                      <div>
-                        <p className="text-white font-medium">{member.displayName}</p>
-                        <p className="text-gray-400 text-sm">{member.email}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => removeUserFromGroup(member._id)}
-                      className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-white transition-colors flex items-center gap-1"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={handleClose}
-            className="px-6 py-2 text-gray-400 hover:text-white transition-colors"
-          >
-            Cancel
-          </button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleCreateGroup}
-            disabled={isCreating || !groupName.trim()}
-            className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 px-6 py-2 rounded-lg text-white transition-colors flex items-center gap-2"
-          >
-            {isCreating ? (
-              <>Creating...</>
-            ) : (
-              <>
-                <Plus className="w-4 h-4" />
-                Create Group ({addedMembers.length + 1} members)
-              </>
+                )}
+              </motion.div>
             )}
-          </motion.button>
+
+            {/* Enhanced Search by Email Tab */}
+            {activeTab === 'search' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                <div className="flex gap-3 mb-6">
+                  <div className="relative flex-1">
+                    <input
+                      type="email"
+                      value={searchEmail}
+                      onChange={(e) => setSearchEmail(e.target.value)}
+                      placeholder="Enter email address to search..."
+                      className="w-full p-4 pl-12 bg-gray-800/60 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-[#74AA9C]/30 focus:border-[#74AA9C]/50 focus:outline-none transition-all duration-300 backdrop-blur-sm"
+                      onKeyDown={(e) => e.key === 'Enter' && searchUser()}
+                    />
+                    <Mail className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" />
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={searchUser}
+                    disabled={isSearching || !searchEmail.trim()}
+                    className="bg-gradient-to-r from-[#74AA9C] to-[#5a8a7d] hover:from-[#5a8a7d] hover:to-[#74AA9C] disabled:from-gray-700 disabled:to-gray-800 px-6 py-4 rounded-xl text-white font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg"
+                  >
+                    <Search className={`w-5 h-5 ${isSearching ? 'animate-pulse' : ''}`} />
+                    {isSearching ? 'Searching...' : 'Search'}
+                  </motion.button>
+                </div>
+
+                {/* Enhanced Search Results */}
+                {searchResults.length > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gradient-to-br from-gray-800/60 to-gray-700/40 rounded-2xl p-6 border border-gray-600/30 backdrop-blur-sm"
+                  >
+                    <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                      <Search className="w-5 h-5 text-[#74AA9C]" />
+                      Search Results
+                    </h3>
+                    <div className="space-y-3 max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-[#74AA9C]/30 scrollbar-track-transparent">
+                      {searchResults.map((user, index) => (
+                        <motion.div 
+                          key={user._id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-700/60 to-gray-800/40 rounded-xl border border-gray-600/30"
+                        >
+                          <div className="flex items-center gap-3">
+                            {user.photoURL ? (
+                              <img src={user.photoURL} alt="Profile" className="w-10 h-10 rounded-full border-2 border-[#74AA9C]/30" />
+                            ) : (
+                              <div className="w-10 h-10 bg-gradient-to-br from-[#74AA9C] to-[#5a8a7d] rounded-full flex items-center justify-center">
+                                <span className="text-white font-semibold text-sm">
+                                  {user.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                                </span>
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-white font-semibold">{user.displayName}</p>
+                              <p className="text-gray-400 text-sm">{user.email}</p>
+                            </div>
+                          </div>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => addUserToGroup(user)}
+                            className="bg-gradient-to-r from-[#74AA9C] to-[#5a8a7d] hover:from-[#5a8a7d] hover:to-[#74AA9C] px-4 py-2 rounded-lg text-white font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Add
+                          </motion.button>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Enhanced Added Members Display */}
+            {addedMembers.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-br from-[#74AA9C]/10 to-transparent rounded-2xl p-6 mt-6 border border-[#74AA9C]/20 backdrop-blur-sm"
+              >
+                <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-[#74AA9C]" />
+                  Selected Members ({addedMembers.length})
+                </h3>
+                <div className="space-y-3 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-[#74AA9C]/30 scrollbar-track-transparent">
+                  {addedMembers.map((member, index) => (
+                    <motion.div 
+                      key={member._id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-800/60 to-gray-700/40 rounded-xl border border-gray-600/30"
+                    >
+                      <div className="flex items-center gap-3">
+                        {member.photoURL ? (
+                          <img src={member.photoURL} alt="Profile" className="w-10 h-10 rounded-full border-2 border-[#74AA9C]/30" />
+                        ) : (
+                          <div className="w-10 h-10 bg-gradient-to-br from-[#74AA9C] to-[#5a8a7d] rounded-full flex items-center justify-center">
+                            <span className="text-white font-semibold text-sm">
+                              {member.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-white font-semibold">{member.displayName}</p>
+                          <p className="text-gray-400 text-sm">{member.email}</p>
+                        </div>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => removeUserFromGroup(member._id)}
+                        className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-4 py-2 rounded-lg text-white font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Remove
+                      </motion.button>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+
+          {/* Enhanced Actions */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex justify-end gap-4 pt-6 border-t border-gray-700/50"
+          >
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleClose}
+              className="px-8 py-3 text-gray-400 hover:text-white transition-colors font-semibold rounded-xl hover:bg-gray-800/60"
+            >
+              Cancel
+            </motion.button>
+            <motion.button
+              whileHover={{ 
+                scale: 1.02, 
+                boxShadow: "0 10px 30px rgba(116, 170, 156, 0.4)" 
+              }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleCreateGroup}
+              disabled={isCreating || !groupName.trim()}
+              className="bg-gradient-to-r from-[#74AA9C] to-[#5a8a7d] hover:from-[#5a8a7d] hover:to-[#74AA9C] disabled:from-gray-700 disabled:to-gray-800 px-8 py-3 rounded-xl text-white font-semibold transition-all duration-300 flex items-center gap-3 shadow-lg"
+            >
+              {isCreating ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Creating Group...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-5 h-5" />
+                  Create Group ({addedMembers.length + 1} members)
+                </>
+              )}
+            </motion.button>
+          </motion.div>
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 };
 
