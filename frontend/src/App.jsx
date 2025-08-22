@@ -17,6 +17,7 @@ import StudyGroup from './pages/StudyGroup';
 import { io } from 'socket.io-client';
 import ChatSession from "./pages/ChatSession"
 import StudyboardPage from "./pages/StudyboardPage"
+import PublicStudyboard from "./pages/PublicStudyboard"
 
 window.socket = io('http://localhost:5000');
 
@@ -45,7 +46,8 @@ const AppContent = () => {
             <Route path="/youtube" element={<YouTubePage />} />
             <Route path="/study-group" element={<StudyGroup />} />
             <Route path="/studyboard/:boardId" element={<StudyboardPage />} />
-<Route path="/chat/:sessionId" element={<ChatSession />} />
+            <Route path="/public-studyboards" element={<PublicStudyboard />} />
+            <Route path="/chat/:sessionId" element={<ChatSession />} />
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </>

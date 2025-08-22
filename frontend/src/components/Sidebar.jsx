@@ -253,6 +253,18 @@ const MainSidebar = () => {
       href: "/settings",
       icon: <Settings className="w-5 h-5" />,
     },
+    {
+      label: "Public Study Boards",
+      href: "/public-studyboards",
+      icon: <Globe className="w-5 h-5" />,
+    },
+    {
+      label: "Logout",
+      href: "#",
+      icon: <LogOut className="w-5 h-5" />,
+      onClick: handleLogout,
+      className: "text-red-400 hover:text-red-300 hover:bg-red-900/20",
+    },
   ];
 
   return (
