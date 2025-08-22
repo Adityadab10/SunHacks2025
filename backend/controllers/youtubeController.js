@@ -140,8 +140,27 @@ export const summarizeVideo = async (req, res) => {
 
     console.log(`Processing video ID: ${videoId} for user: ${userId}`);
 
+    // Handle both Firebase UID and MongoDB ObjectId for userId
+    let actualUserId = userId;
+    
+    // If userId doesn't look like a MongoDB ObjectId, try to find the user
+    if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
+      const User = (await import('../model/user.js')).default;
+      const user = await User.findOne({ firebaseUid: userId });
+      
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          error: "User not found",
+        });
+      }
+      
+      actualUserId = user._id;
+      console.log(`Converted Firebase UID ${userId} to MongoDB ID ${actualUserId}`);
+    }
+
     // Check if this video has already been processed by this user
-    const existingVideo = await Youtube.findOne({ userId, videoId });
+    const existingVideo = await Youtube.findOne({ userId: actualUserId, videoId });
     if (existingVideo) {
       console.log("Video already exists for this user, returning existing data");
       return res.json({
@@ -249,9 +268,9 @@ ${transcript}`
         throw new Error("Failed to generate one or more summaries");
       }
 
-      // Save to MongoDB
+      // Save to MongoDB with the correct userId
       const youtubeRecord = new Youtube({
-        userId: userId,
+        userId: actualUserId,
         videoId: videoId,
         title: metadata.title,
         channel: metadata.channel,
@@ -381,9 +400,34 @@ export const getUserYoutubeHistory = async (req, res) => {
       });
     }
 
-    const youtubeHistory = await Youtube.find({ userId })
-      .sort({ createdAt: -1 })
-      .limit(50);
+    // First, try to find by Firebase UID (string), then by MongoDB ObjectId
+    let youtubeHistory;
+    
+    // Check if userId looks like a MongoDB ObjectId (24 hex characters)
+    if (userId.match(/^[0-9a-fA-F]{24}$/)) {
+      // It's a MongoDB ObjectId
+      youtubeHistory = await Youtube.find({ userId })
+        .sort({ createdAt: -1 })
+        .limit(50);
+    } else {
+      // It's likely a Firebase UID, need to find the user first
+      const User = (await import('../model/user.js')).default;
+      const user = await User.findOne({ firebaseUid: userId });
+      
+      if (!user) {
+        return res.json({
+          success: true,
+          data: {
+            count: 0,
+            videos: []
+          }
+        });
+      }
+      
+      youtubeHistory = await Youtube.find({ userId: user._id })
+        .sort({ createdAt: -1 })
+        .limit(50);
+    }
 
     res.json({
       success: true,

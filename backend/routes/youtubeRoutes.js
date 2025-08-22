@@ -20,6 +20,10 @@ router.post("/transcript", getTranscript);
 // Get user's YouTube video history
 router.get("/history/:userId", getUserYoutubeHistory);
 
+// GET /api/youtube/user/:userId/history
+// Get user's YouTube history
+router.get("/user/:userId/history", getUserYoutubeHistory);
+
 // GET /api/youtube/summary/:id
 // Get specific YouTube video summary by ID
 router.get("/summary/:id", getYoutubeSummary);
