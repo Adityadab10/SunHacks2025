@@ -173,6 +173,7 @@ export const summarizeVideo = async (req, res) => {
             duration: existingVideo.duration,
             url: existingVideo.url,
           },
+          transcript: existingVideo.transcript, // Include existing transcript
           summaries: {
             brief: {
               type: "brief",
@@ -510,3 +511,256 @@ export const getYoutubeSummary = async (req, res) => {
     });
   }
 };
+
+// Add new controller function to generate active recall questions
+export const generateActiveRecallQuestions = async (req, res) => {
+  try {
+    // Initialize Gemini AI client
+    if (!genAI) {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({
+          success: false,
+          error: "GEMINI_API_KEY environment variable is not set",
+        });
+      }
+      genAI = new GoogleGenerativeAI(apiKey);
+    }
+
+    const { transcript, videoTitle } = req.body;
+
+    console.log('Received request for question generation:', {
+      transcriptLength: transcript?.length || 0,
+      videoTitle: videoTitle || 'No title',
+      hasTranscript: !!transcript
+    });
+
+    if (!transcript || transcript.trim().length === 0) {
+      console.error('No transcript provided for question generation');
+      return res.status(400).json({
+        success: false,
+        error: "Transcript is required and cannot be empty"
+      });
+    }
+
+    if (transcript.length < 50) {
+      console.error('Transcript too short for meaningful questions');
+      return res.status(400).json({
+        success: false,
+        error: "Transcript is too short to generate meaningful questions"
+      });
+    }
+
+    console.log('Generating active recall questions for:', videoTitle);
+
+    const prompt = `Based on this YouTube video transcript, generate exactly 4 questions that test deep understanding using the Feynman Technique. The questions should encourage the person to explain concepts in their own words.
+
+Video Title: ${videoTitle || 'YouTube Video'}
+
+Transcript: ${transcript.substring(0, 6000)}
+
+Generate questions that:
+1. Test core concepts and main ideas
+2. Require explanation in simple terms
+3. Check understanding of cause-and-effect relationships
+4. Assess ability to apply knowledge
+
+Return ONLY a JSON object in this exact format:
+{
+  "questions": ["Question 1?", "Question 2?", "Question 3?", "Question 4?"],
+  "difficulties": ["easy", "medium", "medium", "hard"]
+}`;
+
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.0-flash",
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 1024,
+      },
+    });
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const responseText = response.text().trim();
+
+    console.log('Raw AI response:', responseText);
+
+    // Parse the JSON response
+    let questionsData;
+    try {
+      // Extract JSON from the response if it's wrapped in markdown
+      const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/) || responseText.match(/```\n([\s\S]*?)\n```/);
+      const jsonStr = jsonMatch ? jsonMatch[1] : responseText;
+      questionsData = JSON.parse(jsonStr);
+    } catch (parseError) {
+      console.error('Error parsing questions JSON:', parseError);
+      // Fallback: try to extract questions manually
+      questionsData = {
+        questions: [
+          "What are the main concepts explained in this video?",
+          "How would you explain the key ideas to someone who hasn't watched this video?",
+          "What examples or analogies can you use to clarify the main points?",
+          "How do these concepts connect to what you already know?"
+        ],
+        difficulties: ["easy", "medium", "medium", "hard"]
+      };
+    }
+
+    // Validate the structure
+    if (!questionsData.questions || !Array.isArray(questionsData.questions)) {
+      throw new Error('Invalid questions format received from AI');
+    }
+
+    res.json({
+      success: true,
+      data: questionsData
+    });
+
+  } catch (error) {
+    console.error('Error generating active recall questions:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate questions'
+    });
+  }
+};
+
+// Add new controller function to grade active recall answers
+export const gradeActiveRecallAnswers = async (req, res) => {
+  try {
+    // Initialize Gemini AI client
+    if (!genAI) {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({
+          success: false,
+          error: "GEMINI_API_KEY environment variable is not set",
+        });
+      }
+      genAI = new GoogleGenerativeAI(apiKey);
+    }
+
+    const { transcript, questions, answers, videoTitle } = req.body;
+
+    if (!transcript || !questions || !answers) {
+      return res.status(400).json({
+        success: false,
+        error: "Transcript, questions, and answers are required"
+      });
+    }
+
+    console.log('Grading active recall answers for:', videoTitle);
+
+    // Filter out empty answers
+    const validAnswers = answers.filter(answer => answer && answer.trim().length > 0);
+    const validQuestions = questions.filter((_, index) => answers[index] && answers[index].trim().length > 0);
+
+    if (validAnswers.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "No valid answers to grade"
+      });
+    }
+
+    const prompt = `Grade these active recall answers based on the video content. Rate each criteria from 1-10.
+
+Video Title: ${videoTitle || 'YouTube Video'}
+Video Content: ${transcript.substring(0, 5000)}
+
+Questions and Answers:
+${validQuestions.map((q, i) => `Q${i+1}: ${q}\nA${i+1}: ${validAnswers[i]}`).join('\n\n')}
+
+Grade on these criteria:
+1. CLARITY (1-10): How clear and well-structured are the explanations?
+2. UNDERSTANDING (1-10): How well do the answers demonstrate comprehension of core concepts?
+3. ACCURACY (1-10): How factually correct are the answers compared to the video content?
+
+For answers with scores below 6, provide specific feedback for improvement.
+
+Return ONLY a JSON object in this exact format:
+{
+  "grades": {
+    "clarity": 8,
+    "understanding": 7,
+    "accuracy": 9
+  },
+  "feedback": {
+    "clarity": "Feedback if score < 6",
+    "understanding": "Feedback if score < 6", 
+    "accuracy": "Feedback if score < 6",
+    "questions": ["Feedback for Q1 if needed", "Feedback for Q2 if needed"]
+  }
+}`;
+
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.0-flash",
+      generationConfig: {
+        temperature: 0.3,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 1536,
+      },
+    });
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const responseText = response.text().trim();
+
+    console.log('Raw grading response:', responseText);
+
+    // Parse the JSON response
+    let gradingData;
+    try {
+      // Extract JSON from the response if it's wrapped in markdown
+      const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/) || responseText.match(/```\n([\s\S]*?)\n```/);
+      const jsonStr = jsonMatch ? jsonMatch[1] : responseText;
+      gradingData = JSON.parse(jsonStr);
+    } catch (parseError) {
+      console.error('Error parsing grading JSON:', parseError);
+      // Fallback grading
+      gradingData = {
+        grades: {
+          clarity: 7,
+          understanding: 7,
+          accuracy: 7
+        },
+        feedback: {
+          clarity: "Please provide more structured and clear explanations.",
+          understanding: "Try to demonstrate deeper understanding of the concepts.",
+          accuracy: "Ensure your answers align closely with the video content."
+        }
+      };
+    }
+
+    // Validate the structure
+    if (!gradingData.grades || typeof gradingData.grades !== 'object') {
+      throw new Error('Invalid grading format received from AI');
+    }
+
+    // Remove feedback for criteria with good scores (6+)
+    if (gradingData.feedback) {
+      Object.keys(gradingData.grades).forEach(criteria => {
+        if (gradingData.grades[criteria] >= 6 && gradingData.feedback[criteria]) {
+          delete gradingData.feedback[criteria];
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      data: gradingData
+    });
+
+  } catch (error) {
+    console.error('Error grading active recall answers:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to grade answers'
+    });
+  }
+};
+
+// Export helper functions for use in routes
+export { getVideoId, getVideoTranscript };
