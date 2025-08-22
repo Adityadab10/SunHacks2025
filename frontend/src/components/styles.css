@@ -1,0 +1,21 @@
+.members-panel-enter {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.members-panel-enter-active {
+  transform: translateX(0);
+  opacity: 1;
+  transition: all 300ms ease-in-out;
+}
+
+.members-panel-exit {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.members-panel-exit-active {
+  transform: translateX(100%);
+  opacity: 0;
+  transition: all 300ms ease-in-out;
+}

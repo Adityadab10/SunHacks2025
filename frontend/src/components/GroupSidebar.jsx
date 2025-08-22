@@ -64,7 +64,7 @@ const GroupSidebar = ({
   };
 
   return (
-    <div className="w-80 bg-gradient-to-b from-gray-900 to-black border-r border-gray-800/50 flex flex-col h-full backdrop-blur-sm">
+    <div className="w-96 bg-gradient-to-b from-gray-900 to-black border-r border-gray-800/50 flex flex-col h-full backdrop-blur-sm">
       {/* Enhanced Header */}
       <div className="relative p-6 border-b border-gray-800/50">
         <div className="absolute inset-0 bg-gradient-to-r from-[#74AA9C]/5 to-transparent"></div>
@@ -114,7 +114,7 @@ const GroupSidebar = ({
       </div>
 
       {/* Enhanced Groups List */}
-      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
         {groups.length === 0 ? (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}

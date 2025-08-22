@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { io } from 'socket.io-client';
-import { Users, UserPlus, Settings, Trash2, Crown, MessageCircle, Calendar, ChevronRight } from 'lucide-react';
+import { Users, UserPlus, Settings, Trash2, Crown, MessageCircle, Calendar, ChevronRight, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import toast from 'react-hot-toast';
 import MainSidebar from '../components/Sidebar';
@@ -22,6 +22,8 @@ const StudyGroup = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteGroup, setInviteGroup] = useState(null);
+  const [showMembersPanel, setShowMembersPanel] = useState(true);
+  const [isMembersPanelCollapsed, setIsMembersPanelCollapsed] = useState(false);
 
   useEffect(() => {
     const userEmail = window.localStorage.getItem('userEmail');
@@ -283,15 +285,15 @@ const StudyGroup = () => {
           onShowInvite={showInvite}
         />
 
-        {/* Main Content */}
+        {/* Main Content Area */}
         <div className="flex-1 flex flex-col bg-gradient-to-br from-black via-gray-900 to-black">
           {selectedGroup ? (
             <>
-              {/* Enhanced Group Header */}
+              {/* Group Header */}
               <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-r from-gray-900/90 to-gray-800/90 backdrop-blur-sm border-b border-[#74AA9C]/20 p-6 shadow-2xl"
+                className="bg-gradient-to-r from-gray-900/90 to-gray-800/90 backdrop-blur-sm border-b border-[#74AA9C]/20 p-6 shadow-2xl shrink-0"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -320,6 +322,15 @@ const StudyGroup = () => {
                     <motion.button
                       whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(116, 170, 156, 0.3)" }}
                       whileTap={{ scale: 0.95 }}
+                      onClick={() => setIsMembersPanelCollapsed(!isMembersPanelCollapsed)}
+                      className="bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 px-4 py-3 rounded-xl text-white font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg"
+                    >
+                      {isMembersPanelCollapsed ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                      {isMembersPanelCollapsed ? 'Show' : 'Hide'} Members
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(116, 170, 156, 0.3)" }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={() => showInvite(selectedGroup)}
                       className="bg-gradient-to-r from-[#74AA9C] to-[#5a8a7d] hover:from-[#5a8a7d] hover:to-[#74AA9C] px-6 py-3 rounded-xl text-white font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg"
                     >
@@ -339,94 +350,25 @@ const StudyGroup = () => {
                 </div>
               </motion.div>
 
-              {/* Enhanced Content Area */}
-              <div className="flex-1 p-8 grid grid-cols-1 xl:grid-cols-4 gap-8 overflow-hidden">
-                {/* Enhanced Members List */}
+              {/* Main Content with Flexible Layout */}
+              <div className="flex-1 flex overflow-hidden">
+                {/* Group Chat - Main Area */}
                 <motion.div 
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="xl:col-span-1 bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-lg rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className={`${isMembersPanelCollapsed ? 'flex-1' : 'flex-1 max-w-[calc(100%-400px)]'} flex flex-col bg-gradient-to-br from-gray-900/60 to-gray-800/40 backdrop-blur-lg m-6 mr-3 rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden transition-all duration-500`}
                 >
-                  <div className="p-6 border-b border-gray-700/50 bg-gradient-to-r from-[#74AA9C]/10 to-transparent">
-                    <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-3">
-                      <div className="w-8 h-8 bg-[#74AA9C]/20 rounded-lg flex items-center justify-center">
-                        <Users className="w-5 h-5 text-[#74AA9C]" />
-                      </div>
-                      Members ({members.length})
-                    </h2>
-                    <p className="text-gray-400 text-sm">Group participants</p>
-                  </div>
-                  <div className="p-6">
-                    <div className="space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto scrollbar-thin scrollbar-thumb-[#74AA9C]/30 scrollbar-track-transparent">
-                      {members.map((member, index) => (
-                        <motion.div 
-                          key={member._id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="group relative"
-                        >
-                          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-800/60 to-gray-700/40 rounded-xl border border-gray-600/30 hover:border-[#74AA9C]/40 transition-all duration-300 hover:shadow-lg">
-                            <div className="flex items-center gap-3">
-                              <div className="relative">
-                                {member.photoURL ? (
-                                  <img 
-                                    src={member.photoURL} 
-                                    alt="Profile" 
-                                    className="w-10 h-10 rounded-full border-2 border-[#74AA9C]/30 shadow-lg" 
-                                  />
-                                ) : (
-                                  <div className="w-10 h-10 bg-gradient-to-br from-[#74AA9C] to-[#5a8a7d] rounded-full flex items-center justify-center shadow-lg">
-                                    <span className="text-white font-semibold text-sm">
-                                      {member.displayName?.charAt(0)?.toUpperCase() || 'U'}
-                                    </span>
-                                  </div>
-                                )}
-                                {selectedGroup.owner === member._id && (
-                                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg">
-                                    <Crown className="w-3 h-3 text-yellow-900" />
-                                  </div>
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-white font-semibold truncate">
-                                  {member.displayName}
-                                </p>
-                                <p className="text-gray-400 text-sm truncate">{member.email}</p>
-                              </div>
-                            </div>
-                            {selectedGroup.owner === firebaseUid && member._id !== selectedGroup.owner && (
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                onClick={() => removeMember(member._id)}
-                                className="opacity-0 group-hover:opacity-100 bg-red-600/80 hover:bg-red-600 p-2 rounded-lg text-white transition-all duration-300 shadow-lg"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </motion.button>
-                            )}
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Enhanced Group Chat */}
-                <motion.div 
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="xl:col-span-3 bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-lg rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden flex flex-col"
-                >
-                  <div className="p-6 border-b border-gray-700/50 bg-gradient-to-r from-[#74AA9C]/10 to-transparent">
+                  <div className="p-6 border-b border-gray-700/50 bg-gradient-to-r from-[#74AA9C]/10 to-transparent shrink-0">
                     <h2 className="text-xl font-bold text-white flex items-center gap-3">
                       <div className="w-8 h-8 bg-[#74AA9C]/20 rounded-lg flex items-center justify-center">
                         <MessageCircle className="w-5 h-5 text-[#74AA9C]" />
                       </div>
                       Group Chat
                     </h2>
-                    <p className="text-gray-400 text-sm mt-1">Share ideas and collaborate</p>
+                    <p className="text-gray-400 text-sm mt-1">Share ideas and collaborate in real-time</p>
                   </div>
+                  
+                  {/* Chat Container with proper height */}
                   <div className="flex-1 min-h-0">
                     <GroupChat
                       group={selectedGroup}
@@ -437,10 +379,102 @@ const StudyGroup = () => {
                     />
                   </div>
                 </motion.div>
+
+                {/* Members Panel - Collapsible */}
+                <AnimatePresence>
+                  {!isMembersPanelCollapsed && (
+                    <motion.div
+                      initial={{ opacity: 0, x: 300, width: 0 }}
+                      animate={{ opacity: 1, x: 0, width: 400 }}
+                      exit={{ opacity: 0, x: 300, width: 0 }}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
+                      className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-lg m-6 ml-3 rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden flex flex-col"
+                    >
+                      <div className="p-6 border-b border-gray-700/50 bg-gradient-to-r from-[#74AA9C]/10 to-transparent shrink-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                            <div className="w-8 h-8 bg-[#74AA9C]/20 rounded-lg flex items-center justify-center">
+                              <Users className="w-5 h-5 text-[#74AA9C]" />
+                            </div>
+                            Members ({members.length})
+                          </h2>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => setIsMembersPanelCollapsed(true)}
+                            className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
+                          >
+                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                          </motion.button>
+                        </div>
+                        <p className="text-gray-400 text-sm">Group participants and their roles</p>
+                      </div>
+                      
+                      {/* Members List with proper scrolling */}
+                      <div className="flex-1 p-6 overflow-y-auto min-h-0">
+                        <div className="space-y-4">
+                          {members.map((member, index) => (
+                            <motion.div 
+                              key={member._id}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              className="group relative"
+                            >
+                              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-800/60 to-gray-700/40 rounded-xl border border-gray-600/30 hover:border-[#74AA9C]/40 transition-all duration-300 hover:shadow-lg">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <div className="relative shrink-0">
+                                    {member.photoURL ? (
+                                      <img 
+                                        src={member.photoURL} 
+                                        alt="Profile" 
+                                        className="w-12 h-12 rounded-full border-2 border-[#74AA9C]/30 shadow-lg" 
+                                      />
+                                    ) : (
+                                      <div className="w-12 h-12 bg-gradient-to-br from-[#74AA9C] to-[#5a8a7d] rounded-full flex items-center justify-center shadow-lg">
+                                        <span className="text-white font-semibold text-sm">
+                                          {member.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {selectedGroup.owner === member._id && (
+                                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg">
+                                        <Crown className="w-3 h-3 text-yellow-900" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-white font-semibold truncate text-base">
+                                      {member.displayName}
+                                    </p>
+                                    <p className="text-gray-400 text-sm truncate">{member.email}</p>
+                                    {selectedGroup.owner === member._id && (
+                                      <p className="text-yellow-400 text-xs font-medium">Group Owner</p>
+                                    )}
+                                  </div>
+                                </div>
+                                {selectedGroup.owner === firebaseUid && member._id !== selectedGroup.owner && (
+                                  <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={() => removeMember(member._id)}
+                                    className="opacity-0 group-hover:opacity-100 bg-red-600/80 hover:bg-red-600 p-2 rounded-lg text-white transition-all duration-300 shadow-lg shrink-0"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </motion.button>
+                                )}
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </>
           ) : (
-            /* Enhanced Welcome Screen */
+            /* Welcome Screen - unchanged */
             <div className="flex-1 flex items-center justify-center p-8">
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -561,6 +595,24 @@ const StudyGroup = () => {
           />
         )}
       </AnimatePresence>
+
+      {/* Custom Scrollbar Styles */}
+      <style jsx>{`
+        .scrollbar-thin::-webkit-scrollbar {
+          width: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.1);
+          border-radius: 3px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+          background: rgba(116, 170, 156, 0.3);
+          border-radius: 3px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+          background: rgba(116, 170, 156, 0.5);
+        }
+      `}</style>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, MessageCircle, User, Circle, BrainCircuit, ExternalLink, Play, Clock, Youtube, Pin, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
+import { Send, MessageCircle, User, Circle, BrainCircuit, ExternalLink, Play, Clock, Youtube, Pin, ChevronDown, ChevronUp, BookOpen, Users } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,6 +14,7 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
   const [teamStudyBoards, setTeamStudyBoards] = useState([]);
   const [showTeamStudyBoards, setShowTeamStudyBoards] = useState(true);
   const [loadingStudyBoards, setLoadingStudyBoards] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
   const chatEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const socket = useSocket();
