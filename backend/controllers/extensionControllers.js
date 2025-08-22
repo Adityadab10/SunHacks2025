@@ -141,90 +141,41 @@ export const summarizeVideoExtension = async (req, res) => {
     const metadata = await getVideoMetadata(videoId);
     console.log("Metadata fetched:", metadata);
 
-    // Prepare prompts for all 3 summary types
-    const prompts = {
-      brief: `Summarize this YouTube video in 2-3 sentences. Do not add any introductory phrases.
-
-Title: ${metadata.title}
-Channel: ${metadata.channel}
-
-${transcript}`,
-
-      detailed: `Summarize the transcript into detailed paragraphs with key points and takeaways. Output must start directly with the content. Do not say things like "Here is the summary" or similar.
-
-Title: ${metadata.title}
-Channel: ${metadata.channel}
-Duration: ${metadata.duration}
-
-${transcript}`,
-
-      bulletPoints: `Summarize the transcript into bullet points only. No introductions, no closing sentences. Output must start directly with bullet points.
-
-Title: ${metadata.title}
-Channel: ${metadata.channel}
-
-${transcript}`
-    };
-
-    // Generate all 3 summaries using Gemini
-    console.log("Generating all summaries with Gemini for extension...");
+    // Generate simple summary with Gemini
+    console.log("Generating simple summary with Gemini for extension...");
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.0-flash",
+      model: "gemini-1.5-flash",
       generationConfig: {
         temperature: 0.7,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 2048,
+        maxOutputTokens: 1024,
       },
     });
-    
-    const [briefResult, detailedResult, bulletPointsResult] = await Promise.all([
-      model.generateContent(prompts.brief),
-      model.generateContent(prompts.detailed),
-      model.generateContent(prompts.bulletPoints)
-    ]);
 
-    const briefSummary = await briefResult.response;
-    const detailedSummary = await detailedResult.response;
-    const bulletPointsSummary = await bulletPointsResult.response;
+    const prompt = `Please provide a concise summary of the following YouTube video transcript in 3-4 sentences:
 
-    // Validate responses
-    if (!briefSummary.text() || !detailedSummary.text() || !bulletPointsSummary.text()) {
-      throw new Error("Failed to generate one or more summaries");
-    }
+Video Title: ${metadata.title}
+Channel: ${metadata.channel}
 
-    // Return response without saving to database
+Transcript:
+${transcript.slice(0, 8000)} ${transcript.length > 8000 ? '...(truncated)' : ''}
+
+Summary:`;
+
+    console.log("Calling Gemini API...");
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const summary = response.text();
+
+    console.log("Summary generated successfully!");
+
+    // Return simplified response for extension
     res.json({
       success: true,
-      data: {
-        video: {
-          id: videoId,
-          title: metadata.title,
-          channel: metadata.channel,
-          duration: metadata.duration,
-          url: videoUrl,
-        },
-        transcript: transcript,
-        summaries: {
-          brief: {
-            type: "brief",
-            content: briefSummary.text().trim(),
-            generatedAt: new Date().toISOString(),
-          },
-          detailed: {
-            type: "detailed",
-            content: detailedSummary.text().trim(),
-            generatedAt: new Date().toISOString(),
-          },
-          bulletPoints: {
-            type: "bullet-points",
-            content: bulletPointsSummary.text().trim(),
-            generatedAt: new Date().toISOString(),
-          }
-        },
-        generatedAt: new Date().toISOString()
-      },
+      summary: summary.trim(),
+      title: metadata.title,
+      videoId: videoId
     });
+
   } catch (error) {
     console.error("Error summarizing video for extension:", error);
     
@@ -235,8 +186,6 @@ ${transcript}`
       errorMessage = "AI service configuration error. Please check API key.";
     } else if (error.message.includes("Invalid YouTube URL")) {
       errorMessage = "Invalid YouTube URL provided.";
-    } else if (error.message.includes("generate summaries")) {
-      errorMessage = error.message;
     }
     
     res.status(500).json({
