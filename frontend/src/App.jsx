@@ -58,7 +58,6 @@ const AppContent = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
             <Route path='/mainktrial' element={<UploadAndChat />} />
             <Route path='/mainktrial2' element={<FlashCards />} />
-            
           </>
         )}
       </Routes>

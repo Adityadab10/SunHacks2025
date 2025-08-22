@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -36,7 +36,7 @@ class ChatRequest(BaseModel):
 class ChatWithPDFRequest(BaseModel):
     message: str
     teacher: str = "Anil Deshmukh"
-    thread_id: str = "default"
+    thread_id: Optional[str] = None  # Made optional
 
 class ThreadResponse(BaseModel):
     thread_id: str
@@ -49,27 +49,81 @@ class HistoryResponse(BaseModel):
 
 uploaded_files = {}
 
+    
+def extract_message_content(response):
+    """Helper function to extract clean message content"""
+    try:
+        # Handle LangChain message objects
+        if hasattr(response, 'content'):
+            content = response.content
+            if isinstance(content, str):
+                return content.strip()
+            return str(content)
+        
+        # Handle string responses
+        if isinstance(response, str):
+            # Clean up any formatting issues
+            response = response.strip()
+            
+            # If it contains content= pattern, extract it
+            if 'content=' in response:
+                import re
+                # Use regex to extract content between quotes after content=
+                match = re.search(r"content='([^']*)'", response)
+                if match:
+                    return match.group(1).strip()
+                match = re.search(r'content="([^"]*)"', response)
+                if match:
+                    return match.group(1).strip()
+            
+            return response
+            
+        # Handle dictionary responses
+        if isinstance(response, dict):
+            if 'content' in response:
+                return str(response['content']).strip()
+            return str(response)
+            
+        return str(response).strip()
+        
+    except Exception as e:
+        logger.error(f"Error extracting message content: {e}")
+        # Fallback: try to extract any readable content
+        response_str = str(response)
+        if 'content=' in response_str:
+            try:
+                import re
+                match = re.search(r"content='([^']*)'", response_str)
+                if match:
+                    return match.group(1).strip()
+                match = re.search(r'content="([^"]*)"', response_str)
+                if match:
+                    return match.group(1).strip()
+            except:
+                pass
+        return response_str
+
+
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
     """Simple chat endpoint"""
     try:
-        # Build state for chat
         state = {
             "messages": [HumanMessage(content=request.message)],
             "teacher": request.teacher,
-            "pdf_path": None
+            "pdf_path": None,
         }
 
-        # Execute graph directly
         result = await agent.ainvoke(state, config={"configurable": {"thread_id": request.thread_id}})
-        
-        # Extract response from result
+
         if isinstance(result, dict) and 'messages' in result:
-            response = result['messages'][-1].content
+            response = result['messages'][-1]
+            response_content = extract_message_content(response)
+
             return JSONResponse({
                 "status": "success",
                 "thread_id": request.thread_id,
-                "response": response.content
+                "response": response_content
             })
         else:
             raise ValueError("Invalid response format from graph")
@@ -84,13 +138,18 @@ async def chat_endpoint(request: ChatRequest):
 @app.post("/upload-and-chat")
 async def upload_and_chat_endpoint(
     file: UploadFile = File(...),
-    message: str = "What is this document about?",
-    teacher: str = "Anil Deshmukh",
-    user_id: Optional[str] = None
+    message: str = Form(...),  # Use Form instead of default parameter
+    teacher: str = Form("Anil Deshmukh"),  # Use Form with default
+    thread_id: Optional[str] = Form(None)  # Use Form and allow None
 ):
     """Upload PDF and chat endpoint"""
-    if user_id is None:
-        user_id = str(uuid.uuid4())
+    logger.info(f"Received request - thread_id: {thread_id}, message: {message}, teacher: {teacher}")
+    logger.info(f"File received: {file.filename}")
+    
+    # Generate thread_id if not provided
+    if thread_id is None:
+        thread_id = str(uuid.uuid4())
+        logger.info(f"Generated new thread_id: {thread_id}")
 
     temp_file_path = None
     try:
@@ -108,26 +167,28 @@ async def upload_and_chat_endpoint(
         temp_file.close()
         temp_file_path = temp_file.name
 
-        uploaded_files[user_id] = temp_file_path
+        uploaded_files[thread_id] = temp_file_path
 
         # Build state for chat with PDF
         state = {
             "messages": [HumanMessage(content=message)],
             "teacher": teacher,
-            "pdf_path": temp_file_path
+            "pdf_path": temp_file_path,
+            "user_id": thread_id
         }
 
         # Execute graph directly
-        result = await agent.ainvoke(state)
+        result = await agent.ainvoke(state, config={"configurable": {"thread_id": thread_id}})
         
-        # Extract response from result
         if isinstance(result, dict) and 'messages' in result:
-            response = result['messages'][-1].content
+            response = result['messages'][-1]
+            response_content = extract_message_content(response)
+
             return JSONResponse({
                 "status": "success",
-                "thread_id": user_id,
+                "thread_id": thread_id,
                 "filename": file.filename,
-                "response": response
+                "response": response_content
             })
         else:
             raise ValueError("Invalid response format from graph")
@@ -142,16 +203,16 @@ async def upload_and_chat_endpoint(
         if temp_file_path and os.path.exists(temp_file_path):
             try:
                 os.unlink(temp_file_path)
-                uploaded_files.pop(user_id, None)
+                uploaded_files.pop(thread_id, None)
             except Exception as e:
                 logger.error(f"Error cleaning up temp file: {e}")
 
 @app.post("/flashcards")
 async def flashcard_generation(
     file: Optional[UploadFile] = None,
-    message: str = "Generate flashcards from the following content",
-    teacher: str = "Anil Deshmukh",
-    thread_id: Optional[str] = None
+    message: str = Form("Generate flashcards from the following content"),  # Use Form
+    teacher: str = Form("Anil Deshmukh"),  # Use Form
+    thread_id: Optional[str] = Form(None)  # Use Form
 ):
     """Direct flashcard generation endpoint"""
     if thread_id is None:
