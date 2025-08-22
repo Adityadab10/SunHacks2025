@@ -20,9 +20,11 @@ import os
 import logging
 from pptx import Presentation
 from docx import Document
-
+from cachetools import TTLCache
 # Load environment variables FIRST
 load_dotenv()
+
+vector_stores = TTLCache(maxsize=1000, ttl=1800)
 
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2",
@@ -97,50 +99,35 @@ def extract_docx(docx_path):
 
 
 async def prepare_pdf_rag(pdf_path: str, user_id: str) -> Chroma:
-    """Extract PDF text, split into chunks, create/retrieve vector DB, return relevant docs for last query."""
-    try:
-        print("started process...")
-        # Extract entire text
-        content = ""
-        if pdf_path.endswith('.pdf'):
-            content = extract_text(pdf_path)
-        elif pdf_path.endswith('.txt'):
-            with open(pdf_path, 'r') as file:
-                content = file.read()
-        elif pdf_path.endswith('.pptx'):
-            content = extract_pptx(pdf_path)
-        elif pdf_path.endswith('.docx'):
-            content = extract_docx(pdf_path)
-
-        print("text extracted")
-        # Split into chunks
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200
-        )
-        chunks = splitter.split_text(content)
-        print("text split")
-        # Prepare vector DB directory path (unique per user for demo simplicity)
-        vector_db_dir = f"./vector_db/{user_id}"
-        os.makedirs(vector_db_dir, exist_ok=True)
-
-        # Create or load existing Chroma vector store
-        if user_id in vector_stores:
-            vector_db = vector_stores[user_id]
-        else:
-            vector_db = Chroma.from_texts(
-                chunks,
-                embeddings,
-                persist_directory=vector_db_dir
-            )
-            vector_db.persist()
-            vector_stores[user_id] = vector_db
-
-        return vector_db
-
-    except Exception as e:
-        logger.error(f"Error preparing RAG for PDF: {e}")
-        raise
+    # Check if this user already has a vectorstore
+    existing = vector_stores.get(user_id)
+    if existing and existing["file"] == pdf_path:
+        # Reuse the same DB
+        return existing["db"]
+    
+    # If new file or none exists, build fresh
+    if pdf_path.endswith('.pdf'):
+        content = extract_text(pdf_path)
+    elif pdf_path.endswith('.txt'):
+        with open(pdf_path, 'r') as f:
+            content = f.read()
+    elif pdf_path.endswith('.pptx'):
+        content = extract_pptx(pdf_path)
+    elif pdf_path.endswith('.docx'):
+        content = extract_docx(pdf_path)
+    
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200
+    )
+    chunks = splitter.split_text(content)
+    
+    vector_db = Chroma.from_texts(chunks, embeddings)
+    
+    # Store/replace
+    vector_stores[user_id] = {"file": pdf_path, "db": vector_db}
+    
+    return vector_db
 
 def initialise_teacher(state: State):
     """Initialize teacher with appropriate prompt and tools"""
@@ -180,7 +167,7 @@ async def chat(state: State):
         
         # Get the last message
         last_message = state['messages'][-1].content if state['messages'] else ""
-        print(last_message)
+        print(last_message) 
         if not last_message:
             return {"messages": [AIMessage(content="I didn't receive any message. Please try again.")]}
 
