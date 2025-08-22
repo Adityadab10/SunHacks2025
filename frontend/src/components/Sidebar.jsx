@@ -249,11 +249,6 @@ const MainSidebar = () => {
       icon: <BarChart3 className="w-5 h-5" />,
     },
     {
-      label: "Settings",
-      href: "/settings",
-      icon: <Settings className="w-5 h-5" />,
-    },
-    {
       label: "Public Study Boards",
       href: "/public-studyboards",
       icon: <Globe className="w-5 h-5" />,
