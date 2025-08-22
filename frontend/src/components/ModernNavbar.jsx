@@ -66,10 +66,16 @@ const ModernNavbar = ({ isDarkMode, toggleTheme }) => {
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </motion.button>
             <Link
-              to="/waitlist"
+              to="/login"
               className="bg-[#74AA9C] hover:bg-[#74AA9C]/90 text-black px-6 py-2 rounded-full font-semibold transition-all duration-300 hover:scale-105"
             >
-              {t('Join Waitlist')}
+              {t('Login')}
+            </Link>
+            <Link
+              to="/register"
+              className="border-2 border-[#74AA9C] text-[#74AA9C] hover:bg-[#74AA9C] hover:text-black px-6 py-2 rounded-full font-semibold transition-all duration-300 hover:scale-105 bg-transparent"
+            >
+              {t('Signup')}
             </Link>
           </div>
 
@@ -111,11 +117,18 @@ const ModernNavbar = ({ isDarkMode, toggleTheme }) => {
                 </Link>
               ))}
               <Link
-                to="/waitlist"
+                to="/login"
                 className="block px-3 py-2 mt-4 bg-[#74AA9C] text-black rounded-md font-semibold text-center hover:bg-[#74AA9C]/90 transition-all duration-300"
                 onClick={() => setIsMenuOpen(false)}
               >
-                {t('Join Waitlist')}
+                {t('Login')}
+              </Link>
+              <Link
+                to="/register"
+                className="block px-3 py-2 mt-2 border-2 border-[#74AA9C] text-[#74AA9C] rounded-md font-semibold text-center hover:bg-[#74AA9C] hover:text-black transition-all duration-300"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {t('Signup')}
               </Link>
             </div>
           </motion.div>

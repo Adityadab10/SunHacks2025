@@ -219,7 +219,7 @@ const Navbar = ({ isDarkMode = true }) => {
                       navTheme.buttonPrimary
                     )}
                   >
-                    Register
+                    Signup
                   </Link>
                 </motion.div>
               </div>
