@@ -239,8 +239,8 @@ const MainSidebar = () => {
       icon: <Zap className="w-5 h-5" />,
     },
     {
-      label: "AI Tutor",
-      href: "/ai-tutor",
+      label: "Study Group",
+      href: "/study-group",
       icon: <MessageCircle className="w-5 h-5" />,
     },
     {

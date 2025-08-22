@@ -9,7 +9,10 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import Profile from './pages/Profile';
+import UploadAndChat from './pages/MainkTrial';
 import YouTubePage from './pages/Youtube';
+import FlashCards from './pages/FlashCards';
+import StudyGroup from './pages/StudyGroup';
 
 const AppContent = () => {
   const { firebaseUid, loading } = useUser();
@@ -34,6 +37,7 @@ const AppContent = () => {
             <Route path="/upload" element={<Upload />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/youtube" element={<YouTubePage />} />
+            <Route path="/study-group" element={<StudyGroup />} />
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </>
@@ -44,6 +48,9 @@ const AppContent = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path='/mainktrial' element={<UploadAndChat />} />
+            <Route path='/mainktrial2' element={<FlashCards />} />
+            
           </>
         )}
       </Routes>
