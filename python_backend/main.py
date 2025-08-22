@@ -49,61 +49,6 @@ class HistoryResponse(BaseModel):
 
 uploaded_files = {}
 
-    
-def extract_message_content(response):
-    """Helper function to extract clean message content"""
-    try:
-        # Handle LangChain message objects
-        if hasattr(response, 'content'):
-            content = response.content
-            if isinstance(content, str):
-                return content.strip()
-            return str(content)
-        
-        # Handle string responses
-        if isinstance(response, str):
-            # Clean up any formatting issues
-            response = response.strip()
-            
-            # If it contains content= pattern, extract it
-            if 'content=' in response:
-                import re
-                # Use regex to extract content between quotes after content=
-                match = re.search(r"content='([^']*)'", response)
-                if match:
-                    return match.group(1).strip()
-                match = re.search(r'content="([^"]*)"', response)
-                if match:
-                    return match.group(1).strip()
-            
-            return response
-            
-        # Handle dictionary responses
-        if isinstance(response, dict):
-            if 'content' in response:
-                return str(response['content']).strip()
-            return str(response)
-            
-        return str(response).strip()
-        
-    except Exception as e:
-        logger.error(f"Error extracting message content: {e}")
-        # Fallback: try to extract any readable content
-        response_str = str(response)
-        if 'content=' in response_str:
-            try:
-                import re
-                match = re.search(r"content='([^']*)'", response_str)
-                if match:
-                    return match.group(1).strip()
-                match = re.search(r'content="([^"]*)"', response_str)
-                if match:
-                    return match.group(1).strip()
-            except:
-                pass
-        return response_str
-
-
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
     """Simple chat endpoint"""
@@ -134,15 +79,67 @@ async def chat_endpoint(request: ChatRequest):
             {"status": "error", "detail": str(e)},
             status_code=500
         )
+def extract_message_content(message):
+    """Extract clean text content from various message formats"""
+    if hasattr(message, 'content'):
+        content = message.content
+        
+        # If content is a string, return it directly
+        if isinstance(content, str):
+            return content.strip()
+        
+        # If content is a list (tool calls, etc.), extract text parts
+        elif isinstance(content, list):
+            text_parts = []
+            for item in content:
+                if isinstance(item, dict):
+                    if 'text' in item:
+                        text_parts.append(item['text'])
+                    elif 'content' in item:
+                        text_parts.append(str(item['content']))
+                elif isinstance(item, str):
+                    text_parts.append(item)
+                else:
+                    text_parts.append(str(item))
+            return ' '.join(text_parts).strip()
+        
+        # If content is a dict, try to find text
+        elif isinstance(content, dict):
+            if 'text' in content:
+                return content['text'].strip()
+            elif 'content' in content:
+                return str(content['content']).strip()
+            else:
+                return str(content).strip()
+    
+    # Fallback: convert entire message to string and clean it
+    message_str = str(message)
+    
+    # Try to extract just the main content using regex
+    import re
+    
+    # Pattern to match content='...' 
+    content_match = re.search(r"content='([^']*)'", message_str)
+    if content_match:
+        return content_match.group(1).strip()
+    
+    # Pattern to match content="..."
+    content_match = re.search(r'content="([^"]*)"', message_str)
+    if content_match:
+        return content_match.group(1).strip()
+    
+    # If no pattern matches, return the full string (as fallback)
+    return message_str.strip()
+
 
 @app.post("/upload-and-chat")
 async def upload_and_chat_endpoint(
     file: UploadFile = File(...),
-    message: str = Form(...),  # Use Form instead of default parameter
-    teacher: str = Form("Anil Deshmukh"),  # Use Form with default
-    thread_id: Optional[str] = Form(None)  # Use Form and allow None
+    message: str = Form(...),
+    teacher: str = Form("Anil Deshmukh"),
+    thread_id: Optional[str] = Form(None)
 ):
-    """Upload PDF and chat endpoint"""
+    """Upload document and chat endpoint - supports PDF, DOCX, and PPTX"""
     logger.info(f"Received request - thread_id: {thread_id}, message: {message}, teacher: {teacher}")
     logger.info(f"File received: {file.filename}")
     
@@ -153,23 +150,26 @@ async def upload_and_chat_endpoint(
 
     temp_file_path = None
     try:
-        # Validate PDF
-        if not file.filename.lower().endswith('.pdf'):
+        # Validate file type
+        allowed_extensions = ['.pdf', '.docx', '.pptx']
+        file_extension = os.path.splitext(file.filename.lower())[1]
+        
+        if file_extension not in allowed_extensions:
             return JSONResponse(
-                {"status": "error", "detail": "Only PDF files supported"},
+                {"status": "error", "detail": "Only PDF, DOCX, and PPTX files are supported"},
                 status_code=400
             )
 
         # Save uploaded file
         content = await file.read()
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=file_extension)
         temp_file.write(content)
         temp_file.close()
         temp_file_path = temp_file.name
 
         uploaded_files[thread_id] = temp_file_path
 
-        # Build state for chat with PDF
+        # Build state for chat with document
         state = {
             "messages": [HumanMessage(content=message)],
             "teacher": teacher,
@@ -181,8 +181,16 @@ async def upload_and_chat_endpoint(
         result = await agent.ainvoke(state, config={"configurable": {"thread_id": thread_id}})
         
         if isinstance(result, dict) and 'messages' in result:
-            response = result['messages'][-1]
-            response_content = extract_message_content(response)
+            response_message = result['messages'][-1]
+            
+            # Enhanced content extraction with debugging
+            logger.info(f"Raw response message type: {type(response_message)}")
+            logger.info(f"Raw response message: {response_message}")
+            
+            # Extract clean content
+            response_content = extract_message_content(response_message)
+            
+            logger.info(f"Extracted content: {response_content}")
 
             return JSONResponse({
                 "status": "success",
@@ -249,19 +257,24 @@ async def flashcard_generation(
         # Generate flashcards
         try:
             result = await graph.ainvoke(state)
-            print()
-
+            print(result)
             result = result['result']
-        
             flashcards = []
+            quiz = []
             for i in range(1, 11):
                 question_key = f"question_{i}"
                 answer_key = f"answer_{i}"
                 
-                if result[question_key] and result[answer_key]:
+                if result['flashcards'][question_key]:
                     flashcards.append({
-                        "question": result[question_key],
-                        "answer": result[answer_key]
+                        "question": result['flashcards'][question_key],
+                        "answer": result['flashcards'][answer_key]
+                    })
+                if result['quiz'][question_key]:
+                    quiz.append({
+                        "question": result['quiz'][question_key],
+                        "options": result['quiz'][f"options_{i}"],
+                        "answer": result['quiz'][answer_key]
                     })
 
             if not flashcards:
@@ -272,7 +285,9 @@ async def flashcard_generation(
 
             return JSONResponse({
                 "status": "success",
-                "flashcards": flashcards
+                "flashcards": flashcards,
+                'quiz': quiz,
+                'summary': result['summarize']
             })
 
         except Exception as e:
@@ -321,4 +336,4 @@ async def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)
