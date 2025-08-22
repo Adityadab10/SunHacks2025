@@ -464,6 +464,8 @@ export const getPublicStudyBoards = async (req, res) => {
           youtubeVideoId: board.youtubeVideoId,
           likeCount: board.likeCount,
           dislikeCount: board.dislikeCount,
+          likes: board.likes,
+          dislikes: board.dislikes,
           creator: board.userId,
           createdAt: board.createdAt
         })),
@@ -513,11 +515,11 @@ export const toggleLikeDislike = async (req, res) => {
       });
     }
 
-    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const userObjectId = userId;
     
     // Remove user from both arrays first
-    studyBoard.likes = studyBoard.likes.filter(id => !id.equals(userObjectId));
-    studyBoard.dislikes = studyBoard.dislikes.filter(id => !id.equals(userObjectId));
+    studyBoard.likes = studyBoard.likes.filter(id => id.toString() !== userObjectId.toString());
+    studyBoard.dislikes = studyBoard.dislikes.filter(id => id.toString() !== userObjectId.toString());
 
     // Add to appropriate array
     if (action === 'like') {
@@ -537,7 +539,9 @@ export const toggleLikeDislike = async (req, res) => {
       data: {
         likeCount: studyBoard.likeCount,
         dislikeCount: studyBoard.dislikeCount,
-        userAction: action
+        userAction: action,
+        likes: studyBoard.likes,
+        dislikes: studyBoard.dislikes
       }
     });
   } catch (error) {
