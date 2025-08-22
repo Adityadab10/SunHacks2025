@@ -61,7 +61,7 @@ async def chat_endpoint(request: ChatRequest):
         }
 
         # Execute graph directly
-        result = await agent.ainvoke(state)
+        result = await agent.ainvoke(state, config={"configurable": {"thread_id": request.thread_id}})
         
         # Extract response from result
         if isinstance(result, dict) and 'messages' in result:
@@ -69,7 +69,7 @@ async def chat_endpoint(request: ChatRequest):
             return JSONResponse({
                 "status": "success",
                 "thread_id": request.thread_id,
-                "response": response
+                "response": response.content
             })
         else:
             raise ValueError("Invalid response format from graph")

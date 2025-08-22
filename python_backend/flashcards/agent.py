@@ -78,11 +78,15 @@ async def process_pdf(pdf_path: str) -> str:
         raise
 
 @tool
-def search(state: State):
-    """Use this too to search for any information that you are not aware of."""
-    serpapi = SerpAPIWrapper()
-    results = serpapi.run(state['messages'][-1])
-    return {"messages": [results]}
+def search(query: str) -> str:
+    """Search for information on the internet."""
+    try:
+        serpapi = SerpAPIWrapper()
+        results = serpapi.run(query)
+        return results
+    except Exception as e:
+        logger.error(f"Search error: {e}")
+        return f"Search failed: {str(e)}"
 
 # Initialize tools list
 tools = [search]
@@ -131,21 +135,23 @@ def initialise_teacher(state: State):
         
         # Get teacher prompt
         if teacher == 'Anil Deshmukh':
-            prompt = anil_prompt
+            system_prompt = anil_prompt
         elif teacher == 'Kavita Iyer':
-            prompt = kavita_prompt
+            system_prompt = kavita_prompt
         elif teacher == 'Raghav Sharma':
-            prompt = raghav_prompt
+            system_prompt = raghav_prompt
         else:
-            prompt = mary_prompt
+            system_prompt = mary_prompt
         
+        # Create a simpler prompt template
         prompt_template = ChatPromptTemplate.from_messages([
-            ("system", prompt),
-            MessagesPlaceholder(variable_name='pdf_info'),
-            MessagesPlaceholder(variable_name="messages"),
-            ("human", state['messages'][-1])
+            ("system", system_prompt),
+            ("user", "{input}")
         ])
-        chain = prompt_template | llm.bind_tools(tools)    
+        
+        # Create the chain with the new template
+        chain = prompt_template | llm.bind_tools(tools)
+        
         return {"chain": chain}
         
     except Exception as e:
@@ -156,31 +162,42 @@ async def chat(state: State, user_id: str = "default"):
     """Modified chat handler with RAG support"""
     try:
         chain = state['chain']
-        messages = state['messages'][:-1]
-        if not messages:
+        
+        # Get the last message
+        last_message = state['messages'][-1].content if state['messages'] else ""
+        
+        if not last_message:
             return {"messages": [AIMessage(content="I didn't receive any message. Please try again.")]}
 
         # If PDF provided, use retriever to get relevant chunks
         if state.get('pdf_path'):
             vector_db = await prepare_pdf_rag(state['pdf_path'], user_id)
-
-            # Use last user message for similarity search
-            last_user_message = state['messages'][-1].content
-            relevant_docs = vector_db.similarity_search(last_user_message, k=3)
-
-            # Combine retrieved docs as context string
-            pdf_info = "\n\n".join([doc.page_content for doc in relevant_docs])
-            response = await chain.ainvoke({"messages": messages, "pdf_info": pdf_info})
-
+            relevant_docs = vector_db.similarity_search(last_message, k=3)
+            context = "\n\n".join([doc.page_content for doc in relevant_docs])
+            
+            # Format input with context
+            input_text = f"Context from PDF:\n{context}\n\nQuestion: {last_message}"
         else:
-            # No PDF, normal call with empty context
-            response = await chain.ainvoke({"messages": messages, "pdf_info": ""})
+            # No PDF, use message directly
+            input_text = last_message
 
-        return {"messages": [response]}
+        # Invoke chain with simplified input
+        try:
+            response = await chain.ainvoke({"input": input_text})
+            if isinstance(response, str):
+                return {"messages": [AIMessage(content=response)]}
+            elif isinstance(response, dict) and 'output' in response:
+                return {"messages": [AIMessage(content=response['output'])]}
+            else:
+                return {"messages": [AIMessage(content=str(response))]}
+        except Exception as chain_error:
+            logger.error(f"Chain invocation error: {chain_error}")
+            return {"messages": [AIMessage(content=f"I encountered an error processing your request: {str(chain_error)}")]}
 
     except Exception as e:
         logger.error(f"Error in chat with RAG: {e}")
         return {"messages": [AIMessage(content=f"Sorry, I encountered an error: {str(e)}")]}
+
     
 memory = MemorySaver()
 
