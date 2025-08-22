@@ -111,7 +111,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-[#74AA9C] to-[#5a8a7e] text-white py-4 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#74AA9C]/25 transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none flex items-center justify-center space-x-2"
+              className="w-full bg-gradient-to-r from-[#74AA9C] to-[#5a8a7e] text-white py-2.5 rounded-lg font-semibold hover:shadow-lg hover:shadow-[#74AA9C]/25 transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none flex items-center justify-center space-x-2 text-sm"
             >
               {loading ? (
                 <>
@@ -128,12 +128,12 @@ const Login = () => {
           </form>
 
           {/* Divider */}
-          <div className="relative">
+          <div className="relative my-2">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-700"></div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-black/60 text-gray-400">Or continue with</span>
+            <div className="relative flex justify-center text-xs">
+              <span className="px-3 bg-black/60 text-gray-400">Or continue with</span>
             </div>
           </div>
 
@@ -141,7 +141,7 @@ const Login = () => {
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full bg-white/5 border border-gray-700 text-white py-4 rounded-xl font-medium hover:bg-white/10 hover:border-gray-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 group"
+            className="w-full bg-white/5 border border-gray-700 text-white py-2.5 rounded-lg font-medium hover:bg-white/10 hover:border-gray-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 group text-sm"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#EA4335" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -153,8 +153,8 @@ const Login = () => {
           </button>
 
           {/* Footer */}
-          <div className="text-center pt-4">
-            <p className="text-gray-400">
+          <div className="text-center pt-2">
+            <p className="text-gray-400 text-xs">
               Don't have an account?{' '}
               <Link 
                 to="/register" 
@@ -167,8 +167,8 @@ const Login = () => {
         </div>
 
         {/* Bottom decorative text */}
-        <div className="text-center mt-8">
-          <p className="text-gray-500 text-sm">
+        <div className="text-center mt-4">
+          <p className="text-gray-500 text-xs">
             Secure authentication powered by Firebase
           </p>
         </div>
