@@ -430,22 +430,24 @@ Continue this pattern for all 5 questions.`,
       }
     } catch (err) {
       console.error("Error processing file:", err);
-      
+
       // Handle specific error types
       let errorMessage = "Failed to process the file. Please try again.";
-      
-      if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
-        errorMessage = "Processing is taking longer than expected. This may happen with large files or complex documents. Please try with a smaller file or try again later.";
+
+      if (err.code === "ECONNABORTED" || err.message.includes("timeout")) {
+        errorMessage =
+          "Processing is taking longer than expected. This may happen with large files or complex documents. Please try with a smaller file or try again later.";
       } else if (err.response?.status === 413) {
         errorMessage = "File is too large. Please try with a smaller file.";
       } else if (err.response?.status === 415) {
-        errorMessage = "File type not supported. Please upload PDF, DOCX, or PPTX files only.";
+        errorMessage =
+          "File type not supported. Please upload PDF, DOCX, or PPTX files only.";
       } else if (err.response?.status >= 500) {
         errorMessage = "Server error. Please try again later.";
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
       toast.error(errorMessage, {
         id: "processing",
@@ -472,34 +474,39 @@ Continue this pattern for all 5 questions.`,
 
       lines.forEach((line) => {
         line = line.trim();
-        
+
         // Match question patterns: "1.", "Question 1:", "Q1:", etc.
-        if (line.match(/^\d+[.)]\s*/) || line.match(/^(Question|Q)\s*\d+[:.?]?\s*/i)) {
+        if (
+          line.match(/^\d+[.)]\s*/) ||
+          line.match(/^(Question|Q)\s*\d+[:.?]?\s*/i)
+        ) {
           // New question
           if (currentQuestion && currentQuestion.question) {
             quiz.push(currentQuestion);
           }
-          
+
           let questionText = line
             .replace(/^\d+[.)]\s*/, "")
             .replace(/^(Question|Q)\s*\d+[:.?]?\s*/i, "")
             .trim();
-          
+
           currentQuestion = {
             question: questionText,
             options: [],
             answer: "",
             explanation: "",
           };
-        } 
+        }
         // Match option patterns: "A)", "A.", "a)", "(A)", etc.
         else if (line.match(/^[(\s]*[A-Da-d][).:\s]/)) {
           if (currentQuestion) {
-            const optionLetter = line.charAt(line.search(/[A-Da-d]/)).toUpperCase();
+            const optionLetter = line
+              .charAt(line.search(/[A-Da-d]/))
+              .toUpperCase();
             const optionText = line
               .replace(/^[(\s]*[A-Da-d][).:\s]+/, "")
               .trim();
-            
+
             if (optionText) {
               currentQuestion.options.push({
                 label: optionLetter,
@@ -508,7 +515,7 @@ Continue this pattern for all 5 questions.`,
               });
             }
           }
-        } 
+        }
         // Match answer patterns
         else if (
           line.toLowerCase().includes("answer") ||
@@ -529,7 +536,7 @@ Continue this pattern for all 5 questions.`,
               });
             }
           }
-        } 
+        }
         // Match explanation patterns
         else if (line.toLowerCase().includes("explanation")) {
           if (currentQuestion) {
@@ -539,7 +546,11 @@ Continue this pattern for all 5 questions.`,
           }
         }
         // If we have a current question but no specific pattern, it might be a continuation
-        else if (currentQuestion && !currentQuestion.question && line.length > 10) {
+        else if (
+          currentQuestion &&
+          !currentQuestion.question &&
+          line.length > 10
+        ) {
           currentQuestion.question = line;
         }
       });
@@ -548,22 +559,28 @@ Continue this pattern for all 5 questions.`,
       if (currentQuestion && currentQuestion.question) {
         quiz.push(currentQuestion);
       }
-      
+
       console.log("Final parsed quiz:", quiz);
-      
+
       // If parsing failed, create a fallback simple format
       if (quiz.length === 0 && response.length > 50) {
         console.log("Fallback parsing for quiz");
-        return [{
-          question: "Quiz parsing failed - showing raw response",
-          options: [
-            { label: "A", text: "Raw response available in console", isCorrect: true }
-          ],
-          answer: "A",
-          explanation: "Please check the console for the raw quiz response"
-        }];
+        return [
+          {
+            question: "Quiz parsing failed - showing raw response",
+            options: [
+              {
+                label: "A",
+                text: "Raw response available in console",
+                isCorrect: true,
+              },
+            ],
+            answer: "A",
+            explanation: "Please check the console for the raw quiz response",
+          },
+        ];
       }
-      
+
       return quiz;
     } catch (error) {
       console.error("Error parsing quiz:", error);
@@ -628,17 +645,18 @@ Continue this pattern for all 5 questions.`,
       toast.success("Response received!");
     } catch (err) {
       console.error("Error chatting with document:", err);
-      
+
       let errorMessage = "Failed to chat with the document. Please try again.";
-      
-      if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
-        errorMessage = "Request timed out. Please try again or ask a simpler question.";
+
+      if (err.code === "ECONNABORTED" || err.message.includes("timeout")) {
+        errorMessage =
+          "Request timed out. Please try again or ask a simpler question.";
       } else if (err.response?.status >= 500) {
         errorMessage = "Server error. Please try again later.";
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       toast.error(errorMessage, { duration: 4000 });
     }
   };
@@ -823,8 +841,9 @@ Continue this pattern for all 5 questions.`,
               {isProcessing && (
                 <div className="mb-4 p-3 bg-blue-900/20 border border-blue-500/20 rounded-lg">
                   <p className="text-blue-300 text-sm">
-                    <strong>Processing in progress...</strong> Large files may take 1-2 minutes to process. 
-                    Please be patient while we analyze your document and generate study materials.
+                    <strong>Processing in progress...</strong> Large files may
+                    take 1-2 minutes to process. Please be patient while we
+                    analyze your document and generate study materials.
                   </p>
                 </div>
               )}
@@ -869,9 +888,10 @@ Continue this pattern for all 5 questions.`,
                 <AlertCircle className="w-5 h-5 text-red-400 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-red-400">{error}</p>
-                  {error.includes('timeout') && (
+                  {error.includes("timeout") && (
                     <p className="text-red-300 text-sm mt-2">
-                      💡 Tip: Try uploading a smaller file or check your internet connection.
+                      💡 Tip: Try uploading a smaller file or check your
+                      internet connection.
                     </p>
                   )}
                 </div>
@@ -1069,7 +1089,7 @@ Continue this pattern for all 5 questions.`,
                   </div>
                   <h2 className="text-xl font-semibold">Quiz Questions</h2>
                 </div>
-                
+
                 {processedData.quiz?.length > 0 ? (
                   <div className="space-y-6">
                     {processedData.quiz.map((question, qIndex) => (
@@ -1080,68 +1100,75 @@ Continue this pattern for all 5 questions.`,
                         <h3 className="text-xl font-semibold text-white mb-4">
                           {qIndex + 1}. {question.question}
                         </h3>
-                      <div className="space-y-3">
-                        {question.options.map((option, oIndex) => (
-                          <button
-                            key={oIndex}
-                            onClick={() => handleAnswerSelect(qIndex, oIndex)}
-                            disabled={showExplanations[qIndex]}
-                            className={`w-full text-left p-3 rounded-lg text-white transition-colors ${
-                              selectedAnswers[qIndex] === oIndex
-                                ? option.isCorrect
+                        <div className="space-y-3">
+                          {question.options.map((option, oIndex) => (
+                            <button
+                              key={oIndex}
+                              onClick={() => handleAnswerSelect(qIndex, oIndex)}
+                              disabled={showExplanations[qIndex]}
+                              className={`w-full text-left p-3 rounded-lg text-white transition-colors ${
+                                selectedAnswers[qIndex] === oIndex
+                                  ? option.isCorrect
+                                    ? "bg-green-500/20 border-green-500/50"
+                                    : "bg-red-500/20 border-red-500/50"
+                                  : showExplanations[qIndex] && option.isCorrect
                                   ? "bg-green-500/20 border-green-500/50"
-                                  : "bg-red-500/20 border-red-500/50"
-                                : showExplanations[qIndex] && option.isCorrect
-                                ? "bg-green-500/20 border-green-500/50"
-                                : "bg-gray-800 hover:bg-gray-700"
-                            } border border-gray-600`}
-                          >
-                            <span className="font-semibold mr-2">
-                              {option.label}.
-                            </span>
-                            {option.text}
-                            {showExplanations[qIndex] && option.isCorrect && (
-                              <span className="ml-2 text-green-400">✓</span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-
-                      {showExplanations[qIndex] && (
-                        <div
-                          className={`mt-4 p-4 rounded-lg ${
-                            question.options[selectedAnswers[qIndex]]?.isCorrect
-                              ? "bg-green-500/10 border-green-500/30"
-                              : "bg-red-500/10 border-red-500/30"
-                          } border`}
-                        >
-                          <p className="text-sm font-semibold mb-2 text-white">
-                            Correct Answer: {question.answer}
-                          </p>
-                          {question.explanation && (
-                            <p className="text-sm text-gray-300">
-                              {question.explanation}
-                            </p>
-                          )}
+                                  : "bg-gray-800 hover:bg-gray-700"
+                              } border border-gray-600`}
+                            >
+                              <span className="font-semibold mr-2">
+                                {option.label}.
+                              </span>
+                              {option.text}
+                              {showExplanations[qIndex] && option.isCorrect && (
+                                <span className="ml-2 text-green-400">✓</span>
+                              )}
+                            </button>
+                          ))}
                         </div>
-                      )}
-                    </div>
-                  ))}
+
+                        {showExplanations[qIndex] && (
+                          <div
+                            className={`mt-4 p-4 rounded-lg ${
+                              question.options[selectedAnswers[qIndex]]
+                                ?.isCorrect
+                                ? "bg-green-500/10 border-green-500/30"
+                                : "bg-red-500/10 border-red-500/30"
+                            } border`}
+                          >
+                            <p className="text-sm font-semibold mb-2 text-white">
+                              Correct Answer: {question.answer}
+                            </p>
+                            {question.explanation && (
+                              <p className="text-sm text-gray-300">
+                                {question.explanation}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
                     <div className="text-center">
                       <AlertCircle className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-white mb-2">No Quiz Available</h3>
+                      <h3 className="text-lg font-semibold text-white mb-2">
+                        No Quiz Available
+                      </h3>
                       <p className="text-gray-400 mb-4">
-                        Quiz generation might have failed or the response format wasn't recognized.
+                        Quiz generation might have failed or the response format
+                        wasn't recognized.
                       </p>
                       <p className="text-sm text-gray-500">
-                        Debug info: Quiz data length: {processedData.quiz?.length || 0}
+                        Debug info: Quiz data length:{" "}
+                        {processedData.quiz?.length || 0}
                       </p>
                       {import.meta.env.DEV && (
                         <button
-                          onClick={() => console.log("Quiz debug:", processedData.quiz)}
+                          onClick={() =>
+                            console.log("Quiz debug:", processedData.quiz)
+                          }
                           className="mt-2 px-3 py-1 bg-gray-600 hover:bg-gray-500 text-white text-sm rounded"
                         >
                           Log Quiz Data
