@@ -1,16 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, MessageCircle, User, Circle } from 'lucide-react';
+import { Send, MessageCircle, User, Circle, BrainCircuit, ExternalLink, Play, Clock, Youtube, Pin, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
+import { useNavigate } from 'react-router-dom';
 
 const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = [] }) => {
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [pinnedMessages, setPinnedMessages] = useState([]);
+  const [showPinnedMessages, setShowPinnedMessages] = useState(true);
+  const [teamStudyBoards, setTeamStudyBoards] = useState([]);
+  const [showTeamStudyBoards, setShowTeamStudyBoards] = useState(true);
+  const [loadingStudyBoards, setLoadingStudyBoards] = useState(false);
   const chatEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const socket = useSocket();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (chatEndRef.current) {
@@ -144,6 +151,232 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
     }
   }, [socket, group?._id]);
 
+  // Extract pinned messages from regular messages
+  useEffect(() => {
+    const pinned = messages.filter(msg => 
+      msg.isPinned && 
+      msg.messageType === 'studyboard_share' && 
+      msg.isSystemMessage
+    );
+    
+    console.log('📌 PINNED MESSAGES UPDATE:', {
+      groupId: group?._id,
+      groupName: group?.name,
+      totalMessages: messages.length,
+      pinnedCount: pinned.length,
+      pinnedMessages: pinned.map(msg => ({
+        messageType: msg.messageType,
+        isPinned: msg.isPinned,
+        isSystemMessage: msg.isSystemMessage,
+        content: msg.content ? JSON.parse(msg.content)?.studyBoardName : 'No content'
+      }))
+    });
+    
+    setPinnedMessages(pinned);
+  }, [messages, group]);
+
+  // Fetch study boards for the current team/group
+  const fetchTeamStudyBoards = async () => {
+    if (!group?._id) return;
+    
+    setLoadingStudyBoards(true);
+    try {
+      console.log('📚 FETCHING STUDY BOARDS FOR GROUP:', {
+        groupId: group._id,
+        groupName: group.name
+      });
+      
+      const response = await fetch(`http://localhost:5000/api/studyboard-yt/group/${group._id}`);
+      
+      console.log('📚 RESPONSE STATUS:', response.status);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log('📚 Study boards endpoint not found (404)');
+          setTeamStudyBoards([]);
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('📚 RESPONSE DATA:', data);
+      
+      if (data.success) {
+        const studyBoards = Array.isArray(data.data) ? data.data : [];
+        setTeamStudyBoards(studyBoards);
+        console.log('📚 SET TEAM STUDY BOARDS:', {
+          groupId: group._id,
+          groupName: group.name,
+          count: studyBoards.length,
+          studyBoards: studyBoards.map(sb => ({
+            id: sb._id,
+            name: sb.studyBoardName,
+            videoTitle: sb.videoTitle
+          }))
+        });
+      } else {
+        console.log('📚 API returned unsuccessful response:', data);
+        setTeamStudyBoards([]);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching team study boards:', error);
+      setTeamStudyBoards([]);
+    } finally {
+      setLoadingStudyBoards(false);
+    }
+  };
+
+  // Fetch team study boards when group changes
+  useEffect(() => {
+    fetchTeamStudyBoards();
+  }, [group?._id]);
+
+  // Handle study board message click
+  const handleStudyBoardClick = (studyBoardId) => {
+    console.log('🔗 NAVIGATING TO STUDY BOARD:', studyBoardId);
+    navigate(`/studyboard/${studyBoardId}`);
+  };
+
+  // Render study board share message
+  const renderStudyBoardMessage = (messageContent, isPinned = false) => {
+    try {
+      const content = JSON.parse(messageContent);
+      console.log('🎨 RENDERING STUDY BOARD MESSAGE:', {
+        type: content.type,
+        studyBoardId: content.studyBoardId,
+        studyBoardName: content.studyBoardName,
+        isPinned
+      });
+      
+      return (
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => handleStudyBoardClick(content.studyBoardId)}
+          className={`${
+            isPinned 
+              ? 'bg-gradient-to-r from-purple-700/30 to-indigo-700/30 border-2 border-purple-500/50' 
+              : 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 border border-purple-500/30'
+          } rounded-lg p-4 cursor-pointer hover:border-purple-400/50 transition-all`}
+        >
+          <div className="flex items-start gap-3">
+            <div className="bg-purple-500/30 p-2 rounded-lg shrink-0">
+              <BrainCircuit className="w-5 h-5 text-purple-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                {isPinned && <Pin className="w-4 h-4 text-purple-400" />}
+                <span className="text-purple-400 font-medium text-sm">
+                  📚 Study Board {isPinned ? '(Pinned)' : 'Shared'}
+                </span>
+                <ExternalLink className="w-3 h-3 text-purple-400" />
+              </div>
+              <h4 className="text-white font-medium text-sm mb-2 line-clamp-1">
+                {content.studyBoardName}
+              </h4>
+              <div className="bg-gray-800/50 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Youtube className="w-4 h-4 text-red-400" />
+                  <span className="text-gray-300 text-xs font-medium line-clamp-1">
+                    {content.videoTitle}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4 text-xs text-gray-400">
+                  <div className="flex items-center gap-1">
+                    <User className="w-3 h-3" />
+                    <span>{content.videoChannel}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    <span>{content.videoDuration}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center gap-2">
+                  {content.sharedByPhoto && (
+                    <img src={content.sharedByPhoto} alt="User" className="w-4 h-4 rounded-full" />
+                  )}
+                  <span className="text-xs text-gray-400">
+                    Shared by {content.sharedBy}
+                  </span>
+                </div>
+                <span className="text-xs text-purple-400 font-medium">
+                  Click to view →
+                </span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      );
+    } catch (e) {
+      console.error('❌ Error parsing study board message content:', e, messageContent);
+      return <span className="text-sm">{messageContent}</span>;
+    }
+    return <span className="text-sm">{messageContent}</span>;
+  };
+
+  // Render team study board item
+  const renderTeamStudyBoard = (studyBoard) => {
+    return (
+      <motion.div
+        key={studyBoard._id}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => handleStudyBoardClick(studyBoard._id)}
+        className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30 rounded-lg p-3 cursor-pointer hover:border-blue-400/50 transition-all"
+      >
+        <div className="flex items-start gap-3">
+          <div className="bg-blue-500/30 p-2 rounded-lg shrink-0">
+            <BookOpen className="w-4 h-4 text-blue-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-blue-400 font-medium text-xs">
+                📖 Team Study Board
+              </span>
+              <ExternalLink className="w-3 h-3 text-blue-400" />
+            </div>
+            <h4 className="text-white font-medium text-sm mb-2 line-clamp-1">
+              {studyBoard.studyBoardName || studyBoard.name || studyBoard.title || 'Untitled Study Board'}
+            </h4>
+            {studyBoard.videoTitle && (
+              <div className="bg-gray-800/50 rounded-lg p-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <Youtube className="w-3 h-3 text-red-400" />
+                  <span className="text-gray-300 text-xs line-clamp-1">
+                    {studyBoard.videoTitle}
+                  </span>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {studyBoard.userId?.photoURL && (
+                  <img 
+                    src={studyBoard.userId.photoURL} 
+                    alt="Creator" 
+                    className="w-4 h-4 rounded-full" 
+                  />
+                )}
+                <span className="text-xs text-gray-400">
+                  Created by {studyBoard.userId?.displayName || studyBoard.createdBy?.displayName || 'Unknown'}
+                </span>
+              </div>
+              <span className="text-xs text-blue-400 font-medium">
+                View →
+              </span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
+  // Filter out pinned messages from regular chat flow
+  const regularMessages = messages.filter(msg => !msg.isPinned);
+
   return (
     <div className="bg-gray-800 rounded-xl border border-gray-700 flex flex-col h-96">
       {/* Chat Header */}
@@ -169,19 +402,150 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
         </div>
       </div>
 
+      {/* Team Study Boards Section */}
+      {(teamStudyBoards.length > 0 || loadingStudyBoards) && (
+        <div className="border-b border-gray-700 bg-gray-900/50">
+          <div className="p-3">
+            <button
+              onClick={() => setShowTeamStudyBoards(!showTeamStudyBoards)}
+              className="flex items-center justify-between w-full text-left hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-blue-400" />
+                <span className="text-sm font-medium text-blue-400">
+                  Team Study Boards {!loadingStudyBoards && `(${teamStudyBoards.length})`}
+                </span>
+                {loadingStudyBoards && (
+                  <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+                )}
+              </div>
+              {showTeamStudyBoards ? (
+                <ChevronUp className="w-4 h-4 text-gray-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-gray-400" />
+              )}
+            </button>
+            
+            <AnimatePresence>
+              {showTeamStudyBoards && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-3"
+                >
+                  {loadingStudyBoards ? (
+                    <div className="text-center py-4">
+                      <div className="w-6 h-6 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin mx-auto mb-2" />
+                      <p className="text-xs text-gray-400">Loading study boards...</p>
+                    </div>
+                  ) : teamStudyBoards.length === 0 ? (
+                    <div className="text-center py-4">
+                      <BookOpen className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                      <p className="text-xs text-gray-400">No study boards created for this team yet.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {teamStudyBoards.map((studyBoard, idx) => (
+                        <motion.div
+                          key={studyBoard._id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.1 }}
+                        >
+                          {renderTeamStudyBoard(studyBoard)}
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      )}
+
+      {/* Pinned Study Boards Section */}
+      {pinnedMessages.length > 0 && (
+        <div className="border-b border-gray-700 bg-gray-900/50">
+          <div className="p-3">
+            <button
+              onClick={() => setShowPinnedMessages(!showPinnedMessages)}
+              className="flex items-center justify-between w-full text-left hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Pin className="w-4 h-4 text-purple-400" />
+                <span className="text-sm font-medium text-purple-400">
+                  Pinned Study Boards ({pinnedMessages.length})
+                </span>
+              </div>
+              {showPinnedMessages ? (
+                <ChevronUp className="w-4 h-4 text-gray-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-gray-400" />
+              )}
+            </button>
+            
+            <AnimatePresence>
+              {showPinnedMessages && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-3 space-y-2 max-h-48 overflow-y-auto"
+                >
+                  {pinnedMessages.map((message, idx) => (
+                    <motion.div
+                      key={`pinned-${idx}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                    >
+                      {renderStudyBoardMessage(message.content, true)}
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      )}
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.length === 0 ? (
+        {regularMessages.length === 0 ? (
           <div className="text-center py-8">
             <MessageCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400">No messages yet. Start the conversation!</p>
+            <p className="text-gray-400">
+              {pinnedMessages.length > 0 
+                ? "Check out the pinned study boards above! Start chatting about them."
+                : "No messages yet. Start the conversation!"
+              }
+            </p>
           </div>
         ) : (
           <>
-            {messages.map((message, idx) => {
+            {regularMessages.map((message, idx) => {
               const sender = getMessageSender(message.sender);
               const isCurrentUser = message.sender === currentUserId || sender?.firebaseUid === currentUserId;
-              const showAvatar = !isCurrentUser && (idx === 0 || messages[idx - 1].sender !== message.sender);
+              const isSystemMessage = message.isSystemMessage || message.sender === 'system';
+              const showAvatar = !isCurrentUser && !isSystemMessage && (idx === 0 || regularMessages[idx - 1].sender !== message.sender);
+              
+              // Handle system messages (study board shares) - but only show non-pinned ones in chat flow
+              if (isSystemMessage && message.messageType === 'studyboard_share' && !message.isPinned) {
+                return (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex justify-center mb-4"
+                  >
+                    <div className="max-w-md w-full">
+                      {renderStudyBoardMessage(message.content, false)}
+                    </div>
+                  </motion.div>
+                );
+              }
               
               return (
                 <motion.div
@@ -191,7 +555,7 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
                   className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
                 >
                   {/* Avatar for other users */}
-                  {!isCurrentUser && (
+                  {!isCurrentUser && !isSystemMessage && (
                     <div className="w-8 h-8 mr-2 flex-shrink-0">
                       {showAvatar && sender?.photoURL ? (
                         <img 
@@ -209,7 +573,7 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
 
                   <div className={`max-w-xs lg:max-w-md ${isCurrentUser ? 'ml-8' : 'mr-8'}`}>
                     {/* Sender name for other users */}
-                    {!isCurrentUser && showAvatar && (
+                    {!isCurrentUser && !isSystemMessage && showAvatar && (
                       <p className="text-xs text-gray-400 mb-1 ml-2">
                         {sender?.displayName || 'Unknown User'}
                       </p>

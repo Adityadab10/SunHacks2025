@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Youtube, Loader2, CheckCircle, AlertCircle, 
-  Clock, User, Download, BrainCircuit, Play
+  Clock, User, Save, BrainCircuit, Play, Lock,
+  Globe, Users, ChevronDown
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useUser } from '../context/UserContext';
@@ -14,13 +15,16 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
   const [result, setResult] = useState(preloadedData || null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('summary');
-  const [isNameModalOpen, setIsNameModalOpen] = useState(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [studyBoardName, setStudyBoardName] = useState('');
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [showExplanations, setShowExplanations] = useState({});
   const [flippedCards, setFlippedCards] = useState({});
   const [saved, setSaved] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [userGroups, setUserGroups] = useState([]);
+  const [selectedVisibility, setSelectedVisibility] = useState('private');
+  const [selectedGroup, setSelectedGroup] = useState('');
 
   const TABS = [
     { id: "summary", label: "📝 Summary" },
@@ -29,6 +33,32 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
     { id: "flashcards", label: "🔄 Flashcards" },
     { id: "quiz", label: "❓ Quiz" },
   ];
+
+  const VISIBILITY_OPTIONS = [
+    { id: 'private', label: 'Private', icon: Lock, description: 'Only visible to you' },
+    { id: 'public', label: 'Public', icon: Globe, description: 'Visible to everyone' },
+    { id: 'studygroup', label: 'Study Group', icon: Users, description: 'Share with a study group' },
+  ];
+
+  // Fetch user's study groups
+  useEffect(() => {
+    const fetchUserGroups = async () => {
+      if (!mongoUid) return;
+      
+      try {
+        const userEmail = window.localStorage.getItem('userEmail');
+        if (!userEmail) return;
+
+        const res = await fetch(`http://localhost:5000/api/group/groups-by-member?email=${encodeURIComponent(userEmail)}`);
+        const data = await res.json();
+        setUserGroups(data.groups || []);
+      } catch (error) {
+        console.error('Error fetching user groups:', error);
+      }
+    };
+
+    fetchUserGroups();
+  }, [mongoUid]);
 
   const validateYouTubeUrl = (url) => {
     const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -52,11 +82,6 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
       return;
     }
 
-    if (!firebaseUid || !mongoUid) {
-      toast.error('Please log in to use this feature');
-      return;
-    }
-
     setLoading(true);
     setError(null);
     setResult(null);
@@ -70,9 +95,7 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          youtubeUrl: url.trim(),
-          userId: mongoUid,
-          studyBoardName: 'Temporary Study Board'
+          youtubeUrl: url.trim()
         }),
       });
 
@@ -80,8 +103,8 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
 
       if (response.ok && data.success) {
         setResult(data.data);
-        setStudyBoardName(data.data.studyBoardName);
-        toast.success('Study board created successfully!');
+        setStudyBoardName(generateStudyBoardName(data.data.video.title));
+        toast.success('Study board created! Click save to store it.');
         setActiveTab('summary');
       } else {
         const errorMsg = data.error || `Server error: ${response.status}`;
@@ -105,24 +128,44 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
       toast.error('No study board to save');
       return;
     }
-    setStudyBoardName(result.studyBoardName || generateStudyBoardName(result.videoTitle || 'YouTube Video'));
-    setIsNameModalOpen(true);
+    setStudyBoardName(generateStudyBoardName(result.video.title));
+    setSelectedVisibility('private');
+    setSelectedGroup('');
+    setIsSaveModalOpen(true);
   };
 
   const handleSave = async () => {
-    if (!result) return;
-    
+    if (!result || !studyBoardName.trim()) {
+      toast.error('Please enter a study board name');
+      return;
+    }
+
+    if (selectedVisibility === 'studygroup' && !selectedGroup) {
+      toast.error('Please select a study group');
+      return;
+    }
+
     try {
       setLoading(true);
       
-      const response = await fetch(`http://localhost:5000/api/studyboard-yt/${result.studyBoardId}/name`, {
-        method: 'PUT',
+      const saveData = {
+        youtubeUrl: result.video.url,
+        userId: mongoUid,
+        studyBoardName: studyBoardName.trim(),
+        visibility: selectedVisibility,
+        content: result.content
+      };
+
+      if (selectedVisibility === 'studygroup') {
+        saveData.studyGroupId = selectedGroup;
+      }
+
+      const response = await fetch(`http://localhost:5000/api/studyboard-yt/save`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          studyBoardName: studyBoardName.trim()
-        }),
+        body: JSON.stringify(saveData),
       });
 
       const data = await response.json();
@@ -130,12 +173,17 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
       if (response.ok && data.success) {
         setSaveSuccess(true);
         setSaved(true);
-        setIsNameModalOpen(false);
-        setResult(prev => ({
-          ...prev,
-          studyBoardName: data.data.studyBoardName
-        }));
-        toast.success('Study board saved successfully!');
+        setIsSaveModalOpen(false);
+        
+        let successMessage = 'Study board saved successfully!';
+        if (selectedVisibility === 'public') {
+          successMessage = 'Study board saved and published publicly!';
+        } else if (selectedVisibility === 'studygroup') {
+          const groupName = userGroups.find(g => g._id === selectedGroup)?.name;
+          successMessage = `Study board shared with ${groupName}!`;
+        }
+        
+        toast.success(successMessage);
         setTimeout(() => setSaveSuccess(false), 3000);
       } else {
         toast.error(data.error || 'Failed to save study board');
@@ -167,7 +215,7 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
   };
 
   const renderSaveModal = () => {
-    if (!isNameModalOpen) return null;
+    if (!isSaveModalOpen) return null;
 
     return (
       <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
@@ -175,35 +223,101 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
-          className="bg-gray-900 rounded-xl border border-gray-700 p-6 w-[400px] max-w-[90vw]"
+          className="bg-gray-900 rounded-xl border border-gray-700 p-6 w-[500px] max-w-[90vw] max-h-[90vh] overflow-y-auto"
         >
           <h3 className="text-xl font-semibold mb-4 text-white">💾 Save Study Board</h3>
-          <p className="text-gray-400 text-sm mb-4">Give your study board a custom name before saving to your collection</p>
-          <input
-            type="text"
-            value={studyBoardName}
-            onChange={(e) => setStudyBoardName(e.target.value)}
-            placeholder="Enter study board name"
-            className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white mb-4 focus:ring-purple-500/30 focus:border-purple-500/30 focus:outline-none"
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && studyBoardName.trim()) {
-                handleSave();
-              } else if (e.key === 'Escape') {
-                setIsNameModalOpen(false);
-              }
-            }}
-          />
+          
+          {/* Study Board Name */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-300 mb-2">Study Board Name</label>
+            <input
+              type="text"
+              value={studyBoardName}
+              onChange={(e) => setStudyBoardName(e.target.value)}
+              placeholder="Enter study board name"
+              className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-purple-500/30 focus:border-purple-500/30 focus:outline-none"
+              autoFocus
+            />
+          </div>
+
+          {/* Visibility Options */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-300 mb-3">Visibility</label>
+            <div className="space-y-3">
+              {VISIBILITY_OPTIONS.map((option) => {
+                const Icon = option.icon;
+                const isDisabled = option.id === 'studygroup' && userGroups.length === 0;
+                
+                return (
+                  <div
+                    key={option.id}
+                    onClick={() => !isDisabled && setSelectedVisibility(option.id)}
+                    className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                      selectedVisibility === option.id
+                        ? 'border-purple-500 bg-purple-500/10'
+                        : isDisabled
+                        ? 'border-gray-700 bg-gray-800/50 opacity-50 cursor-not-allowed'
+                        : 'border-gray-600 bg-gray-800 hover:border-gray-500'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className={`w-5 h-5 ${
+                        selectedVisibility === option.id ? 'text-purple-400' : 'text-gray-400'
+                      }`} />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-white">{option.label}</span>
+                          {isDisabled && (
+                            <span className="text-xs text-gray-500">(No groups available)</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-400">{option.description}</p>
+                      </div>
+                      <div className={`w-4 h-4 rounded-full border-2 ${
+                        selectedVisibility === option.id
+                          ? 'border-purple-500 bg-purple-500'
+                          : 'border-gray-500'
+                      }`}>
+                        {selectedVisibility === option.id && (
+                          <div className="w-full h-full rounded-full bg-white scale-50" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Study Group Selection */}
+          {selectedVisibility === 'studygroup' && userGroups.length > 0 && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">Select Study Group</label>
+              <select
+                value={selectedGroup}
+                onChange={(e) => setSelectedGroup(e.target.value)}
+                className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-purple-500/30 focus:border-purple-500/30 focus:outline-none"
+              >
+                <option value="">Choose a study group...</option>
+                {userGroups.map((group) => (
+                  <option key={group._id} value={group._id}>
+                    {group.name} ({group.members?.length || 0} members)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="flex justify-end gap-3">
             <button
-              onClick={() => setIsNameModalOpen(false)}
+              onClick={() => setIsSaveModalOpen(false)}
               className="px-4 py-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              disabled={loading || !studyBoardName.trim()}
+              disabled={loading || !studyBoardName.trim() || (selectedVisibility === 'studygroup' && !selectedGroup)}
               className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading ? (
@@ -213,7 +327,7 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
                 </>
               ) : (
                 <>
-                  <CheckCircle className="w-4 h-4" />
+                  <Save className="w-4 h-4" />
                   Save Study Board
                 </>
               )}
@@ -229,7 +343,7 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
     if (preloadedData) {
       setResult(preloadedData);
       setActiveTab('summary');
-      setSaved(true); // Mark as saved since it was auto-generated
+      setSaved(false); // Don't mark as saved - allow user to choose save options
     }
   }, [preloadedData]);
 
@@ -251,7 +365,7 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
           <p className="text-gray-400">Comprehensive study materials with flashcards and quizzes</p>
         </motion.div>
 
-        {/* Results Display - same as existing */}
+        {/* Results Display */}
         <AnimatePresence>
           {result && (
             <motion.div
@@ -260,7 +374,7 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
               exit={{ opacity: 0, y: -20 }}
               className="bg-gray-900 rounded-2xl p-8 border border-gray-800"
             >
-              {/* Study Board Header - modified to show as ready */}
+              {/* Study Board Header - show save options */}
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center space-x-3">
                   <div className="bg-gradient-to-r from-purple-500 to-indigo-500 p-2 rounded-lg">
@@ -268,39 +382,63 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-white">Study Board Ready</h3>
-                    <p className="text-gray-400 text-sm">{result.studyBoardName}</p>
+                    <p className="text-gray-400 text-sm">Click save to store with your preferred visibility</p>
                   </div>
                 </div>
                 
-                <div className="text-green-400 flex items-center gap-2 bg-green-900/20 px-4 py-2 rounded-lg border border-green-500/30">
-                  <CheckCircle className="w-5 h-5" />
-                  Auto-Generated & Saved
+                <div className="flex space-x-2">
+                  {!saved ? (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={openSaveModal}
+                      disabled={loading}
+                      className="px-6 py-2 rounded-lg transition-all flex items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:cursor-not-allowed text-white shadow-lg hover:shadow-xl"
+                    >
+                      <Save className="w-4 h-4" />
+                      {loading ? 'Saving...' : 'Save Study Board'}
+                    </motion.button>
+                  ) : saveSuccess ? (
+                    <motion.div
+                      initial={{ scale: 0.8 }}
+                      animate={{ scale: 1 }}
+                      className="text-green-400 flex items-center gap-2 bg-green-900/20 px-4 py-2 rounded-lg border border-green-500/30"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      Saved Successfully
+                    </motion.div>
+                  ) : (
+                    <div className="text-green-400 flex items-center gap-2 bg-green-900/20 px-4 py-2 rounded-lg border border-green-500/30">
+                      <CheckCircle className="w-5 h-5" />
+                      Study Board Saved
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Video Info */}
-              {result.videoTitle && (
+              {result.video && (
                 <div className="grid md:grid-cols-3 gap-6 mb-6 p-4 bg-gray-800 rounded-lg">
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <Play className="w-4 h-4 text-purple-400" />
                       <span className="text-gray-400 text-sm">Title</span>
                     </div>
-                    <p className="text-white font-medium">{result.videoTitle}</p>
+                    <p className="text-white font-medium">{result.video?.title || result.videoTitle}</p>
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <User className="w-4 h-4 text-purple-400" />
                       <span className="text-gray-400 text-sm">Channel</span>
                     </div>
-                    <p className="text-white font-medium">{result.videoChannel || 'Unknown'}</p>
+                    <p className="text-white font-medium">{result.video?.channel || result.videoChannel || 'Unknown'}</p>
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <Clock className="w-4 h-4 text-purple-400" />
                       <span className="text-gray-400 text-sm">Duration</span>
                     </div>
-                    <p className="text-white font-medium">{result.videoDuration || 'Unknown'}</p>
+                    <p className="text-white font-medium">{result.video?.duration || result.videoDuration || 'Unknown'}</p>
                   </div>
                 </div>
               )}
@@ -449,6 +587,8 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {renderSaveModal()}
       </div>
     );
   }
@@ -557,8 +697,8 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
                   <BrainCircuit className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">Study Board Created</h3>
-                  <p className="text-gray-400 text-sm">{result.studyBoardName}</p>
+                  <h3 className="text-xl font-bold text-white">Study Board Ready</h3>
+                  <p className="text-gray-400 text-sm">Click save to store with your preferred visibility</p>
                 </div>
               </div>
               
@@ -571,7 +711,7 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
                     disabled={loading}
                     className="px-6 py-2 rounded-lg transition-all flex items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:cursor-not-allowed text-white shadow-lg hover:shadow-xl"
                   >
-                    <Download className="w-4 h-4" />
+                    <Save className="w-4 h-4" />
                     {loading ? 'Saving...' : 'Save Study Board'}
                   </motion.button>
                 ) : saveSuccess ? (
@@ -593,28 +733,28 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
             </div>
 
             {/* Video Info */}
-            {result.videoTitle && (
+            {result.video && (
               <div className="grid md:grid-cols-3 gap-6 mb-6 p-4 bg-gray-800 rounded-lg">
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Play className="w-4 h-4 text-purple-400" />
                     <span className="text-gray-400 text-sm">Title</span>
                   </div>
-                  <p className="text-white font-medium">{result.videoTitle}</p>
+                  <p className="text-white font-medium">{result.video.title}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <User className="w-4 h-4 text-purple-400" />
                     <span className="text-gray-400 text-sm">Channel</span>
                   </div>
-                  <p className="text-white font-medium">{result.videoChannel || 'Unknown'}</p>
+                  <p className="text-white font-medium">{result.video.channel || 'Unknown'}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Clock className="w-4 h-4 text-purple-400" />
                     <span className="text-gray-400 text-sm">Duration</span>
                   </div>
-                  <p className="text-white font-medium">{result.videoDuration || 'Unknown'}</p>
+                  <p className="text-white font-medium">{result.video.duration || 'Unknown'}</p>
                 </div>
               </div>
             )}
