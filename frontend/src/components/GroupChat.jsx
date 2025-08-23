@@ -12,9 +12,9 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
   const [pinnedMessages, setPinnedMessages] = useState([]);
   const [showPinnedMessages, setShowPinnedMessages] = useState(true);
   const [teamStudyBoards, setTeamStudyBoards] = useState([]);
-  const [showTeamStudyBoards, setShowTeamStudyBoards] = useState(true);
+  const [showTeamStudyBoards, setShowTeamStudyBoards] = useState(false);
   const [loadingStudyBoards, setLoadingStudyBoards] = useState(false);
-  const [showMembers, setShowMembers] = useState(false);
+  const [showMembers, setShowMembers] = useState(false); // Changed to false
   const chatEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const socket = useSocket();
@@ -379,7 +379,7 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
   const regularMessages = messages.filter(msg => !msg.isPinned);
 
   return (
-    <div className="bg-black rounded-2xl border border-gray-800/50 shadow-2xl flex flex-col h-96 backdrop-blur-sm">
+    <div className="bg-black rounded-2xl border border-gray-800/50 shadow-2xl flex flex-col h-[85vh] backdrop-blur-sm">
       {/* Chat Header */}
       <div className="p-6 border-b border-gray-800/50 bg-gradient-to-r from-black/50 to-[#74AA9C]/5 backdrop-blur-sm">
         <div className="flex items-center justify-between">
@@ -405,7 +405,7 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
         </div>
       </div>
 
-      {/* Team Study Boards Section */}
+      {/* Team Study Boards Section - Updated styles */}
       {(teamStudyBoards.length > 0 || loadingStudyBoards) && (
         <div className="border-b border-gray-800/50 bg-gradient-to-r from-black/30 to-[#74AA9C]/5">
           <div className="p-4">
@@ -456,7 +456,7 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
                       <p className="text-sm text-gray-400">No study boards created for this team yet.</p>
                     </div>
                   ) : (
-                    <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+                    <div className="space-y-3 max-h-48 overflow-y-auto custom-scrollbar"> {/* Reduced max-height */}
                       {teamStudyBoards.map((studyBoard, idx) => (
                         <motion.div
                           key={studyBoard._id}
@@ -528,8 +528,8 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
         </div>
       )}
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-gradient-to-b from-black/20 to-black/40">
+      {/* Messages Area - Added min-height */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-gradient-to-b from-black/20 to-black/40 min-h-[200px]">
         {regularMessages.length === 0 ? (
           <div className="text-center py-12">
             <div className="p-6 bg-[#74AA9C]/10 rounded-full w-24 h-24 mx-auto mb-4 flex items-center justify-center">
@@ -657,8 +657,8 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="p-6 border-t border-gray-800/50 bg-gradient-to-r from-black/50 to-[#74AA9C]/5 backdrop-blur-sm">
+      {/* Input Area - Added max-height */}
+      <div className="p-4 border-t border-gray-800/50 bg-gradient-to-r from-black/50 to-[#74AA9C]/5 backdrop-blur-sm"> {/* Reduced padding */}
         <div className="flex gap-3">
           <div className="flex-1 relative">
             <textarea
@@ -666,9 +666,8 @@ const GroupChat = ({ group, messages, onSendMessage, currentUserId, members = []
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder="Type your message..."
-              className="w-full p-4 bg-gradient-to-r from-gray-900/80 to-gray-800/80 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-[#74AA9C]/50 focus:border-[#74AA9C]/50 focus:outline-none resize-none transition-all duration-300 backdrop-blur-sm shadow-inner"
-              rows="1"
-              style={{ minHeight: '52px', maxHeight: '120px' }}
+              className="w-full p-3 bg-gradient-to-r from-gray-900/80 to-gray-800/80 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-[#74AA9C]/50 focus:border-[#74AA9C]/50 focus:outline-none resize-none transition-all duration-300 backdrop-blur-sm shadow-inner"
+              style={{ minHeight: '42px', maxHeight: '100px' }} // Reduced heights
             />
           </div>
           <motion.button

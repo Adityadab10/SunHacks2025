@@ -29,6 +29,8 @@ const YouTubePage = () => {
     active: 'pending'
   });
   const [videoInfo, setVideoInfo] = useState(null);
+  const [showFeatureSelect, setShowFeatureSelect] = useState(false);
+  const [selectedFeatures, setSelectedFeatures] = useState([]);
 
   const components = [
     {
@@ -259,6 +261,11 @@ const YouTubePage = () => {
 
   const handleUrlSubmit = (e) => {
     e.preventDefault();
+    setShowFeatureSelect(true);
+  };
+
+  const handleFeatureSelection = () => {
+    setShowFeatureSelect(false);
     processAllTools();
   };
 
@@ -325,147 +332,154 @@ const YouTubePage = () => {
   const ActiveComponent = components.find(comp => comp.id === activeTab)?.component || YTTranscribe;
 
   return (
-    <div className="min-h-screen bg-black text-white flex">
+    <div className="min-h-screen bg-gradient-to-br from-black to-[#222] text-white flex">
       <MainSidebar />
       
       <div className="flex-1 overflow-auto">
-        <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="max-w-4xl mx-auto px-6 py-12">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-8"
+            className="text-center mb-12"
           >
-            <h1 className="text-5xl font-bold mb-6">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-purple-400">
-                YouTube
-              </span> AI Suite
+            <h1 className="text-4xl font-bold mb-4">
+              <span className="text-[#74AA9C]">YouTube</span> AI Tools
             </h1>
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-8">
-              One URL, Three Powerful Tools. Transform any YouTube video into summaries, study materials, and interactive chat sessions.
-            </p>
           </motion.div>
 
-          {/* Unified URL Input */}
+          {/* URL Input */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-gray-900 rounded-2xl p-8 border border-gray-800 mb-8"
+            className="backdrop-blur-lg bg-gradient-to-br from-black/80 to-[#222]/80 rounded-xl p-6 border border-[#74AA9C]/30"
           >
-            <div className="flex items-center justify-center mb-6">
-              <div className="bg-gradient-to-r from-red-500 to-purple-500 p-4 rounded-xl">
-                <Youtube className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold ml-4">Universal YouTube Processor</h3>
-            </div>
-            
-            <form onSubmit={handleUrlSubmit} className="space-y-6">
+            <form onSubmit={handleUrlSubmit} className="space-y-4">
               <div className="relative">
-                <Youtube className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="url"
                   value={unifiedUrl}
                   onChange={(e) => setUnifiedUrl(e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=... (Paste once, get everything!)"
-                  className="w-full pl-12 pr-4 py-4 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 text-lg"
+                  placeholder="Paste YouTube URL here..."
+                  className="w-full px-4 py-3 bg-gray-800/50 border border-[#74AA9C]/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#74AA9C] focus:ring-2 focus:ring-[#74AA9C]/20 transition-all"
                   disabled={isProcessing}
                 />
               </div>
               
-              <div className="flex gap-4">
-                <motion.button
-                  type="submit"
-                  disabled={isProcessing || !unifiedUrl.trim()}
-                  whileHover={{ scale: isProcessing ? 1 : 1.02 }}
-                  whileTap={{ scale: isProcessing ? 1 : 0.98 }}
-                  className="flex-1 bg-gradient-to-r from-red-500 to-purple-500 hover:from-red-600 hover:to-purple-600 disabled:from-gray-600 disabled:to-gray-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                      <span>Processing All Tools...</span>
-                    </>
-                  ) : (
-                    <>
-                      <BrainCircuit className="w-6 h-6" />
-                      <span>Generate All Three Tools</span>
-                    </>
-                  )}
-                </motion.button>
-                
-                {(videoInfo || isProcessing) && (
-                  <motion.button
-                    type="button"
-                    onClick={resetAll}
-                    disabled={isProcessing}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="px-6 py-4 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 text-white rounded-xl font-medium transition-all disabled:cursor-not-allowed"
-                  >
-                    Reset
-                  </motion.button>
-                )}
-              </div>
-            </form>
-
-            {/* Processing Status */}
-            {isProcessing || videoInfo && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-8 space-y-4"
+              <motion.button
+                type="submit"
+                disabled={isProcessing || !unifiedUrl.trim()}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                className="w-full bg-gradient-to-r from-[#74AA9C] to-[#5a8a7d] disabled:from-gray-700 disabled:to-gray-800 text-white py-3 rounded-lg font-medium transition-all shadow-[#74AA9C44] shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
               >
-                {videoInfo && (
-                  <div className="bg-gray-800 rounded-lg p-4 mb-6">
-                    <div className="flex items-start space-x-4">
-                      <div className="bg-green-500 p-2 rounded-lg">
-                        <Play className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-white font-semibold mb-1">{videoInfo.title}</h4>
-                        <p className="text-gray-400 text-sm mb-2">{videoInfo.channel} • {videoInfo.duration}</p>
-                        <a 
-                          href={videoInfo.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-red-400 hover:text-red-300 text-sm transition-colors"
-                        >
-                          Watch on YouTube →
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="bg-gray-800 rounded-lg p-6">
-                  <h4 className="text-white font-semibold mb-4">Processing Status</h4>
-                  <div className="space-y-3">
-                    {components.map((comp) => (
-                      <div key={comp.id} className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <comp.icon className="w-5 h-5 text-gray-400" />
-                          <span className="text-white">{comp.label}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {getStatusIcon(processingStatus[comp.id])}
-                          <span className={`text-sm capitalize ${
-                            processingStatus[comp.id] === 'completed' ? 'text-green-400' :
-                            processingStatus[comp.id] === 'processing' ? 'text-blue-400' :
-                            processingStatus[comp.id] === 'error' ? 'text-red-400' : 'text-gray-500'
-                          }`}>
-                            {processingStatus[comp.id]}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            )}
+                {isProcessing ? 'Processing...' : 'Analyze Video'}
+              </motion.button>
+            </form>
           </motion.div>
 
-          {/* Tool Navigation */}
+          {/* Feature Select Modal */}
+          {showFeatureSelect && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+            >
+              <div className="bg-gradient-to-br from-black/90 to-[#222]/90 p-6 rounded-xl border border-[#74AA9C]/30 max-w-md w-full">
+                <h3 className="text-xl font-bold mb-4 text-[#74AA9C]">Choose Features</h3>
+                {components.map((comp) => (
+                  <label key={comp.id} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#74AA9C]/10 cursor-pointer mb-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedFeatures.includes(comp.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedFeatures([...selectedFeatures, comp.id]);
+                        } else {
+                          setSelectedFeatures(selectedFeatures.filter(id => id !== comp.id));
+                        }
+                      }}
+                      className="rounded border-[#74AA9C]"
+                    />
+                    <span>{comp.label}</span>
+                  </label>
+                ))}
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    onClick={() => setShowFeatureSelect(false)}
+                    className="flex-1 px-4 py-2 bg-gray-800 rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleFeatureSelection}
+                    disabled={selectedFeatures.length === 0}
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-[#74AA9C] to-[#5a8a7d] rounded-lg"
+                  >
+                    Process
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Processing Status */}
+          {(isProcessing || videoInfo) && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-8 space-y-4"
+            >
+              {videoInfo && (
+                <div className="bg-gray-800 rounded-lg p-4 mb-6">
+                  <div className="flex items-start space-x-4">
+                    <div className="bg-green-500 p-2 rounded-lg">
+                      <Play className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-white font-semibold mb-1">{videoInfo.title}</h4>
+                      <p className="text-gray-400 text-sm mb-2">{videoInfo.channel} • {videoInfo.duration}</p>
+                      <a 
+                        href={videoInfo.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-red-400 hover:text-red-300 text-sm transition-colors"
+                      >
+                        Watch on YouTube →
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-gray-800 rounded-lg p-6">
+                <h4 className="text-white font-semibold mb-4">Processing Status</h4>
+                <div className="space-y-3">
+                  {components.map((comp) => (
+                    <div key={comp.id} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <comp.icon className="w-5 h-5 text-gray-400" />
+                        <span className="text-white">{comp.label}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {getStatusIcon(processingStatus[comp.id])}
+                        <span className={`text-sm capitalize ${
+                          processingStatus[comp.id] === 'completed' ? 'text-green-400' :
+                          processingStatus[comp.id] === 'processing' ? 'text-blue-400' :
+                          processingStatus[comp.id] === 'error' ? 'text-red-400' : 'text-gray-500'
+                        }`}>
+                          {processingStatus[comp.id]}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Tool Navigation - only show if video is processed */}
           {videoInfo && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}

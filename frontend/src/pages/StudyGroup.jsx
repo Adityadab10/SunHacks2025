@@ -23,7 +23,7 @@ const StudyGroup = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteGroup, setInviteGroup] = useState(null);
   const [showMembersPanel, setShowMembersPanel] = useState(true);
-  const [isMembersPanelCollapsed, setIsMembersPanelCollapsed] = useState(false);
+  const [isMembersPanelCollapsed, setIsMembersPanelCollapsed] = useState(true);
 
   useEffect(() => {
     const userEmail = window.localStorage.getItem('userEmail');
