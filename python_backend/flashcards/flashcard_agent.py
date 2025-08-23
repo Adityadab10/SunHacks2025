@@ -156,7 +156,7 @@ def extract_file(state: State) -> str:
 async def summarize(state: State) -> Dict[str, Optional[str]]:
     try:
         llm = ChatGoogleGenerativeAI(
-            model='gemini-2.0-flash',
+            model='gemini-2.5-flash',
             temperature=0.7
         )
 
@@ -186,7 +186,7 @@ async def summarize(state: State) -> Dict[str, Optional[str]]:
 async def generate_quiz(state: State) -> Dict[str, Optional[Dict]]:
     try:
         llm = ChatGoogleGenerativeAI(
-            model='gemini-2.0-flash',
+            model='gemini-2.5-flash',
             temperature=0.7
         ).with_structured_output(Quiz)
 
@@ -217,7 +217,7 @@ async def generate_quiz(state: State) -> Dict[str, Optional[Dict]]:
 async def generate_important(state: State):
     try:
         llm = ChatGoogleGenerativeAI(
-            model='gemini-2.0-flash',
+            model='gemini-1.5-flash',
             temperature=0.7
         ).with_structured_output(ImportantPoint)
 
@@ -245,7 +245,7 @@ async def generate_important(state: State):
 async def generate_flashcards(state: State) -> Dict[str, Optional[Dict]]:
     try:
         llm = ChatGoogleGenerativeAI(
-            model='gemini-2.0-flash',
+            model='gemini-2.5-flash',
             temperature=0.7
         ).with_structured_output(Flashcards)
 

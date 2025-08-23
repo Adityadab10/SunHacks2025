@@ -179,9 +179,9 @@ async def upload_and_chat_endpoint(
 
         # Execute graph directly
         result = await agent.ainvoke(state, config={"configurable": {"thread_id": thread_id}})
-        print("got the info")
+        print("got the info: ", result)
         if result:
-            points = result['points']
+            points = result['messages'][-1].content
             return JSONResponse({
                 "status": "success",
                 "thread_id": thread_id,

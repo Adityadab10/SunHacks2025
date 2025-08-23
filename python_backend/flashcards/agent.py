@@ -188,7 +188,7 @@ async def chat(state: State):
             response = await chain.ainvoke({"input": input_text})
             response = response.model_dump() if hasattr(response, 'model_dump') else None
             print(response)
-            return {"messages": [AIMessage(content=response)]}
+            return {"messages": [AIMessage(content=response['content'])]}
         except Exception as chain_error:
             logger.error(f"Chain invocation error: {chain_error}")
             return {"messages": [AIMessage(content=f"I encountered an error processing your request: {str(chain_error)}")]}
