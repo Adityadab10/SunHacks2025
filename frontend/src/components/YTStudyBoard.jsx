@@ -218,31 +218,36 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
     if (!isSaveModalOpen) return null;
 
     return (
-      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
+      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
-          className="bg-gray-900 rounded-xl border border-gray-700 p-6 w-[500px] max-w-[90vw] max-h-[90vh] overflow-y-auto"
+          className="bg-black rounded-xl border border-gray-800 p-8 w-[550px] max-w-[90vw] max-h-[90vh] overflow-y-auto shadow-2xl"
         >
-          <h3 className="text-xl font-semibold mb-4 text-white">💾 Save Study Board</h3>
+          <h3 className="text-2xl font-bold mb-6 text-white flex items-center gap-3">
+            <div className="p-2 bg-[#74AA9C] rounded-lg">
+              <Save className="w-5 h-5 text-black" />
+            </div>
+            Save Study Board
+          </h3>
           
           {/* Study Board Name */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-300 mb-2">Study Board Name</label>
+            <label className="block text-sm font-semibold text-white mb-3">Study Board Name</label>
             <input
               type="text"
               value={studyBoardName}
               onChange={(e) => setStudyBoardName(e.target.value)}
               placeholder="Enter study board name"
-              className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-purple-500/30 focus:border-purple-500/30 focus:outline-none"
+              className="w-full p-4 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-[#74AA9C]/50 focus:border-[#74AA9C] focus:outline-none transition-all"
               autoFocus
             />
           </div>
 
           {/* Visibility Options */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-300 mb-3">Visibility</label>
+            <label className="block text-sm font-semibold text-white mb-4">Visibility</label>
             <div className="space-y-3">
               {VISIBILITY_OPTIONS.map((option) => {
                 const Icon = option.icon;
@@ -254,32 +259,32 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
                     onClick={() => !isDisabled && setSelectedVisibility(option.id)}
                     className={`p-4 rounded-lg border cursor-pointer transition-all ${
                       selectedVisibility === option.id
-                        ? 'border-purple-500 bg-purple-500/10'
+                        ? 'border-[#74AA9C] bg-[#74AA9C]/10 shadow-md'
                         : isDisabled
-                        ? 'border-gray-700 bg-gray-800/50 opacity-50 cursor-not-allowed'
-                        : 'border-gray-600 bg-gray-800 hover:border-gray-500'
+                        ? 'border-gray-800 bg-gray-900/50 opacity-50 cursor-not-allowed'
+                        : 'border-gray-700 bg-gray-900 hover:border-gray-600 hover:bg-gray-800'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                       <Icon className={`w-5 h-5 ${
-                        selectedVisibility === option.id ? 'text-purple-400' : 'text-gray-400'
+                        selectedVisibility === option.id ? 'text-[#74AA9C]' : 'text-gray-400'
                       }`} />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-white">{option.label}</span>
+                          <span className="font-semibold text-white">{option.label}</span>
                           {isDisabled && (
                             <span className="text-xs text-gray-500">(No groups available)</span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-400">{option.description}</p>
+                        <p className="text-sm text-gray-400 mt-1">{option.description}</p>
                       </div>
-                      <div className={`w-4 h-4 rounded-full border-2 ${
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                         selectedVisibility === option.id
-                          ? 'border-purple-500 bg-purple-500'
+                          ? 'border-[#74AA9C] bg-[#74AA9C]'
                           : 'border-gray-500'
                       }`}>
                         {selectedVisibility === option.id && (
-                          <div className="w-full h-full rounded-full bg-white scale-50" />
+                          <div className="w-2 h-2 rounded-full bg-black" />
                         )}
                       </div>
                     </div>
@@ -292,11 +297,11 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
           {/* Study Group Selection */}
           {selectedVisibility === 'studygroup' && userGroups.length > 0 && (
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-2">Select Study Group</label>
+              <label className="block text-sm font-semibold text-white mb-3">Select Study Group</label>
               <select
                 value={selectedGroup}
                 onChange={(e) => setSelectedGroup(e.target.value)}
-                className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-purple-500/30 focus:border-purple-500/30 focus:outline-none"
+                className="w-full p-4 bg-gray-900 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-[#74AA9C]/50 focus:border-[#74AA9C] focus:outline-none transition-all"
               >
                 <option value="">Choose a study group...</option>
                 {userGroups.map((group) => (
@@ -308,17 +313,17 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
             </div>
           )}
 
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-4">
             <button
               onClick={() => setIsSaveModalOpen(false)}
-              className="px-4 py-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800"
+              className="px-6 py-3 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-800 font-medium"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={loading || !studyBoardName.trim() || (selectedVisibility === 'studygroup' && !selectedGroup)}
-              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-8 py-3 bg-[#74AA9C] text-black font-semibold rounded-lg hover:bg-[#74AA9C]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg hover:shadow-xl"
             >
               {loading ? (
                 <>
@@ -350,20 +355,358 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
   // Don't show the input form if data is preloaded
   if (isPreloaded && result) {
     return (
-      <div className="space-y-8">
+      <div className="min-h-screen bg-black">
+        <div className="container mx-auto px-6 py-8 space-y-8">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <div className="flex items-center justify-center mb-6">
+              <div className="p-4 bg-gradient-to-br from-[#74AA9C] to-[#5a8a7a] rounded-2xl shadow-xl">
+                <BrainCircuit className="w-12 h-12 text-black" />
+              </div>
+            </div>
+            <h2 className="text-4xl font-bold mb-4">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#74AA9C] to-white">
+                Study Board
+              </span>
+            </h2>
+            <p className="text-gray-300 text-lg">Comprehensive study materials with flashcards and quizzes</p>
+          </motion.div>
+
+          {/* Results Display */}
+          <AnimatePresence>
+            {result && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="bg-gray-950 rounded-2xl p-8 border border-gray-800 shadow-2xl"
+              >
+                {/* Study Board Header - show save options */}
+                <div className="flex justify-between items-center mb-8">
+                  <div className="flex items-center space-x-4">
+                    <div className="bg-gradient-to-br from-[#74AA9C] to-[#5a8a7a] p-3 rounded-xl shadow-lg">
+                      <BrainCircuit className="w-6 h-6 text-black" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-white">Study Board Ready</h3>
+                      <p className="text-gray-400">Click save to store with your preferred visibility</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-3">
+                    {!saved ? (
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={openSaveModal}
+                        disabled={loading}
+                        className="px-8 py-3 rounded-xl transition-all flex items-center gap-2 bg-[#74AA9C] hover:bg-[#74AA9C]/90 disabled:bg-[#74AA9C]/50 disabled:cursor-not-allowed text-black font-semibold shadow-lg hover:shadow-xl"
+                      >
+                        <Save className="w-5 h-5" />
+                        {loading ? 'Saving...' : 'Save Study Board'}
+                      </motion.button>
+                    ) : saveSuccess ? (
+                      <motion.div
+                        initial={{ scale: 0.8 }}
+                        animate={{ scale: 1 }}
+                        className="text-[#74AA9C] flex items-center gap-2 bg-[#74AA9C]/10 px-6 py-3 rounded-xl border border-[#74AA9C]/30 shadow-lg"
+                      >
+                        <CheckCircle className="w-5 h-5" />
+                        Saved Successfully
+                      </motion.div>
+                    ) : (
+                      <div className="text-[#74AA9C] flex items-center gap-2 bg-[#74AA9C]/10 px-6 py-3 rounded-xl border border-[#74AA9C]/30">
+                        <CheckCircle className="w-5 h-5" />
+                        Study Board Saved
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Video Info */}
+                {result.video && (
+                  <div className="grid md:grid-cols-3 gap-6 mb-8 p-6 bg-gray-900 rounded-xl border border-gray-800">
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Play className="w-5 h-5 text-[#74AA9C]" />
+                        <span className="text-gray-400 text-sm font-medium">Title</span>
+                      </div>
+                      <p className="text-white font-semibold">{result.video?.title || result.videoTitle}</p>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <User className="w-5 h-5 text-[#74AA9C]" />
+                        <span className="text-gray-400 text-sm font-medium">Channel</span>
+                      </div>
+                      <p className="text-white font-semibold">{result.video?.channel || result.videoChannel || 'Unknown'}</p>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-5 h-5 text-[#74AA9C]" />
+                        <span className="text-gray-400 text-sm font-medium">Duration</span>
+                      </div>
+                      <p className="text-white font-semibold">{result.video?.duration || result.videoDuration || 'Unknown'}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tabs */}
+                <div className="flex gap-2 mb-8 overflow-x-auto bg-gray-900 p-2 rounded-xl">
+                  {TABS.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`px-6 py-3 rounded-lg transition-all whitespace-nowrap font-medium ${
+                        activeTab === tab.id
+                          ? "bg-[#74AA9C] text-black shadow-lg"
+                          : "text-gray-400 hover:text-white hover:bg-gray-800"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Content */}
+                <div className="prose prose-invert max-w-none">
+                  {activeTab === "summary" && result.content.summary?.length > 0 && (
+                    <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                      <ul className="list-none space-y-3">
+                        {result.content.summary.map((point, idx) => (
+                          <li key={idx} className="text-gray-200 flex items-start gap-3">
+                            <span className="w-2 h-2 bg-[#74AA9C] rounded-full mt-2 flex-shrink-0"></span>
+                            <span>{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {activeTab === "tldr" && result.content.tldr && (
+                    <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                      <p className="text-lg text-gray-200 leading-relaxed">{result.content.tldr}</p>
+                    </div>
+                  )}
+
+                  {activeTab === "detailed" && result.content.detailedSummary && (
+                    <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                      <div className="text-gray-200 whitespace-pre-wrap leading-relaxed">
+                        {result.content.detailedSummary}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === "flashcards" && result.content.flashcards?.length > 0 && (
+                    <div className="space-y-6">
+                      {result.content.flashcards.map((card, idx) => (
+                        <motion.div
+                          key={idx}
+                          onClick={() => toggleCard(idx)}
+                          whileHover={{ scale: 1.01 }}
+                          className={`bg-gray-900 rounded-xl border border-gray-800 p-6 transition-all hover:border-[#74AA9C]/50 cursor-pointer relative min-h-[180px] shadow-lg ${
+                            flippedCards[idx] ? "shadow-xl border-[#74AA9C]/30" : ""
+                          }`}
+                        >
+                          <div
+                            className={`transition-all duration-300 ${
+                              flippedCards[idx] ? "opacity-0" : "opacity-100"
+                            }`}
+                          >
+                            <h3 className="text-xl font-bold mb-4 text-white flex items-center gap-2">
+                              <span className="w-3 h-3 bg-[#74AA9C] rounded-full"></span>
+                              Question:
+                            </h3>
+                            <p className="text-gray-200 leading-relaxed">{card.question}</p>
+                          </div>
+
+                          <div
+                            className={`absolute inset-0 p-6 transition-all duration-300 rounded-xl ${
+                              flippedCards[idx]
+                                ? "opacity-100 transform translate-y-0 bg-gray-900 border border-gray-800"
+                                : "opacity-0 transform translate-y-4"
+                            }`}
+                          >
+                            <h3 className="text-xl font-bold mb-4 text-[#74AA9C] flex items-center gap-2">
+                              <CheckCircle className="w-5 h-5" />
+                              Answer:
+                            </h3>
+                            <p className="text-gray-200 leading-relaxed">{card.answer}</p>
+                          </div>
+
+                          <div className="absolute bottom-4 right-4">
+                            <span className="text-sm text-gray-500 bg-gray-800 px-3 py-1 rounded-full">
+                              {flippedCards[idx] ? "Click to hide" : "Click to reveal"}
+                            </span>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+
+                  {activeTab === "quiz" && result.content.quiz?.length > 0 && (
+                    <div className="space-y-8">
+                      {result.content.quiz.map((question, qIndex) => (
+                        <div
+                          key={qIndex}
+                          className="border border-gray-800 rounded-xl p-6 bg-gray-900 shadow-lg"
+                        >
+                          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                            <span className="bg-[#74AA9C] text-black w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">
+                              {qIndex + 1}
+                            </span>
+                            {question.question}
+                          </h3>
+                          <div className="space-y-3">
+                            {question.options.map((option, oIndex) => (
+                              <button
+                                key={oIndex}
+                                onClick={() => handleAnswerSelect(qIndex, oIndex)}
+                                disabled={showExplanations[qIndex]}
+                                className={`w-full text-left p-4 rounded-lg text-white transition-all font-medium ${
+                                  selectedAnswers[qIndex] === oIndex
+                                    ? option.isCorrect
+                                      ? "bg-[#74AA9C]/20 border-[#74AA9C] shadow-lg"
+                                      : "bg-red-500/20 border-red-500 shadow-lg"
+                                    : showExplanations[qIndex] && option.isCorrect
+                                    ? "bg-[#74AA9C]/20 border-[#74AA9C]"
+                                    : "bg-gray-800 hover:bg-gray-700 border-gray-700"
+                                } border-2`}
+                              >
+                                <span className="font-bold mr-3 text-[#74AA9C]">
+                                  {option.label}.
+                                </span>
+                                {option.text}
+                                {showExplanations[qIndex] && option.isCorrect && (
+                                  <span className="ml-3 text-[#74AA9C]">✓</span>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+
+                          {showExplanations[qIndex] && (
+                            <div
+                              className={`mt-6 p-4 rounded-lg border-2 ${
+                                question.options[selectedAnswers[qIndex]]?.isCorrect
+                                  ? "bg-[#74AA9C]/10 border-[#74AA9C]/30"
+                                  : "bg-red-500/10 border-red-500/30"
+                              }`}
+                            >
+                              <p className="text-sm font-bold mb-2 text-white">
+                                Correct Answer: {question.correctAnswer}
+                              </p>
+                              <p className="text-sm text-gray-300 leading-relaxed">
+                                {question.explanation}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {renderSaveModal()}
+        </div>
+      </div>
+    );
+  }
+
+  // Return existing component code for non-preloaded use
+  return (
+    <div className="min-h-screen bg-black">
+      <div className="container mx-auto px-6 py-8 space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <h2 className="text-3xl font-bold mb-4">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">
+          <div className="flex items-center justify-center mb-8">
+            <div className="p-5 bg-gradient-to-br from-[#74AA9C] to-[#5a8a7a] rounded-3xl shadow-2xl">
+              <BrainCircuit className="w-16 h-16 text-black" />
+            </div>
+          </div>
+          <h1 className="text-5xl font-bold mb-6">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#74AA9C] to-white">
               Study Board
-            </span>
-          </h2>
-          <p className="text-gray-400">Comprehensive study materials with flashcards and quizzes</p>
+            </span>{" "}
+            <span className="text-white">Generator</span>
+          </h1>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            Create comprehensive study materials from YouTube videos including flashcards, quizzes, and detailed summaries.
+          </p>
         </motion.div>
+
+        {/* Input Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-gray-950 rounded-2xl p-8 border border-gray-800 shadow-2xl max-w-4xl mx-auto"
+        >
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="space-y-4">
+              <label className="block text-xl font-bold text-white mb-4">
+                YouTube Video URL
+              </label>
+              <div className="relative">
+                <Youtube className="absolute left-5 top-1/2 transform -translate-y-1/2 text-[#74AA9C] w-6 h-6" />
+                <input
+                  type="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  className="w-full pl-16 pr-6 py-5 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#74AA9C] focus:ring-2 focus:ring-[#74AA9C]/30 transition-all duration-200 text-lg"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <motion.button
+              type="submit"
+              disabled={loading}
+              whileHover={{ scale: loading ? 1 : 1.02 }}
+              whileTap={{ scale: loading ? 1 : 0.98 }}
+              className="w-full bg-gradient-to-r from-[#74AA9C] to-[#5a8a7a] hover:from-[#74AA9C]/90 hover:to-[#5a8a7a]/90 disabled:from-gray-600 disabled:to-gray-700 text-black py-5 rounded-xl font-bold text-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-7 h-7 animate-spin" />
+                  <span>Creating Study Board...</span>
+                </>
+              ) : (
+                <>
+                  <BrainCircuit className="w-7 h-7" />
+                  <span>Generate Study Board</span>
+                </>
+              )}
+            </motion.button>
+          </form>
+        </motion.div>
+
+        {/* Error Display */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-red-900/20 border border-red-500/50 rounded-xl p-6 max-w-4xl mx-auto shadow-lg"
+            >
+              <div className="flex items-center space-x-3">
+                <AlertCircle className="w-6 h-6 text-red-400" />
+                <p className="text-red-300 font-medium">{error}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Results Display */}
         <AnimatePresence>
@@ -372,43 +715,43 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="bg-gray-900 rounded-2xl p-8 border border-gray-800"
+              className="bg-gray-950 rounded-2xl p-8 border border-gray-800 shadow-2xl"
             >
-              {/* Study Board Header - show save options */}
-              <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-gradient-to-r from-purple-500 to-indigo-500 p-2 rounded-lg">
-                    <BrainCircuit className="w-5 h-5 text-white" />
+              {/* Study Board Header */}
+              <div className="flex justify-between items-center mb-8">
+                <div className="flex items-center space-x-4">
+                  <div className="bg-gradient-to-br from-[#74AA9C] to-[#5a8a7a] p-3 rounded-xl shadow-lg">
+                    <BrainCircuit className="w-6 h-6 text-black" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white">Study Board Ready</h3>
-                    <p className="text-gray-400 text-sm">Click save to store with your preferred visibility</p>
+                    <h3 className="text-2xl font-bold text-white">Study Board Ready</h3>
+                    <p className="text-gray-400">Click save to store with your preferred visibility</p>
                   </div>
                 </div>
                 
-                <div className="flex space-x-2">
+                <div className="flex space-x-3">
                   {!saved ? (
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={openSaveModal}
                       disabled={loading}
-                      className="px-6 py-2 rounded-lg transition-all flex items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:cursor-not-allowed text-white shadow-lg hover:shadow-xl"
+                      className="px-8 py-3 rounded-xl transition-all flex items-center gap-2 bg-[#74AA9C] hover:bg-[#74AA9C]/90 disabled:bg-[#74AA9C]/50 disabled:cursor-not-allowed text-black font-semibold shadow-lg hover:shadow-xl"
                     >
-                      <Save className="w-4 h-4" />
+                      <Save className="w-5 h-5" />
                       {loading ? 'Saving...' : 'Save Study Board'}
                     </motion.button>
                   ) : saveSuccess ? (
                     <motion.div
                       initial={{ scale: 0.8 }}
                       animate={{ scale: 1 }}
-                      className="text-green-400 flex items-center gap-2 bg-green-900/20 px-4 py-2 rounded-lg border border-green-500/30"
+                      className="text-[#74AA9C] flex items-center gap-2 bg-[#74AA9C]/10 px-6 py-3 rounded-xl border border-[#74AA9C]/30 shadow-lg"
                     >
                       <CheckCircle className="w-5 h-5" />
                       Saved Successfully
                     </motion.div>
                   ) : (
-                    <div className="text-green-400 flex items-center gap-2 bg-green-900/20 px-4 py-2 rounded-lg border border-green-500/30">
+                    <div className="text-[#74AA9C] flex items-center gap-2 bg-[#74AA9C]/10 px-6 py-3 rounded-xl border border-[#74AA9C]/30">
                       <CheckCircle className="w-5 h-5" />
                       Study Board Saved
                     </div>
@@ -418,40 +761,40 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
 
               {/* Video Info */}
               {result.video && (
-                <div className="grid md:grid-cols-3 gap-6 mb-6 p-4 bg-gray-800 rounded-lg">
-                  <div className="space-y-2">
+                <div className="grid md:grid-cols-3 gap-6 mb-8 p-6 bg-gray-900 rounded-xl border border-gray-800">
+                  <div className="space-y-3">
                     <div className="flex items-center space-x-2">
-                      <Play className="w-4 h-4 text-purple-400" />
-                      <span className="text-gray-400 text-sm">Title</span>
+                      <Play className="w-5 h-5 text-[#74AA9C]" />
+                      <span className="text-gray-400 text-sm font-medium">Title</span>
                     </div>
-                    <p className="text-white font-medium">{result.video?.title || result.videoTitle}</p>
+                    <p className="text-white font-semibold">{result.video.title}</p>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center space-x-2">
-                      <User className="w-4 h-4 text-purple-400" />
-                      <span className="text-gray-400 text-sm">Channel</span>
+                      <User className="w-5 h-5 text-[#74AA9C]" />
+                      <span className="text-gray-400 text-sm font-medium">Channel</span>
                     </div>
-                    <p className="text-white font-medium">{result.video?.channel || result.videoChannel || 'Unknown'}</p>
+                    <p className="text-white font-semibold">{result.video.channel || 'Unknown'}</p>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center space-x-2">
-                      <Clock className="w-4 h-4 text-purple-400" />
-                      <span className="text-gray-400 text-sm">Duration</span>
+                      <Clock className="w-5 h-5 text-[#74AA9C]" />
+                      <span className="text-gray-400 text-sm font-medium">Duration</span>
                     </div>
-                    <p className="text-white font-medium">{result.video?.duration || result.videoDuration || 'Unknown'}</p>
+                    <p className="text-white font-semibold">{result.video.duration || 'Unknown'}</p>
                   </div>
                 </div>
               )}
 
               {/* Tabs */}
-              <div className="flex gap-2 mb-6 overflow-x-auto">
+              <div className="flex gap-2 mb-8 overflow-x-auto bg-gray-900 p-2 rounded-xl">
                 {TABS.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-2 rounded-lg transition-colors whitespace-nowrap ${
+                    className={`px-6 py-3 rounded-lg transition-all whitespace-nowrap font-medium ${
                       activeTab === tab.id
-                        ? "bg-purple-600 text-white"
+                        ? "bg-[#74AA9C] text-black shadow-lg"
                         : "text-gray-400 hover:text-white hover:bg-gray-800"
                     }`}
                   >
@@ -463,33 +806,41 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
               {/* Content */}
               <div className="prose prose-invert max-w-none">
                 {activeTab === "summary" && result.content.summary?.length > 0 && (
-                  <ul className="list-disc pl-4 space-y-2">
-                    {result.content.summary.map((point, idx) => (
-                      <li key={idx} className="text-gray-200">
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                    <ul className="list-none space-y-3">
+                      {result.content.summary.map((point, idx) => (
+                        <li key={idx} className="text-gray-200 flex items-start gap-3">
+                          <span className="w-2 h-2 bg-[#74AA9C] rounded-full mt-2 flex-shrink-0"></span>
+                          <span>{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
 
                 {activeTab === "tldr" && result.content.tldr && (
-                  <p className="text-lg text-gray-200">{result.content.tldr}</p>
+                  <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                    <p className="text-lg text-gray-200 leading-relaxed">{result.content.tldr}</p>
+                  </div>
                 )}
 
                 {activeTab === "detailed" && result.content.detailedSummary && (
-                  <div className="text-gray-200 whitespace-pre-wrap">
-                    {result.content.detailedSummary}
+                  <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                    <div className="text-gray-200 whitespace-pre-wrap leading-relaxed">
+                      {result.content.detailedSummary}
+                    </div>
                   </div>
                 )}
 
                 {activeTab === "flashcards" && result.content.flashcards?.length > 0 && (
                   <div className="space-y-6">
                     {result.content.flashcards.map((card, idx) => (
-                      <div
+                      <motion.div
                         key={idx}
                         onClick={() => toggleCard(idx)}
-                        className={`bg-gray-800 backdrop-blur-sm rounded-xl border border-gray-700 p-6 transition-all hover:bg-gray-750 cursor-pointer relative min-h-[150px] ${
-                          flippedCards[idx] ? "shadow-lg" : ""
+                        whileHover={{ scale: 1.01 }}
+                        className={`bg-gray-900 rounded-xl border border-gray-800 p-6 transition-all hover:border-[#74AA9C]/50 cursor-pointer relative min-h-[180px] shadow-lg ${
+                          flippedCards[idx] ? "shadow-xl border-[#74AA9C]/30" : ""
                         }`}
                       >
                         <div
@@ -497,31 +848,33 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
                             flippedCards[idx] ? "opacity-0" : "opacity-100"
                           }`}
                         >
-                          <h3 className="text-xl font-semibold mb-3 text-white">Question:</h3>
-                          <p className="text-gray-200">{card.question}</p>
+                          <h3 className="text-xl font-bold mb-4 text-white flex items-center gap-2">
+                            <span className="w-3 h-3 bg-[#74AA9C] rounded-full"></span>
+                            Question:
+                          </h3>
+                          <p className="text-gray-200 leading-relaxed">{card.question}</p>
                         </div>
 
                         <div
                           className={`absolute inset-0 p-6 transition-all duration-300 rounded-xl ${
                             flippedCards[idx]
-                              ? "opacity-100 transform translate-y-0 bg-gray-800 backdrop-blur-sm border border-gray-700"
+                              ? "opacity-100 transform translate-y-0 bg-gray-900 border border-gray-800"
                               : "opacity-0 transform translate-y-4"
                           }`}
                         >
-                          <h3 className="text-xl font-semibold mb-3 text-purple-400">
+                          <h3 className="text-xl font-bold mb-4 text-[#74AA9C] flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5" />
                             Answer:
                           </h3>
-                          <p className="text-gray-200">{card.answer}</p>
+                          <p className="text-gray-200 leading-relaxed">{card.answer}</p>
                         </div>
 
                         <div className="absolute bottom-4 right-4">
-                          <span className="text-sm text-gray-500">
-                            {flippedCards[idx]
-                              ? "Click to hide answer"
-                              : "Click to reveal answer"}
+                          <span className="text-sm text-gray-500 bg-gray-800 px-3 py-1 rounded-full">
+                            {flippedCards[idx] ? "Click to hide" : "Click to reveal"}
                           </span>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 )}
@@ -531,10 +884,13 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
                     {result.content.quiz.map((question, qIndex) => (
                       <div
                         key={qIndex}
-                        className="border border-gray-700 rounded-lg p-6"
+                        className="border border-gray-800 rounded-xl p-6 bg-gray-900 shadow-lg"
                       >
-                        <h3 className="text-xl font-semibold text-white mb-4">
-                          {qIndex + 1}. {question.question}
+                        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                          <span className="bg-[#74AA9C] text-black w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">
+                            {qIndex + 1}
+                          </span>
+                          {question.question}
                         </h3>
                         <div className="space-y-3">
                           {question.options.map((option, oIndex) => (
@@ -542,22 +898,22 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
                               key={oIndex}
                               onClick={() => handleAnswerSelect(qIndex, oIndex)}
                               disabled={showExplanations[qIndex]}
-                              className={`w-full text-left p-3 rounded-lg text-white transition-colors ${
+                              className={`w-full text-left p-4 rounded-lg text-white transition-all font-medium ${
                                 selectedAnswers[qIndex] === oIndex
                                   ? option.isCorrect
-                                    ? "bg-green-500/20 border-green-500/50"
-                                    : "bg-red-500/20 border-red-500/50"
+                                    ? "bg-[#74AA9C]/20 border-[#74AA9C] shadow-lg"
+                                    : "bg-red-500/20 border-red-500 shadow-lg"
                                   : showExplanations[qIndex] && option.isCorrect
-                                  ? "bg-green-500/20 border-green-500/50"
-                                  : "bg-gray-800 hover:bg-gray-700"
-                              } border border-gray-600`}
+                                  ? "bg-[#74AA9C]/20 border-[#74AA9C]"
+                                  : "bg-gray-800 hover:bg-gray-700 border-gray-700"
+                              } border-2`}
                             >
-                              <span className="font-semibold mr-2">
+                              <span className="font-bold mr-3 text-[#74AA9C]">
                                 {option.label}.
                               </span>
                               {option.text}
                               {showExplanations[qIndex] && option.isCorrect && (
-                                <span className="ml-2 text-green-400">✓</span>
+                                <span className="ml-3 text-[#74AA9C]">✓</span>
                               )}
                             </button>
                           ))}
@@ -565,16 +921,16 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
 
                         {showExplanations[qIndex] && (
                           <div
-                            className={`mt-4 p-4 rounded-lg ${
+                            className={`mt-6 p-4 rounded-lg border-2 ${
                               question.options[selectedAnswers[qIndex]]?.isCorrect
-                                ? "bg-green-500/10 border-green-500/30"
+                                ? "bg-[#74AA9C]/10 border-[#74AA9C]/30"
                                 : "bg-red-500/10 border-red-500/30"
-                            } border`}
+                            }`}
                           >
-                            <p className="text-sm font-semibold mb-2 text-white">
+                            <p className="text-sm font-bold mb-2 text-white">
                               Correct Answer: {question.correctAnswer}
                             </p>
-                            <p className="text-sm text-gray-300">
+                            <p className="text-sm text-gray-300 leading-relaxed">
                               {question.explanation}
                             </p>
                           </div>
@@ -590,321 +946,6 @@ const YTStudyBoard = ({ preloadedData, isPreloaded = false }) => {
 
         {renderSaveModal()}
       </div>
-    );
-  }
-
-  // Return existing component code for non-preloaded use
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center"
-      >
-        <div className="flex items-center justify-center mb-6">
-          <div className="bg-gradient-to-r from-purple-500 to-indigo-500 p-4 rounded-2xl">
-            <BrainCircuit className="w-12 h-12 text-white" />
-          </div>
-        </div>
-        <h1 className="text-4xl font-bold mb-4">
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">
-            Study Board
-          </span> Generator
-        </h1>
-        <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-          Create comprehensive study materials from YouTube videos including flashcards, quizzes, and detailed summaries.
-        </p>
-      </motion.div>
-
-      {/* Input Form */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-gray-900 rounded-2xl p-8 border border-gray-800"
-      >
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label className="block text-lg font-semibold text-white mb-3">
-              YouTube Video URL
-            </label>
-            <div className="relative">
-              <Youtube className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://www.youtube.com/watch?v=..."
-                className="w-full pl-12 pr-4 py-4 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200"
-                disabled={loading}
-              />
-            </div>
-          </div>
-
-          <motion.button
-            type="submit"
-            disabled={loading}
-            whileHover={{ scale: loading ? 1 : 1.02 }}
-            whileTap={{ scale: loading ? 1 : 0.98 }}
-            className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 disabled:from-gray-600 disabled:to-gray-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-6 h-6 animate-spin" />
-                <span>Creating Study Board...</span>
-              </>
-            ) : (
-              <>
-                <BrainCircuit className="w-6 h-6" />
-                <span>Generate Study Board</span>
-              </>
-            )}
-          </motion.button>
-        </form>
-      </motion.div>
-
-      {/* Error Display */}
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-red-900/20 border border-red-500 rounded-xl p-6"
-          >
-            <div className="flex items-center space-x-3">
-              <AlertCircle className="w-6 h-6 text-red-400" />
-              <p className="text-red-300 font-medium">{error}</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Results Display */}
-      <AnimatePresence>
-        {result && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-gray-900 rounded-2xl p-8 border border-gray-800"
-          >
-            {/* Study Board Header */}
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="bg-gradient-to-r from-purple-500 to-indigo-500 p-2 rounded-lg">
-                  <BrainCircuit className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Study Board Ready</h3>
-                  <p className="text-gray-400 text-sm">Click save to store with your preferred visibility</p>
-                </div>
-              </div>
-              
-              <div className="flex space-x-2">
-                {!saved ? (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={openSaveModal}
-                    disabled={loading}
-                    className="px-6 py-2 rounded-lg transition-all flex items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:cursor-not-allowed text-white shadow-lg hover:shadow-xl"
-                  >
-                    <Save className="w-4 h-4" />
-                    {loading ? 'Saving...' : 'Save Study Board'}
-                  </motion.button>
-                ) : saveSuccess ? (
-                  <motion.div
-                    initial={{ scale: 0.8 }}
-                    animate={{ scale: 1 }}
-                    className="text-green-400 flex items-center gap-2 bg-green-900/20 px-4 py-2 rounded-lg border border-green-500/30"
-                  >
-                    <CheckCircle className="w-5 h-5" />
-                    Saved Successfully
-                  </motion.div>
-                ) : (
-                  <div className="text-green-400 flex items-center gap-2 bg-green-900/20 px-4 py-2 rounded-lg border border-green-500/30">
-                    <CheckCircle className="w-5 h-5" />
-                    Study Board Saved
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Video Info */}
-            {result.video && (
-              <div className="grid md:grid-cols-3 gap-6 mb-6 p-4 bg-gray-800 rounded-lg">
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Play className="w-4 h-4 text-purple-400" />
-                    <span className="text-gray-400 text-sm">Title</span>
-                  </div>
-                  <p className="text-white font-medium">{result.video.title}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <User className="w-4 h-4 text-purple-400" />
-                    <span className="text-gray-400 text-sm">Channel</span>
-                  </div>
-                  <p className="text-white font-medium">{result.video.channel || 'Unknown'}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="w-4 h-4 text-purple-400" />
-                    <span className="text-gray-400 text-sm">Duration</span>
-                  </div>
-                  <p className="text-white font-medium">{result.video.duration || 'Unknown'}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Tabs */}
-            <div className="flex gap-2 mb-6 overflow-x-auto">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 rounded-lg transition-colors whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? "bg-purple-600 text-white"
-                      : "text-gray-400 hover:text-white hover:bg-gray-800"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Content */}
-            <div className="prose prose-invert max-w-none">
-              {activeTab === "summary" && result.content.summary?.length > 0 && (
-                <ul className="list-disc pl-4 space-y-2">
-                  {result.content.summary.map((point, idx) => (
-                    <li key={idx} className="text-gray-200">
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {activeTab === "tldr" && result.content.tldr && (
-                <p className="text-lg text-gray-200">{result.content.tldr}</p>
-              )}
-
-              {activeTab === "detailed" && result.content.detailedSummary && (
-                <div className="text-gray-200 whitespace-pre-wrap">
-                  {result.content.detailedSummary}
-                </div>
-              )}
-
-              {activeTab === "flashcards" && result.content.flashcards?.length > 0 && (
-                <div className="space-y-6">
-                  {result.content.flashcards.map((card, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => toggleCard(idx)}
-                      className={`bg-gray-800 backdrop-blur-sm rounded-xl border border-gray-700 p-6 transition-all hover:bg-gray-750 cursor-pointer relative min-h-[150px] ${
-                        flippedCards[idx] ? "shadow-lg" : ""
-                      }`}
-                    >
-                      <div
-                        className={`transition-all duration-300 ${
-                          flippedCards[idx] ? "opacity-0" : "opacity-100"
-                        }`}
-                      >
-                        <h3 className="text-xl font-semibold mb-3 text-white">Question:</h3>
-                        <p className="text-gray-200">{card.question}</p>
-                      </div>
-
-                      <div
-                        className={`absolute inset-0 p-6 transition-all duration-300 rounded-xl ${
-                          flippedCards[idx]
-                            ? "opacity-100 transform translate-y-0 bg-gray-800 backdrop-blur-sm border border-gray-700"
-                            : "opacity-0 transform translate-y-4"
-                        }`}
-                      >
-                        <h3 className="text-xl font-semibold mb-3 text-purple-400">
-                          Answer:
-                        </h3>
-                        <p className="text-gray-200">{card.answer}</p>
-                      </div>
-
-                      <div className="absolute bottom-4 right-4">
-                        <span className="text-sm text-gray-500">
-                          {flippedCards[idx]
-                            ? "Click to hide answer"
-                            : "Click to reveal answer"}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {activeTab === "quiz" && result.content.quiz?.length > 0 && (
-                <div className="space-y-8">
-                  {result.content.quiz.map((question, qIndex) => (
-                    <div
-                      key={qIndex}
-                      className="border border-gray-700 rounded-lg p-6"
-                    >
-                      <h3 className="text-xl font-semibold text-white mb-4">
-                        {qIndex + 1}. {question.question}
-                      </h3>
-                      <div className="space-y-3">
-                        {question.options.map((option, oIndex) => (
-                          <button
-                            key={oIndex}
-                            onClick={() => handleAnswerSelect(qIndex, oIndex)}
-                            disabled={showExplanations[qIndex]}
-                            className={`w-full text-left p-3 rounded-lg text-white transition-colors ${
-                              selectedAnswers[qIndex] === oIndex
-                                ? option.isCorrect
-                                  ? "bg-green-500/20 border-green-500/50"
-                                  : "bg-red-500/20 border-red-500/50"
-                                : showExplanations[qIndex] && option.isCorrect
-                                ? "bg-green-500/20 border-green-500/50"
-                                : "bg-gray-800 hover:bg-gray-700"
-                            } border border-gray-600`}
-                          >
-                            <span className="font-semibold mr-2">
-                              {option.label}.
-                            </span>
-                            {option.text}
-                            {showExplanations[qIndex] && option.isCorrect && (
-                              <span className="ml-2 text-green-400">✓</span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-
-                      {showExplanations[qIndex] && (
-                        <div
-                          className={`mt-4 p-4 rounded-lg ${
-                            question.options[selectedAnswers[qIndex]]?.isCorrect
-                              ? "bg-green-500/10 border-green-500/30"
-                              : "bg-red-500/10 border-red-500/30"
-                          } border`}
-                        >
-                          <p className="text-sm font-semibold mb-2 text-white">
-                            Correct Answer: {question.correctAnswer}
-                          </p>
-                          <p className="text-sm text-gray-300">
-                            {question.explanation}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {renderSaveModal()}
     </div>
   );
 };
