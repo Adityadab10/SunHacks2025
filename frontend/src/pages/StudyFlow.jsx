@@ -306,98 +306,6 @@ const StudyFlow = () => {
     </motion.div>
   );
 
-  const renderAnalytics = () => {
-    if (loadingAnalytics) {
-      return (
-        <div className="grid lg:grid-cols-2 gap-6">
-          {[1, 2].map(i => (
-            <div key={i} className="bg-gray-800 rounded-xl p-6 animate-pulse">
-              <div className="h-64 bg-gray-700 rounded"></div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    if (!analytics) return null;
-
-    const subjectData = Object.entries(analytics.learningPatterns.subjects).map(([name, value]) => ({
-      name,
-      value,
-      color: colors[Object.keys(analytics.learningPatterns.subjects).indexOf(name) % colors.length]
-    }));
-
-    return (
-      <div className="grid lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30">
-          <h3 className="text-xl font-bold text-white mb-6">Learning Activity Timeline</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={analytics.timelineData.slice(-14)}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="#666"
-                  tickFormatter={(date) => new Date(date).toLocaleDateString('en', { month: 'short', day: 'numeric' })}
-                />
-                <YAxis stroke="#666" />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: '8px' }}
-                  labelStyle={{ color: '#fff' }}
-                  formatter={(value, name) => [value, name === 'activities' ? 'Activities' : 'Est. Time (min)']}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="activities" 
-                  stroke="#74AA9C" 
-                  strokeWidth={3}
-                  dot={{ fill: '#74AA9C', strokeWidth: 2 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="estimatedTime" 
-                  stroke="#6366f1" 
-                  strokeWidth={2}
-                  dot={{ fill: '#6366f1', strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30">
-          <h3 className="text-xl font-bold text-white mb-6">Subject Distribution</h3>
-          <div className="h-64">
-            {subjectData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsPie>
-                  <Pie
-                    data={subjectData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {subjectData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </RechartsPie>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">
-                Start learning to see subject distribution
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-[#111] to-[#222] text-white flex">
       <MainSidebar />
@@ -419,9 +327,6 @@ const StudyFlow = () => {
               AI-powered personalized learning paths based on your study history and goals
             </p>
           </motion.div>
-
-          {/* Analytics Section */}
-          {analytics && renderAnalytics()}
 
           {/* Quick Stats */}
           {analytics && (
@@ -574,3 +479,4 @@ const StudyFlow = () => {
 };
 
 export default StudyFlow;
+             
