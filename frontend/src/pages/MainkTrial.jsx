@@ -26,7 +26,6 @@ const StudyboardPage = () => {
   const navigate = useNavigate();
   const { mongoUid } = useUser();
   const [studyBoard, setStudyBoard] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('summary');
   const [selectedAnswers, setSelectedAnswers] = useState({});
@@ -43,8 +42,6 @@ const StudyboardPage = () => {
 
   const TABS = [
     { id: "summary", label: "📝 Summary" },
-    { id: "tldr", label: "⚡ TLDR" },
-    { id: "detailed", label: "📖 Detailed" },
     { id: "flashcards", label: "🔄 Flashcards" },
     { id: "quiz", label: "❓ Quiz" },
     { id: "important", label: "⭐ Important Points" },
@@ -111,56 +108,50 @@ const StudyboardPage = () => {
     setError(null);
 
     try {
-      // Process document for flashcards, quiz, and summary
       const formData = new FormData();
       formData.append('file', documentFile);
       formData.append('message', 'Generate study materials from this document');
 
-      const flashcardsResponse = await fetch('http://localhost:8000/flashcards', {
+      const response = await fetch('http://localhost:8000/flashcards', {
         method: 'POST',
         body: formData,
       });
 
-      const video_desc = await fetch("http://localhost:8000/video-desc", {
-        method: 'POST',
-        body: formData,
-      });
+      if (response.ok) {
+        const responseData = await response.json();
 
-      if (flashcardsResponse.ok && video_desc.ok) {
-        const flashcardsData = await flashcardsResponse.json();
-        const videoDescData = await video_desc.json();
-
-        if (flashcardsData.status === 'success' && videoDescData.status === 'success') {
+        if (responseData.status === 'success') {
+          // Extract all data from the single response
+          const result = responseData
+          console.log("result is", result)
           // Ensure summary is in array format
           let summaryArray = [];
-          if (flashcardsData.summary) {
-            if (Array.isArray(flashcardsData.summary)) {
-              summaryArray = flashcardsData.summary;
-            } else if (typeof flashcardsData.summary === 'string') {
-              // Split string into array of points
-              summaryArray = flashcardsData.summary.split('\n').filter(point => point.trim());
+          if (result.summarize) {
+            if (Array.isArray(result.summarize)) {
+              summaryArray = result.summarize;
+            } else if (typeof result.summarize === 'string') {
+              summaryArray = result.summarize.split('\n').filter(point => point.trim());
             }
           }
           
           // Ensure flashcards is an array
-          const flashcardsArray = Array.isArray(flashcardsData.flashcards) 
-            ? flashcardsData.flashcards 
+          const flashcardsArray = Array.isArray(result.flashcards) 
+            ? result.flashcards 
             : [];
             
           // Ensure quiz is an array
-          const quizArray = Array.isArray(flashcardsData.quiz) 
-            ? flashcardsData.quiz 
+          const quizArray = Array.isArray(result.quiz) 
+            ? result.quiz 
             : [];
 
-          // Extract important points from videoDescData - handle different response formats
+          // Extract important points - handle different formats
           let importantPoints = [];
-          if (videoDescData.results && Array.isArray(videoDescData.results.points)) {
-            importantPoints = videoDescData.results.points;
-          } else if (videoDescData.important_points && Array.isArray(videoDescData.important_points)) {
-            importantPoints = videoDescData.important_points;
-          } else if (typeof videoDescData.results === 'string') {
-            // If results is a string, split it into points
-            importantPoints = videoDescData.results.split('\n').filter(point => point.trim());
+          if (result.important && Array.isArray(result.important.points)) {
+            importantPoints = result.important.points;
+          } else if (result.important && typeof result.important === 'string') {
+            importantPoints = result.important.split('\n').filter(point => point.trim());
+          } else if (Array.isArray(result.important)) {
+            importantPoints = result.important;
           }
 
           setStudyBoard({
@@ -168,8 +159,6 @@ const StudyboardPage = () => {
             createdAt: new Date().toISOString(),
             content: {
               summary: summaryArray,
-              tldr: flashcardsData.tldr || "No TLDR available",
-              detailedSummary: flashcardsData.detailedSummary || "No detailed summary available",
               flashcards: flashcardsArray,
               quiz: quizArray,
               importantPoints: importantPoints
@@ -185,6 +174,8 @@ const StudyboardPage = () => {
             timestamp: new Date()
           };
           setMessages(prev => [...prev, successMessage]);
+        } else {
+          throw new Error(responseData.detail || 'Failed to process document');
         }
       } else {
         throw new Error('Failed to process document');
@@ -264,7 +255,6 @@ const StudyboardPage = () => {
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsProcessing(false);
-      // Don't clear the document file as we want to keep it for future messages
     }
   };
 
@@ -440,44 +430,6 @@ const StudyboardPage = () => {
                       <h2 className="text-xl font-semibold">Summary</h2>
                     </div>
                     {renderSummary(studyBoard.content.summary)}
-                  </motion.div>
-                )}
-
-                {/* TLDR Tab */}
-                {activeTab === "tldr" && studyBoard?.content?.tldr && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-gray-900 rounded-xl p-6 border border-gray-800"
-                  >
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="bg-yellow-500/20 p-2 rounded-lg">
-                        <Target className="w-5 h-5 text-yellow-400" />
-                      </div>
-                      <h2 className="text-xl font-semibold">TLDR</h2>
-                    </div>
-                    <div className="prose prose-invert max-w-none">
-                      <p className="text-gray-300 leading-relaxed text-lg">{studyBoard.content.tldr}</p>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Detailed Summary Tab */}
-                {activeTab === "detailed" && studyBoard?.content?.detailedSummary && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-gray-900 rounded-xl p-6 border border-gray-800"
-                  >
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="bg-green-500/20 p-2 rounded-lg">
-                        <BookOpen className="w-5 h-5 text-green-400" />
-                      </div>
-                      <h2 className="text-xl font-semibold">Detailed Summary</h2>
-                    </div>
-                    <div className="prose prose-invert max-w-none">
-                      <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">{studyBoard.content.detailedSummary}</p>
-                    </div>
                   </motion.div>
                 )}
 
