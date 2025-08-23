@@ -277,7 +277,8 @@ async def flashcard_generation(
                 "status": "success",
                 "flashcards": flashcards,
                 'quiz': quiz,
-                'summary': result['summarize']
+                'summary': result['summarize'],
+                "important": result['important'],
             })
 
         except Exception as e:
