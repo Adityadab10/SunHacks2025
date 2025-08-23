@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Sun, Moon } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import { auth } from '../../firebase.config';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,7 @@ const cn = (...classes) => {
   return classes.filter(Boolean).join(" ");
 };
 
-const Navbar = ({ isDarkMode = true }) => {
+const Navbar = ({ isDarkMode = true, toggleTheme }) => {
   const ref = useRef(null);
   const { scrollY } = useScroll({
     target: ref,
@@ -61,25 +61,38 @@ const Navbar = ({ isDarkMode = true }) => {
     setMobileMenuOpen(false);
   };
 
-  // Theme-aware styling - OPPOSITE to landing page for contrast
-  // Match hero section: dark background, green accent, border
-  const navTheme = {
+  // Dynamic theme-aware styling
+  const navTheme = isDarkMode ? {
     bg: "#111827", // Tailwind's bg-gray-900
     bgVisible: "#111827",
     text: "text-white",
     textSecondary: "text-gray-400",
-    border: "border-2 border-[#74AA9C]", // Green accent border
+    border: "border-2 border-[#74AA9C]",
     borderVisible: "border-2 border-[#74AA9C]",
     hoverBg: "bg-gray-800 hover:bg-[#74AA9C]/20",
     buttonPrimary: "bg-[#74AA9C] text-black hover:bg-[#74AA9C]/90",
     buttonSecondary: "text-[#74AA9C] hover:text-white",
+  } : {
+    bg: "#ffffff",
+    bgVisible: "#ffffff",
+    text: "text-gray-900",
+    textSecondary: "text-gray-600",
+    border: "border-2 border-[#74AA9C]",
+    borderVisible: "border-2 border-[#74AA9C]",
+    hoverBg: "bg-gray-100 hover:bg-[#74AA9C]/20",
+    buttonPrimary: "bg-[#74AA9C] text-white hover:bg-[#74AA9C]/90",
+    buttonSecondary: "text-[#74AA9C] hover:text-gray-900",
   };
 
   return (
     <motion.div
       ref={ref}
-  className="fixed inset-x-0 top-0 z-50 max-w-6xl mx-auto"
-  style={{ background: navTheme.bg, borderBottom: '2px solid #74AA9C', boxShadow: '0 2px 16px 0 rgba(116,170,156,0.10)' }}
+      className="fixed inset-x-0 top-0 z-50 max-w-6xl mx-auto"
+      style={{ 
+        background: navTheme.bg, 
+        borderBottom: '2px solid #74AA9C', 
+        boxShadow: '0 2px 16px 0 rgba(116,170,156,0.10)' 
+      }}
     >
       {/* Desktop Navbar */}
       <motion.div
@@ -99,7 +112,8 @@ const Navbar = ({ isDarkMode = true }) => {
           boxShadow: '0 2px 16px 0 rgba(116,170,156,0.10)',
         }}
         className={cn(
-          "relative z-[60] mx-auto hidden w-full max-w-6xl flex-row items-center justify-between rounded-full px-8 py-3 md:flex border-2 border-[#74AA9C] bg-gray-900",
+          "relative z-[60] mx-auto hidden w-full max-w-6xl flex-row items-center justify-between rounded-full px-8 py-3 md:flex border-2 border-[#74AA9C]",
+          isDarkMode ? "bg-gray-900" : "bg-white",
           "shadow-lg"
         )}
       >
@@ -149,6 +163,28 @@ const Navbar = ({ isDarkMode = true }) => {
             }}
             className="flex items-center space-x-3"
           >
+            {/* Theme Toggle Button */}
+            <motion.button
+              onClick={toggleTheme}
+              className={cn(
+                "p-2 rounded-full transition-colors",
+                isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-200"
+              )}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{
+                type: "spring",
+                stiffness: 500,
+                damping: 25,
+              }}
+            >
+              {isDarkMode ? (
+                <Sun className="w-5 h-5 text-yellow-500" />
+              ) : (
+                <Moon className="w-5 h-5 text-gray-700" />
+              )}
+            </motion.button>
+
             {firebaseUid ? (
               <>
                 {currentUser?.photoURL ? (
@@ -235,7 +271,8 @@ const Navbar = ({ isDarkMode = true }) => {
           boxShadow: '0 2px 16px 0 rgba(116,170,156,0.10)',
         }}
         className={cn(
-          "md:hidden flex items-center justify-between px-6 py-3 mx-6 rounded-full border-2 border-[#74AA9C] bg-gray-900",
+          "md:hidden flex items-center justify-between px-6 py-3 mx-6 rounded-full border-2 border-[#74AA9C]",
+          isDarkMode ? "bg-gray-900" : "bg-white",
           "shadow-lg"
         )}
       >
@@ -255,27 +292,51 @@ const Navbar = ({ isDarkMode = true }) => {
           </Link>
         </motion.h1>
 
-        <motion.button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className={cn("text-xl p-1", navTheme.text)}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          transition={{
-            type: "spring",
-            stiffness: 500,
-            damping: 25,
-          }}
-        >
-          {mobileMenuOpen ? (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          )}
-        </motion.button>
+        <div className="flex items-center space-x-2">
+          {/* Theme Toggle Button for Mobile */}
+          <motion.button
+            onClick={toggleTheme}
+            className={cn(
+              "p-2 rounded-full transition-colors",
+              isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-200"
+            )}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{
+              type: "spring",
+              stiffness: 500,
+              damping: 25,
+            }}
+          >
+            {isDarkMode ? (
+              <Sun className="w-4 h-4 text-yellow-500" />
+            ) : (
+              <Moon className="w-4 h-4 text-gray-700" />
+            )}
+          </motion.button>
+
+          <motion.button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className={cn("text-xl p-1", navTheme.text)}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{
+              type: "spring",
+              stiffness: 500,
+              damping: 25,
+            }}
+          >
+            {mobileMenuOpen ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </motion.button>
+        </div>
       </motion.div>
 
       {/* Mobile Menu */}
@@ -293,11 +354,10 @@ const Navbar = ({ isDarkMode = true }) => {
             className="md:hidden absolute top-full left-0 right-0 mt-2 mx-6"
           >
             <div 
-              className="backdrop-blur-xl border rounded-2xl p-4 space-y-2 shadow-2xl"
-              style={{ 
-                backgroundColor: navTheme.bgVisible,
-                borderColor: isDarkMode ? 'rgba(229, 231, 235, 0.2)' : 'rgba(75, 85, 99, 0.2)'
-              }}
+              className={cn(
+                "backdrop-blur-xl border rounded-2xl p-4 space-y-2 shadow-2xl",
+                isDarkMode ? "bg-gray-900/95 border-gray-700" : "bg-white/95 border-gray-300"
+              )}
             >
               {navItems.map((item, idx) => (
                 <motion.a
@@ -307,7 +367,7 @@ const Navbar = ({ isDarkMode = true }) => {
                   className={cn(
                     "block w-full text-left py-2 px-3 rounded-xl transition-colors tracking-wide",
                     navTheme.text,
-                    isDarkMode ? "hover:bg-gray-100" : "hover:bg-gray-800"
+                    isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"
                   )}
                   whileTap={{ scale: 0.95 }}
                   whileHover={{ x: 4 }}
@@ -323,8 +383,10 @@ const Navbar = ({ isDarkMode = true }) => {
 
               {firebaseUid ? (
                 <motion.div 
-                  className="flex items-center justify-between p-3 mt-3 rounded-xl"
-                  style={{ backgroundColor: isDarkMode ? 'rgba(243, 244, 246, 0.5)' : 'rgba(31, 41, 55, 0.5)' }}
+                  className={cn(
+                    "flex items-center justify-between p-3 mt-3 rounded-xl",
+                    isDarkMode ? "bg-gray-800/50" : "bg-gray-100/50"
+                  )}
                 >
                   <div className="flex items-center space-x-3">
                     {currentUser?.photoURL ? (
@@ -363,7 +425,9 @@ const Navbar = ({ isDarkMode = true }) => {
                       className={cn(
                         "block w-full px-4 py-2 rounded-xl text-center font-medium tracking-wide transition-colors border",
                         navTheme.text,
-                        isDarkMode ? "border-gray-300 hover:bg-gray-100" : "border-gray-600 hover:bg-gray-800"
+                        isDarkMode 
+                          ? "border-gray-600 hover:bg-gray-800" 
+                          : "border-gray-300 hover:bg-gray-100"
                       )}
                     >
                       {t("Login")}
@@ -423,7 +487,7 @@ const NavItem = ({ item, onNavigate, textColor, isDarkMode }) => {
       <motion.span 
         className={cn(
           "absolute inset-0 rounded-full",
-          isDarkMode ? "bg-gray-200" : "bg-gray-700"
+          isDarkMode ? "bg-gray-700" : "bg-gray-200"
         )}
         initial={{ scale: 0.8, opacity: 0 }}
         variants={{

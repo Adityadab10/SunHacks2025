@@ -14,13 +14,39 @@ export default function Landing() {
     setIsDarkMode(!isDarkMode)
   }
 
+  // Theme-aware styling
+  const themeClasses = isDarkMode
+    ? {
+        bg: "bg-black",
+        text: "text-white",
+        textSecondary: "text-gray-400",
+        cardBg: "bg-gray-900/50",
+        cardBorder: "border-gray-800",
+        cardHover: "hover:bg-gray-800/50",
+        stepBg: "bg-gray-800/50",
+        stepBorder: "border-gray-700",
+        finalBg: "bg-black",
+      }
+    : {
+        bg: "bg-white",
+        text: "text-gray-900",
+        textSecondary: "text-gray-600",
+        cardBg: "bg-gray-50/50",
+        cardBorder: "border-gray-200",
+        cardHover: "hover:bg-gray-100/50",
+        stepBg: "bg-gray-100/50",
+        stepBorder: "border-gray-300",
+        finalBg: "bg-gray-50",
+      }
+
   return (
-    <div className="min-h-screen pt-16 bg-black text-white">
-      {/* <ModernNavbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} /> */}
+    <div
+      className={`min-h-screen pt-16 ${themeClasses.bg} ${themeClasses.text}`}
+    >
       <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
 
       {/* Hero Section with Lamp Effect */}
-      <LampContainer>
+      <LampContainer isDarkMode={isDarkMode}>
         <motion.div
           initial={{ opacity: 0.5, y: 100 }}
           whileInView={{ opacity: 1, y: 40 }}
@@ -31,17 +57,31 @@ export default function Landing() {
           }}
           className="text-center space-y-8 max-w-4xl mx-auto mt-24"
         >
-          <h1 className="bg-gradient-to-br from-slate-300 to-slate-500 py-4 bg-clip-text text-center text-5xl md:text-7xl font-bold tracking-tight text-transparent leading-tight">
-            <span className="bg-gradient-to-br from-white to-[#74AA9C] bg-clip-text text-transparent">
+          <h1
+            className={`py-4 bg-clip-text text-center text-5xl md:text-7xl font-bold tracking-tight text-transparent leading-tight ${
+              isDarkMode
+                ? "bg-gradient-to-br from-slate-300 to-slate-500"
+                : "bg-gradient-to-br from-gray-700 to-gray-900"
+            }`}
+          >
+            <span className="bg-gradient-to-br from-[#74AA9C] to-[#5a8a7f] bg-clip-text text-transparent">
               PadhAI
             </span>
             <br />
-            <span className="text-4xl md:text-6xl bg-gradient-to-br from-gray-300 to-gray-500 bg-clip-text text-transparent">
+            <span
+              className={`text-4xl md:text-6xl bg-clip-text text-transparent ${
+                isDarkMode
+                  ? "bg-gradient-to-br from-gray-300 to-gray-500"
+                  : "bg-gradient-to-br from-gray-600 to-gray-800"
+              }`}
+            >
               {t("Smarter Learning, Simplified")}
             </span>
           </h1>
 
-          <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
+          <p
+            className={`text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed ${themeClasses.textSecondary}`}
+          >
             {t(
               "AI-powered study assistant that turns YouTube, PDFs, and notes into personalized learning boards."
             )}
@@ -50,14 +90,14 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
             <Link
               to="/demo"
-              className="bg-[#74AA9C] hover:bg-[#74AA9C]/90 text-black font-semibold px-8 py-4 text-lg rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-[#74AA9C]/25 flex items-center space-x-2"
+              className="bg-[#74AA9C] hover:bg-[#74AA9C]/90 text-white font-semibold px-8 py-4 text-lg rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-[#74AA9C]/25 flex items-center space-x-2"
             >
               <Play className="w-5 h-5" />
               <span>{t("Try Demo")}</span>
             </Link>
             <Link
               to="/waitlist"
-              className="border-2 border-[#74AA9C] text-[#74AA9C] hover:bg-[#74AA9C] hover:text-black px-8 py-4 text-lg rounded-lg transition-all duration-300 hover:scale-105 bg-transparent flex items-center space-x-2"
+              className="border-2 border-[#74AA9C] text-[#74AA9C] hover:bg-[#74AA9C] hover:text-white px-8 py-4 text-lg rounded-lg transition-all duration-300 hover:scale-105 bg-transparent flex items-center space-x-2"
             >
               <UserPlus className="w-5 h-5" />
               <span>{t("Join Waitlist")}</span>
@@ -68,7 +108,9 @@ export default function Landing() {
 
       {/* Features Preview */}
       <section className="pb-20 px-6 max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12">
+        <h2
+          className={`text-3xl font-bold text-center mb-12 ${themeClasses.text}`}
+        >
           {t("Powerful Features for")}{" "}
           <span className="text-[#74AA9C]">{t("Smart Learning")}</span>
         </h2>
@@ -102,15 +144,17 @@ export default function Landing() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="text-center space-y-4 p-8 rounded-xl border border-gray-800 hover:border-[#74AA9C]/50 transition-all duration-300 bg-gray-900/50 backdrop-blur-sm hover:bg-gray-800/50"
+              className={`text-center space-y-4 p-8 rounded-xl border ${themeClasses.cardBorder} hover:border-[#74AA9C]/50 transition-all duration-300 ${themeClasses.cardBg} backdrop-blur-sm ${themeClasses.cardHover}`}
             >
-              <div className="w-16 h-16 rounded-full bg-[#74AA9C] flex items-center justify-center mx-auto text-black">
+              <div className="w-16 h-16 rounded-full bg-[#74AA9C] flex items-center justify-center mx-auto text-white">
                 {feature.icon}
               </div>
-              <h3 className="text-xl font-semibold text-white">
+              <h3 className={`text-xl font-semibold ${themeClasses.text}`}>
                 {feature.title}
               </h3>
-              <p className="text-gray-400 leading-relaxed">
+              <p
+                className={`leading-relaxed ${themeClasses.textSecondary}`}
+              >
                 {feature.description}
               </p>
             </motion.div>
@@ -120,7 +164,9 @@ export default function Landing() {
 
       {/* How It Works */}
       <section className="py-20 px-6 max-w-5xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12">
+        <h2
+          className={`text-3xl font-bold text-center mb-12 ${themeClasses.text}`}
+        >
           {t("How")}{" "}
           <span className="text-[#74AA9C]">PadhAI</span> {t("Works")}
         </h2>
@@ -165,16 +211,18 @@ export default function Landing() {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: index * 0.2 }}
               viewport={{ once: true }}
-              className="flex items-center space-x-8 bg-gray-800/50 rounded-2xl p-8 border border-gray-700 hover:border-[#74AA9C]/50 transition-all duration-300"
+              className={`flex items-center space-x-8 ${themeClasses.stepBg} rounded-2xl p-8 border ${themeClasses.stepBorder} hover:border-[#74AA9C]/50 transition-all duration-300`}
             >
-              <div className="w-12 h-12 rounded-full bg-[#74AA9C] flex items-center justify-center text-xl font-bold text-black flex-shrink-0">
+              <div className="w-12 h-12 rounded-full bg-[#74AA9C] flex items-center justify-center text-xl font-bold text-white flex-shrink-0">
                 {item.step}
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-semibold mb-2 text-white">
+                <h3 className={`text-xl font-semibold mb-2 ${themeClasses.text}`}>
                   {item.title}
                 </h3>
-                <p className="text-gray-400">{item.description}</p>
+                <p className={themeClasses.textSecondary}>
+                  {item.description}
+                </p>
               </div>
               <div className="text-4xl">{item.emoji}</div>
             </motion.div>
@@ -183,7 +231,7 @@ export default function Landing() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-24 px-6 bg-black">
+      <section className={`py-24 px-6 ${themeClasses.finalBg}`}>
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -191,11 +239,13 @@ export default function Landing() {
           viewport={{ once: true }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h2 className="text-5xl font-bold mb-8">
+          <h2 className={`text-5xl font-bold mb-8 ${themeClasses.text}`}>
             {t("Start Learning Smarter with")}{" "}
             <span className="text-[#74AA9C]">PadhAI</span>
           </h2>
-          <p className="text-xl text-gray-400 mb-12 max-w-3xl mx-auto">
+          <p
+            className={`text-xl mb-12 max-w-3xl mx-auto ${themeClasses.textSecondary}`}
+          >
             {t(
               "Join thousands of students who are already transforming their study habits with AI-powered personalized learning."
             )}
@@ -204,14 +254,14 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
             <Link
               to="/demo"
-              className="bg-[#74AA9C] hover:bg-[#74AA9C]/90 text-black px-12 py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-3 hover:scale-105"
+              className="bg-[#74AA9C] hover:bg-[#74AA9C]/90 text-white px-12 py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-3 hover:scale-105"
             >
               <Play className="w-6 h-6" />
               <span>{t("Try Demo")}</span>
             </Link>
             <Link
               to="/waitlist"
-              className="border-2 border-[#74AA9C] text-[#74AA9C] px-12 py-4 rounded-xl font-bold text-lg hover:bg-[#74AA9C] hover:text-black transition-all duration-300 flex items-center justify-center space-x-3 hover:scale-105"
+              className="border-2 border-[#74AA9C] text-[#74AA9C] px-12 py-4 rounded-xl font-bold text-lg hover:bg-[#74AA9C] hover:text-white transition-all duration-300 flex items-center justify-center space-x-3 hover:scale-105"
             >
               <UserPlus className="w-6 h-6" />
               <span>{t("Join Waitlist")}</span>
