@@ -45,7 +45,7 @@ export default function Landing() {
     >
       <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
 
-      {/* Hero Section with Lamp Effect */}
+      {/* Hero Section with Lamp Effect - NOW PROPERLY RECEIVES THEME */}
       <LampContainer isDarkMode={isDarkMode}>
         <motion.div
           initial={{ opacity: 0.5, y: 100 }}
