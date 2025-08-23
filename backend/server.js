@@ -9,6 +9,7 @@ import studyBoardYTRoutes from "./routes/studyboard-ytRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js";
+import translateRoutes from "./routes/translateRoutes.js";
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import extensionRoutes from './routes/extensionRoutes.js'
@@ -40,8 +41,6 @@ app.use('/storage', express.static(path.join(process.cwd(), 'storage')));
 app.get("/", (req, res) => {
   res.send("PadhAI API is running...");
 });
-
-import translateRoutes from "./routes/translateRoutes.js";
 app.use("/api/auth", authRoutes);
 app.use("/api/youtube", youtubeRoutes);
 app.use("/api/studyboard-yt", studyBoardYTRoutes);

@@ -2,6 +2,7 @@ import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { UserProvider, useUser } from './context/UserContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { SocketProvider } from './context/SocketContext';
 import Navbar from './components/Navbar';
 import Landing from './pages/Landing';
@@ -79,11 +80,13 @@ const AppContent = () => {
 const App = () => {
   return (
     <UserProvider>
-      <SocketProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </SocketProvider>
+      <LanguageProvider>
+        <SocketProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </SocketProvider>
+      </LanguageProvider>
     </UserProvider>
   );
 };
