@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import MainSidebar from '../components/Sidebar';
+import StoryMode from '../components/StoryMode';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { 
@@ -20,7 +21,8 @@ import {
   FileText,
   X,
   Upload,
-  Star
+  Star,
+  Headphones
 } from 'lucide-react';
 
 const StudyboardPage = () => {
@@ -46,6 +48,7 @@ const StudyboardPage = () => {
     { id: "flashcards", label: "🔄 Flashcards", icon: BrainCircuit },
     { id: "quiz", label: "❓ Quiz", icon: Target },
     { id: "important", label: "⭐ Important Points", icon: Star },
+    { id: "storymode", label: "🎧 Story Mode", icon: Headphones },
     { id: "chat", label: "💬 Chat", icon: Send },
   ];
 
@@ -699,6 +702,14 @@ const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/flashcards`, {
                       <p className="text-gray-500">No important points available</p>
                     )}
                   </motion.div>
+                )}
+
+                {/* Story Mode Tab */}
+                {activeTab === "storymode" && (
+                  <StoryMode 
+                    studyBoard={studyBoard} 
+                    documentFile={documentFile} 
+                  />
                 )}
 
                 {/* Chat Tab */}
