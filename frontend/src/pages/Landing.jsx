@@ -1,5 +1,5 @@
 import { motion } from "framer-motion"
-import { Upload, Target, MessageCircle, Play, UserPlus } from "lucide-react"
+import { Upload, Target, MessageCircle, ArrowRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { LampContainer } from "../components/ui/lamp"
 import { Link } from "react-router-dom"
@@ -87,20 +87,13 @@ export default function Landing() {
             )}
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
+          <div className="flex justify-center pt-8">
             <Link
-              to="/demo"
-              className="bg-[#74AA9C] hover:bg-[#74AA9C]/90 text-white font-semibold px-8 py-4 text-lg rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-[#74AA9C]/25 flex items-center space-x-2"
+              to="/login"
+              className="bg-gradient-to-r from-[#74AA9C] to-[#5a8a7f] hover:from-[#5a8a7f] hover:to-[#74AA9C] text-white font-semibold px-10 py-4 text-lg rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#74AA9C]/25 flex items-center space-x-3 group"
             >
-              <Play className="w-5 h-5" />
-              <span>{t("Try Demo")}</span>
-            </Link>
-            <Link
-              to="/waitlist"
-              className="border-2 border-[#74AA9C] text-[#74AA9C] hover:bg-[#74AA9C] hover:text-white px-8 py-4 text-lg rounded-lg transition-all duration-300 hover:scale-105 bg-transparent flex items-center space-x-2"
-            >
-              <UserPlus className="w-5 h-5" />
-              <span>{t("Join Waitlist")}</span>
+              <span>{t("Get Started")}</span>
+              <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </div>
         </motion.div>
@@ -251,20 +244,13 @@ export default function Landing() {
             )}
           </p>
 
-          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+          <div className="flex justify-center">
             <Link
-              to="/demo"
-              className="bg-[#74AA9C] hover:bg-[#74AA9C]/90 text-white px-12 py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-3 hover:scale-105"
+              to="/login"
+              className="bg-gradient-to-r from-[#74AA9C] to-[#5a8a7f] hover:from-[#5a8a7f] hover:to-[#74AA9C] text-white px-12 py-4 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center space-x-3 hover:scale-105 hover:shadow-xl hover:shadow-[#74AA9C]/25 group"
             >
-              <Play className="w-6 h-6" />
-              <span>{t("Try Demo")}</span>
-            </Link>
-            <Link
-              to="/waitlist"
-              className="border-2 border-[#74AA9C] text-[#74AA9C] px-12 py-4 rounded-xl font-bold text-lg hover:bg-[#74AA9C] hover:text-white transition-all duration-300 flex items-center justify-center space-x-3 hover:scale-105"
-            >
-              <UserPlus className="w-6 h-6" />
-              <span>{t("Join Waitlist")}</span>
+              <span>{t("Get Started")}</span>
+              <ArrowRight className="w-6 h-6 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </div>
         </motion.div>
