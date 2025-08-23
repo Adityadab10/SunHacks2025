@@ -196,9 +196,15 @@ async def generate_quiz(state: State) -> Dict[str, Optional[Dict]]:
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", """
-                You are an expert educator. The user will provide a topic, and you must generate questions on that topic using Bloom’s Taxonomy. 
-                Create questions at different cognitive levels: Remember, Understand, Apply, Analyze, Evaluate, and Create. 
-                Label each question with its Bloom’s level. Provide 2–3 questions per level. 
+                You are an expert educator. The user will provide a topic, and you must generate multiple-choice questions on that topic using Bloom’s Taxonomy.  
+                Create questions at different cognitive levels: Remember, Understand, Apply, Analyze, Evaluate, and Create.  
+
+                For each question:  
+                - Only write the question text (do not generate the options like A. B. C. D. etc. Don't do it at all costs).  
+                - Indicate which option letter (A, B, C, or D) is the correct answer.  
+                - Don't label the Bloom’s level.  
+
+                Do not explain the answer.  
                 Ensure progression from simple factual recall to higher-order critical thinking and creativity.
             """),
             ("human", "{content}")

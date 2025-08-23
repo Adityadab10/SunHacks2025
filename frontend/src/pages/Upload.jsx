@@ -512,111 +512,113 @@ const StudyboardPage = () => {
                   </motion.div>
                 )}
 
-                {/* Quiz Tab */}
-                {activeTab === "quiz" && studyBoard?.content?.quiz && studyBoard.content.quiz.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-gray-900 rounded-xl p-6 border border-gray-800"
+{/* Quiz Tab */}
+{activeTab === "quiz" && studyBoard?.content?.quiz && studyBoard.content.quiz.length > 0 && (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-gray-900 rounded-xl p-6 border border-gray-800"
+  >
+    <div className="flex items-center space-x-3 mb-4">
+      <div className="bg-orange-500/20 p-2 rounded-lg">
+        <BrainCircuit className="w-5 h-5 text-orange-400" />
+      </div>
+      <h2 className="text-xl font-semibold">Quiz Questions</h2>
+    </div>
+    <div className="space-y-6">
+      {studyBoard.content.quiz.map((question, qIndex) => {
+        const optionLabels = ['A', 'B', 'C', 'D'];
+        
+        return (
+          <div
+            key={qIndex}
+            className="bg-gray-800/50 rounded-lg p-6 border border-gray-700"
+          >
+            <h3 className="text-xl font-semibold text-white mb-4">
+              {qIndex + 1}. <ReactMarkdown>{question.question}</ReactMarkdown>
+            </h3>
+            <div className="space-y-3">
+              {question.options && question.options.map((option, oIndex) => {
+                // FIXED: Compare option letter (A, B, C, D) with the answer letter
+                const isCorrect = optionLabels[oIndex] === question.answer;
+                const isSelected = selectedAnswers[qIndex] === oIndex;
+                const showResult = showExplanations[qIndex];
+                
+                return (
+                  <button
+                    key={oIndex}
+                    onClick={() => handleAnswerSelect(qIndex, oIndex)}
+                    disabled={showExplanations[qIndex]}
+                    className={`w-full text-left p-4 rounded-lg text-white transition-colors border-2 ${
+                      showResult
+                        ? isCorrect
+                          ? "bg-green-500/20 border-green-500 text-green-100"
+                          : isSelected
+                          ? "bg-red-500/20 border-red-500 text-red-100"
+                          : "bg-gray-700 border-gray-600"
+                        : isSelected
+                        ? "bg-blue-500/20 border-blue-500"
+                        : "bg-gray-700 border-gray-600 hover:bg-gray-600 hover:border-gray-500"
+                    }`}
                   >
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="bg-orange-500/20 p-2 rounded-lg">
-                        <BrainCircuit className="w-5 h-5 text-orange-400" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className="font-semibold mr-3 text-sm bg-gray-600 px-2 py-1 rounded">
+                          {optionLabels[oIndex]}
+                        </span>
+                        <span className="text-left"><ReactMarkdown>{option}</ReactMarkdown></span>
                       </div>
-                      <h2 className="text-xl font-semibold">Quiz Questions</h2>
+                      {showResult && (
+                        <div className="flex items-center">
+                          {isCorrect && (
+                            <span className="text-green-400 font-bold">✓ Correct</span>
+                          )}
+                          {!isCorrect && isSelected && (
+                            <span className="text-red-400 font-bold">✗ Wrong</span>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="space-y-6">
-                      {studyBoard.content.quiz.map((question, qIndex) => {
-                        const optionLabels = ['A', 'B', 'C', 'D'];
-                        return (
-                          <div
-                            key={qIndex}
-                            className="bg-gray-800/50 rounded-lg p-6 border border-gray-700"
-                          >
-                            <h3 className="text-xl font-semibold text-white mb-4">
-                              {qIndex + 1}. <ReactMarkdown>{question.question}</ReactMarkdown>
-                            </h3>
-                            <div className="space-y-3">
-                              {question.options && question.options.map((option, oIndex) => {
-                                const isCorrect = option.toLowerCase() === question.answer.toLowerCase();
-                                const isSelected = selectedAnswers[qIndex] === oIndex;
-                                const showResult = showExplanations[qIndex];
-                                
-                                return (
-                                  <button
-                                    key={oIndex}
-                                    onClick={() => handleAnswerSelect(qIndex, oIndex)}
-                                    disabled={showExplanations[qIndex]}
-                                    className={`w-full text-left p-4 rounded-lg text-white transition-colors border-2 ${
-                                      showResult
-                                        ? isCorrect
-                                          ? "bg-green-500/20 border-green-500 text-green-100"
-                                          : isSelected
-                                          ? "bg-red-500/20 border-red-500 text-red-100"
-                                          : "bg-gray-700 border-gray-600"
-                                        : isSelected
-                                        ? "bg-blue-500/20 border-blue-500"
-                                        : "bg-gray-700 border-gray-600 hover:bg-gray-600 hover:border-gray-500"
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center">
-                                        <span className="font-semibold mr-3 text-sm bg-gray-600 px-2 py-1 rounded">
-                                          {optionLabels[oIndex]}
-                                        </span>
-                                        <span className="text-left"><ReactMarkdown>{option}</ReactMarkdown></span>
-                                      </div>
-                                      {showResult && (
-                                        <div className="flex items-center">
-                                          {isCorrect && (
-                                            <span className="text-green-400 font-bold">✓ Correct</span>
-                                          )}
-                                          {!isCorrect && isSelected && (
-                                            <span className="text-red-400 font-bold">✗ Wrong</span>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
+                  </button>
+                );
+              })}
+            </div>
 
-                            {showExplanations[qIndex] && (
-                              <div
-                                className={`mt-4 p-4 rounded-lg border-2 ${
-                                  selectedAnswers[qIndex] !== undefined && 
-                                  question.options[selectedAnswers[qIndex]]?.toLowerCase() === question.answer.toLowerCase()
-                                    ? "bg-green-500/10 border-green-500/50"
-                                    : "bg-red-500/10 border-red-500/50"
-                                }`}
-                              >
-                                <div className="flex items-center justify-between mb-2">
-                                  <p className="text-sm font-semibold text-white">
-                                    Correct Answer: <div><ReactMarkdown>{question.answer}</ReactMarkdown></div>
-                                  </p>
-                                  <div className="text-sm">
-                                    {selectedAnswers[qIndex] !== undefined && 
-                                     question.options[selectedAnswers[qIndex]]?.toLowerCase() === question.answer.toLowerCase() ? (
-                                      <span className="text-green-400 font-semibold">✓ You got it right!</span>
-                                    ) : (
-                                      <span className="text-red-400 font-semibold">✗ Better luck next time!</span>
-                                    )}
-                                  </div>
-                                </div>
-                                {question.explanation && (
-                                  <p className="text-sm text-gray-300 mt-2 p-3 bg-gray-800/50 rounded">
-                                    <strong>Explanation:</strong> <div><ReactMarkdown>{question.explanation}</ReactMarkdown></div>
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
+            {showExplanations[qIndex] && (
+              <div
+                className={`mt-4 p-4 rounded-lg border-2 ${
+                  selectedAnswers[qIndex] !== undefined && 
+                  optionLabels[selectedAnswers[qIndex]] === question.answer
+                    ? "bg-green-500/10 border-green-500/50"
+                    : "bg-red-500/10 border-red-500/50"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold text-white">
+                    Correct Answer: {question.answer} - <ReactMarkdown>{question.options[optionLabels.indexOf(question.answer)]}</ReactMarkdown>
+                  </p>
+                  <div className="text-sm">
+                    {selectedAnswers[qIndex] !== undefined && 
+                     optionLabels[selectedAnswers[qIndex]] === question.answer ? (
+                      <span className="text-green-400 font-semibold">✓ You got it right!</span>
+                    ) : (
+                      <span className="text-red-400 font-semibold">✗ Better luck next time!</span>
+                    )}
+                  </div>
+                </div>
+                {question.explanation && (
+                  <p className="text-sm text-gray-300 mt-2 p-3 bg-gray-800/50 rounded">
+                    <strong>Explanation:</strong> <div><ReactMarkdown>{question.explanation}</ReactMarkdown></div>
+                  </p>
                 )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  </motion.div>
+)}
 
                 {/* Important Points Tab */}
                 {activeTab === "important" && studyBoard?.content?.importantPoints && (
