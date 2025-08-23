@@ -397,10 +397,10 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="flex flex-row md:flex-col gap-4 text-center">
-                <div className="p-5 bg-gradient-to-br from-[#74AA9C]/40 to-black/30 rounded-2xl border border-[#74AA9C]/50 shadow-lg min-w-[90px]">
-                  <div className="text-3xl font-bold text-[#74AA9C] mb-1 font-mono">{streak}</div>
-                  <div className="text-[#74AA9C]/80 text-xs font-semibold">STREAK</div>
-                </div>
+                {/* <div className="p-5 bg-gradient-to-br from-[#74AA9C]/40 to-black/30 rounded-2xl border border-[#74AA9C]/50 shadow-lg min-w-[90px]"> */}
+                  {/* <div className="text-3xl font-bold text-[#74AA9C] mb-1 font-mono">{streak}</div>
+                  <div className="text-[#74AA9C]/80 text-xs font-semibold">STREAK</div> */}
+                {/* </div> */}
               </div>
             </div>
           </motion.div>

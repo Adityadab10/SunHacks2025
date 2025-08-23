@@ -1,0 +1,9 @@
+version: "3.8"
+services:
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    restart: always
+    ports:
+      - "6000:5000" # external:internal
+    environment:
+      - LT_LOAD_ONLY=en,hi,mr # only load English, French, Hindi, and Marathi (saves memory)
