@@ -12,6 +12,9 @@ import groupRoutes from "./routes/groupRoutes.js";
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import extensionRoutes from './routes/extensionRoutes.js'
+import flowRoutes from './routes/flowRoutes.js';
+
+// Load environment variables
 dotenv.config();
 
 const app = express();
@@ -22,6 +25,12 @@ const io = new SocketIOServer(server, {
     methods: ['GET', 'POST']
   }
 });
+
+const PORT = process.env.PORT || 5000;
+
+console.log('🚀 Starting server...');
+console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
+console.log('🔑 Gemini API Key exists:', !!process.env.GEMINI_API_KEY);
 
 // Middleware
 app.use(
@@ -50,6 +59,28 @@ app.use("/api", userRoutes);
 app.use("/api/group", groupRoutes);
 app.use("/api/translate", translateRoutes);
 app.use("/api/extension", extensionRoutes);
+console.log('🛣️ Registering flow routes at /api/flow...');
+app.use('/api/flow', flowRoutes);
+
+// Test route
+app.get('/api/test', (req, res) => {
+  console.log('🧪 Test endpoint hit');
+  res.json({ 
+    success: true, 
+    message: 'Server is running!',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Health check
+app.get('/health', (req, res) => {
+  console.log('❤️ Health endpoint hit');
+  res.json({ 
+    success: true, 
+    message: 'Server is healthy!',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -65,9 +96,34 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// 404 handler
+app.use("*", (req, res) => {
+  console.log(`❌ Route not found: ${req.method} ${req.originalUrl}`);
+  console.log('📋 Available routes:');
+  console.log('   GET /health');
+  console.log('   GET /api/test');
+  console.log('   POST /api/flow/generate-flow');
+  console.log('   GET /api/flow/health');
+  console.log('   GET /api/flow/test');
+  console.log('   GET /api/flow/analytics/:userId');
+  
+  res.status(404).json({
+    success: false,
+    error: `Route not found: ${req.method} ${req.originalUrl}`,
+    availableRoutes: [
+      'GET /health',
+      'GET /api/test', 
+      'POST /api/flow/generate-flow',
+      'GET /api/flow/health',
+      'GET /api/flow/test',
+      'GET /api/flow/analytics/:userId'
+    ]
+  });
+});
+
 // Error handling middleware
 app.use((error, req, res, next) => {
-  console.error("Server error:", error);
+  console.error("❌ Server error:", error);
 
   if (error.code === "LIMIT_FILE_SIZE") {
     return res.status(400).json({
@@ -79,14 +135,6 @@ app.use((error, req, res, next) => {
   res.status(500).json({
     success: false,
     error: "Internal server error",
-  });
-});
-
-// 404 handler
-app.use("*", (req, res) => {
-  res.status(404).json({
-    success: false,
-    error: "Route not found",
   });
 });
 
