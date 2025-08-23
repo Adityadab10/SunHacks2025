@@ -376,28 +376,31 @@ const SidebarContent = ({ navigationLinks, currentUser, onLogout }) => {
 
       {/* User Profile & Logout */}
       <div className="border-t border-gray-800/50 pt-6 mt-6">
-        <div className="flex items-center gap-4 mb-6 p-3 rounded-xl bg-gray-800/30 border border-gray-700/30">
-          {currentUser?.photoURL ? (
-            <img 
-              src={currentUser.photoURL} 
-              alt="Profile" 
-              className="w-10 h-10 rounded-full border-2 border-[#74AA9C]/30"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center">
-              <User className="w-5 h-5 text-gray-300" />
-            </div>
-          )}
+        <div className={`flex items-center gap-2 ${!open ? 'p-2' : 'p-3'} rounded-xl bg-gray-800/30 border border-gray-700/30 transition-all duration-300`}>
+          <div className="relative w-10 h-10 flex-shrink-0 rounded-full overflow-hidden transform-gpu">
+            {currentUser?.photoURL ? (
+              <img 
+                src={currentUser.photoURL} 
+                alt="Profile" 
+                className="w-full h-full object-cover rounded-full border-2 border-[#74AA9C]/30"
+                style={{ aspectRatio: '1', objectPosition: 'center' }}
+              />
+            ) : (
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center">
+                <User className="w-5 h-5 text-gray-300" />
+              </div>
+            )}
+          </div>
           <motion.div
             animate={{
+              width: open ? 'auto' : 0,
               opacity: open ? 1 : 0,
-              display: open ? "block" : "none",
             }}
             transition={{
-              duration: 0.2,
-              ease: "easeInOut",
+              duration: 0.3,
+              ease: [0.4, 0.0, 0.2, 1]
             }}
-            className="flex-1 min-w-0"
+            className="overflow-hidden flex-1 min-w-0"
           >
             <p className="text-sm font-semibold text-white truncate">
               {currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User'}

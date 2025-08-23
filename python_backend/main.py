@@ -13,7 +13,7 @@ from datetime import datetime
 from flashcards.flashcard_agent import graph
 from flashcards.agent import agent
 from langchain_core.messages import HumanMessage
-
+from flashcards.video_agent import graph_imp
 
 app = FastAPI(title="Teacher Agent API", version="1.0.0")
 
@@ -317,6 +317,77 @@ async def flashcard_generation(
                 os.rmdir(temp_dir)
             except Exception as e:
                 logger.error(f"Error removing temp directory: {e}")
+
+@app.post("/video-desc")
+async def video_desc(
+    file: UploadFile = File(...),
+    message: str = Form(...),
+    teacher: str = Form("Anil Deshmukh"),
+    thread_id: Optional[str] = Form(None)
+):
+    """Upload document and chat endpoint - supports PDF, DOCX, and PPTX"""
+    logger.info(f"File received: {file.filename}")
+    
+    # Generate thread_id if not provided
+    if thread_id is None:
+        thread_id = str(uuid.uuid4())
+        logger.info(f"Generated new thread_id: {thread_id}")
+
+    temp_file_path = None
+    try:
+        # Validate file type
+        allowed_extensions = ['.pdf', '.docx', '.pptx']
+        file_extension = os.path.splitext(file.filename.lower())[1]
+        
+        if file_extension not in allowed_extensions:
+            return JSONResponse(
+                {"status": "error", "detail": "Only PDF, DOCX, and PPTX files are supported"},
+                status_code=400
+            )
+
+        # Save uploaded file
+        content = await file.read()
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=file_extension)
+        temp_file.write(content)
+        temp_file.close()
+        temp_file_path = temp_file.name
+
+        uploaded_files[thread_id] = temp_file_path
+
+        # Build state for chat with document
+        state = {
+            "messages": [HumanMessage(content=message)],
+            "pdf_path": temp_file_path,
+        }
+
+        # Execute graph directly
+        result = await graph_imp.ainvoke(state, config={"configurable": {"thread_id": thread_id}})
+        
+        if result['result']:
+            response_content = result['result']['points']
+            return JSONResponse({
+                "status": "success",
+                "thread_id": thread_id,
+                "filename": file.filename,
+                "result": response_content
+            })
+        else:
+            raise ValueError("Invalid response format from graph")
+
+    except Exception as e:
+        logger.error(f"Error in videp endpoint: {e}")
+        return JSONResponse(
+            {"status": "error", "detail": str(e)},
+            status_code=500
+        )
+    finally:
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+                uploaded_files.pop(thread_id, None)
+            except Exception as e:
+                logger.error(f"Error cleaning up temp file: {e}")
+
                 
 @app.get("/health")
 async def health_check():
