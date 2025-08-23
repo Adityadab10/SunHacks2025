@@ -9,9 +9,7 @@ from pdfminer.high_level import extract_text
 from pydantic import BaseModel
 from pptx import Presentation
 from docx import Document
-from sympy import content
 import logging
-import asyncio
 
 load_dotenv()
 
