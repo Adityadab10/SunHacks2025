@@ -393,9 +393,9 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <h1 className="text-5xl font-extrabold mb-2 bg-gradient-to-r from-white to-[#74AA9C] bg-clip-text text-transparent drop-shadow-lg">
-                    {translations.welcomeBack}, {currentUser?.displayName || currentUser?.email?.split('@')[0] || translations.student}!
+                    {translations.welcomeBack || "Welcome Back"}, {currentUser?.displayName || currentUser?.email?.split('@')[0] || translations.student || "Student"}!
                   </h1>
-                  <p className="text-[#74AA9C]/80 text-lg">{translations.readyToContinue}</p>
+                  <p className="text-[#74AA9C]/80 text-lg">{translations.readyToContinue || "Ready to continue your learning journey?"}</p>
                 </div>
               </div>
               <div className="flex flex-row md:flex-col gap-4 text-center">
