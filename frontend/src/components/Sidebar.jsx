@@ -304,11 +304,11 @@ const MainSidebar = () => {
       href: "/study-flow",
       icon: <TrendingUp className="w-5 h-5" />,
     },
-    {
-      label: "Flashcards",
-      href: "/flashcards",
-      icon: <Zap className="w-5 h-5" />,
-    },
+    // {
+    //   label: "Flashcards",
+    //   href: "/flashcards",
+    //   icon: <Zap className="w-5 h-5" />,
+    // },
     {
       label: "Study Group",
       href: "/study-group",
