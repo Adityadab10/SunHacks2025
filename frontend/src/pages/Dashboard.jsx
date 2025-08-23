@@ -164,6 +164,65 @@ const Dashboard = () => {
     setTimelineStats(timelineData);
   }, [studyBoards.length, chatHistory.length, youtubeHistory.length]);
 
+  // Replace dummy stats with real data fetching
+  useEffect(() => {
+    async function fetchAnalytics() {
+      if (!mongoUid) return;
+
+      try {
+        // Reset states
+        setWeeklyStats([]);
+        setActivityStats([]);
+        setTimelineStats([]);
+
+        // Fetch all analytics in parallel for better performance
+        const [weeklyRes, distributionRes, timelineRes] = await Promise.all([
+          fetch(`http://localhost:5000/api/analytics/weekly-activity/${mongoUid}`),
+          fetch(`http://localhost:5000/api/analytics/activity-distribution/${mongoUid}`),
+          fetch(`http://localhost:5000/api/analytics/daily-timeline/${mongoUid}`)
+        ]);
+
+        // Handle weekly activity
+        if (weeklyRes.ok) {
+          const weeklyData = await weeklyRes.json();
+          if (weeklyData.success && weeklyData.data?.length > 0) {
+            setWeeklyStats(weeklyData.data);
+          }
+        }
+
+        // Handle activity distribution
+        if (distributionRes.ok) {
+          const distributionData = await distributionRes.json();
+          if (distributionData.success) {
+            const stats = [
+              { name: 'Study Boards', value: distributionData.data.studyBoards, color: '#74AA9C' },
+              { name: 'Chat Sessions', value: distributionData.data.chatSessions, color: '#6366f1' },
+              { name: 'Video Summaries', value: distributionData.data.videoSummaries, color: '#ef4444' }
+            ].filter(item => item.value > 0);
+            if (stats.length > 0) {
+              setActivityStats(stats);
+            }
+          }
+        }
+
+        // Handle timeline data
+        if (timelineRes.ok) {
+          const timelineData = await timelineRes.json();
+          if (timelineData.success && timelineData.data?.length > 0) {
+            setTimelineStats(timelineData.data);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+      }
+    }
+
+    fetchAnalytics();
+    // Poll every 5 minutes for fresh data
+    const intervalId = setInterval(fetchAnalytics, 300000);
+    return () => clearInterval(intervalId);
+  }, [mongoUid]);
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -177,6 +236,7 @@ const Dashboard = () => {
     return title.length > maxLength ? title.substring(0, maxLength) + '...' : title;
   };
 
+  // Update renderStats to show empty state messages
   const renderStats = () => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -188,26 +248,32 @@ const Dashboard = () => {
       <div className="bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg">
         <h3 className="text-xl font-semibold mb-6 text-white">Activity Distribution</h3>
         <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={activityStats}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              >
-                {activityStats.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          {activityStats.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={activityStats}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {activityStats.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-gray-400">
+              Start using features to see activity distribution
+            </div>
+          )}
         </div>
       </div>
 
@@ -215,21 +281,27 @@ const Dashboard = () => {
       <div className="bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg">
         <h3 className="text-xl font-semibold mb-6 text-white">Weekly Activity</h3>
         <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={weeklyStats}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-              <XAxis dataKey="day" stroke="#666" />
-              <YAxis stroke="#666" />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#111', border: '1px solid #333' }}
-                labelStyle={{ color: '#fff' }}
-              />
-              <Legend />
-              <Bar dataKey="studyBoards" name="Study Boards" fill="#74AA9C" />
-              <Bar dataKey="chats" name="Chat Sessions" fill="#6366f1" />
-              <Bar dataKey="videos" name="Video Summaries" fill="#ef4444" />
-            </BarChart>
-          </ResponsiveContainer>
+          {weeklyStats.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={weeklyStats}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis dataKey="day" stroke="#666" />
+                <YAxis stroke="#666" />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#111', border: '1px solid #333' }}
+                  labelStyle={{ color: '#fff' }}
+                />
+                <Legend />
+                <Bar dataKey="studyBoards" name="Study Boards" fill="#74AA9C" />
+                <Bar dataKey="chats" name="Chat Sessions" fill="#6366f1" />
+                <Bar dataKey="videos" name="Video Summaries" fill="#ef4444" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-gray-400">
+              Complete activities to see weekly statistics
+            </div>
+          )}
         </div>
       </div>
 
@@ -237,24 +309,30 @@ const Dashboard = () => {
       <div className="lg:col-span-2 bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg">
         <h3 className="text-xl font-semibold mb-6 text-white">Today's Activity Timeline</h3>
         <div className="h-[200px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={timelineStats}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-              <XAxis dataKey="hour" stroke="#666" />
-              <YAxis stroke="#666" />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#111', border: '1px solid #333' }}
-                labelStyle={{ color: '#fff' }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="activity" 
-                stroke="#74AA9C" 
-                strokeWidth={2}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          {timelineStats.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={timelineStats}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis dataKey="hour" stroke="#666" />
+                <YAxis stroke="#666" />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#111', border: '1px solid #333' }}
+                  labelStyle={{ color: '#fff' }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="activity" 
+                  stroke="#74AA9C" 
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-gray-400">
+              Complete activities to see today's timeline
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

@@ -294,11 +294,11 @@ const MainSidebar = () => {
       href: "/youtube",
       icon: <Globe className="w-5 h-5" />,
     },
-    {
-      label: "Study Flow",
-      href: "/study-flow",
-      icon: <Target className="w-5 h-5" />,
-    },
+    // {
+    //   label: "Study Flow",
+    //   href: "/study-x low",
+    //   icon: <Target className="w-5 h-5" />,
+    // },
     // {
     //   label: "Flashcards",
     //   href: "/flashcards",
