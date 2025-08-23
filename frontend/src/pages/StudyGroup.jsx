@@ -136,32 +136,91 @@ const StudyGroup = () => {
   };
 
   const createGroup = async (groupName, addedMembers) => {
+    console.log('🚀 Creating group:', { groupName, addedMembers, currentUserEmail });
+    
+    // Validation
+    if (!groupName || !groupName.trim()) {
+      toast.error('Group name is required');
+      throw new Error('Group name is required');
+    }
+    
+    if (!currentUserEmail) {
+      toast.error('User email not found. Please log in again.');
+      throw new Error('User email not found');
+    }
+
     try {
+      console.log('📡 Sending request to create group...');
       const res = await fetch('http://localhost:5000/api/group/group', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: groupName, ownerEmail: currentUserEmail })
+        body: JSON.stringify({ 
+          name: groupName.trim(), 
+          ownerEmail: currentUserEmail 
+        })
       });
       
-      const data = await res.json();
+      console.log('📡 Response status:', res.status);
       
-      if (data.success) {
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('❌ HTTP Error:', res.status, errorText);
+        throw new Error(`HTTP ${res.status}: ${errorText}`);
+      }
+      
+      const data = await res.json();
+      console.log('📦 Response data:', data);
+      
+      if (data.success && data.group) {
+        console.log('✅ Group created successfully:', data.group);
+        
         // Add members after group creation
-        for (const member of addedMembers) {
-          await fetch(`http://localhost:5000/api/group/group/${data.group._id}/member`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: member.email })
-          });
+        if (addedMembers && addedMembers.length > 0) {
+          console.log('👥 Adding members:', addedMembers);
+          for (const member of addedMembers) {
+            try {
+              console.log('➕ Adding member:', member.email);
+              const memberRes = await fetch(`http://localhost:5000/api/group/group/${data.group._id}/member`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: member.email })
+              });
+              
+              if (!memberRes.ok) {
+                console.warn('⚠️ Failed to add member:', member.email, memberRes.status);
+              } else {
+                console.log('✅ Member added:', member.email);
+              }
+            } catch (memberError) {
+              console.error('❌ Error adding member:', member.email, memberError);
+            }
+          }
         }
         
-        fetchUserGroups(currentUserEmail);
+        // Refresh groups list
+        await fetchUserGroups(currentUserEmail);
         toast.success('Group created successfully!');
+        return data.group;
       } else {
-        throw new Error(data.message || 'Failed to create group');
+        console.error('❌ Server returned success=false:', data);
+        throw new Error(data.message || 'Failed to create group - server returned success=false');
       }
     } catch (error) {
-      toast.error(error.message);
+      console.error('❌ Create group error:', error);
+      
+      // More specific error messages
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        toast.error('Cannot connect to server. Please check if the backend is running.');
+      } else if (error.message.includes('HTTP 400')) {
+        toast.error('Invalid group data. Please check group name and try again.');
+      } else if (error.message.includes('HTTP 401')) {
+        toast.error('Authentication failed. Please log in again.');
+      } else if (error.message.includes('HTTP 500')) {
+        toast.error('Server error. Please try again later.');
+      } else {
+        toast.error(error.message || 'Failed to create group');
+      }
+      
       throw error;
     }
   };
