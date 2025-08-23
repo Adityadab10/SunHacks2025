@@ -382,7 +382,6 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
-
 @app.on_event("startup")
 async def startup_event():
     logger.info("Teacher Agent API starting up...")

@@ -14,7 +14,7 @@ import {
   RefreshCw,
   CheckCircle,
   Settings,
-  SkipForward,
+  SkipForward,    
   SkipBack
 } from 'lucide-react';
 
