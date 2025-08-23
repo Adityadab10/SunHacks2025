@@ -179,24 +179,14 @@ async def upload_and_chat_endpoint(
 
         # Execute graph directly
         result = await agent.ainvoke(state, config={"configurable": {"thread_id": thread_id}})
-        
-        if isinstance(result, dict) and 'messages' in result:
-            response_message = result['messages'][-1]
-            
-            # Enhanced content extraction with debugging
-            logger.info(f"Raw response message type: {type(response_message)}")
-            logger.info(f"Raw response message: {response_message}")
-            
-            # Extract clean content
-            response_content = extract_message_content(response_message)
-            
-            logger.info(f"Extracted content: {response_content}")
-
+        print("got the info: ", result)
+        if result:
+            points = result['messages'][-1].content
             return JSONResponse({
                 "status": "success",
                 "thread_id": thread_id,
                 "filename": file.filename,
-                "response": response_content
+                "response": points
             })
         else:
             raise ValueError("Invalid response format from graph")
@@ -287,7 +277,8 @@ async def flashcard_generation(
                 "status": "success",
                 "flashcards": flashcards,
                 'quiz': quiz,
-                'summary': result['summarize']
+                'summary': result['summarize'],
+                "important": result['important'],
             })
 
         except Exception as e:

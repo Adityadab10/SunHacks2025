@@ -1,6 +1,6 @@
 import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, Home, BookOpen, BarChart3, Settings, LogOut, User, Upload, Target, Zap, MessageCircle, Globe, Sparkles, Languages, Check } from "lucide-react";
+import { Menu, X, Home, BookOpen, BarChart3, Settings, LogOut, User, Upload, Target, Zap, MessageCircle, Globe, Sparkles, Languages, Check, TrendingUp } from "lucide-react";
 
 // Custom scrollbar styles
 const scrollbarStyles = `
@@ -292,6 +292,21 @@ const MainSidebar = () => {
       href: "/youtube",
       icon: <Globe className="w-5 h-5" />,
     },
+    // {
+    //   label: "Study Flow",
+    //   href: "/study-x low",
+    //   icon: <Target className="w-5 h-5" />,
+    // },
+    {
+      label: "Study Flow",
+      href: "/study-flow",
+      icon: <TrendingUp className="w-5 h-5" />,
+    },
+    // {
+    //   label: "Flashcards",
+    //   href: "/flashcards",
+    //   icon: <Zap className="w-5 h-5" />,
+    // },
     {
       label: translations.studyGroup || "Study Group",
       href: "/study-group",

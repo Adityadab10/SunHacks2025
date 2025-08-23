@@ -71,6 +71,8 @@ class Quiz(BaseModel):
     options_10: List[str]
     answer_10: str
 
+class ImportantPoint(BaseModel):
+    points: List[str]
 
 class State(TypedDict):
     messages: Annotated[List, add_messages]
@@ -80,6 +82,7 @@ class State(TypedDict):
     quiz: Optional[Quiz]
     summarize: Optional[str]
     content: str
+    important: Optional[ImportantPoint]
     result: any
 
 def extract_pdf(pdf_path: str) -> str:
@@ -153,7 +156,7 @@ def extract_file(state: State) -> str:
 async def summarize(state: State) -> Dict[str, Optional[str]]:
     try:
         llm = ChatGoogleGenerativeAI(
-            model='gemini-2.0-flash',
+            model='gemini-2.5-flash',
             temperature=0.7
         )
 
@@ -183,7 +186,7 @@ async def summarize(state: State) -> Dict[str, Optional[str]]:
 async def generate_quiz(state: State) -> Dict[str, Optional[Dict]]:
     try:
         llm = ChatGoogleGenerativeAI(
-            model='gemini-2.0-flash',
+            model='gemini-2.5-flash',
             temperature=0.7
         ).with_structured_output(Quiz)
 
@@ -193,9 +196,15 @@ async def generate_quiz(state: State) -> Dict[str, Optional[Dict]]:
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", """
-                You are an expert educator. The user will provide a topic, and you must generate questions on that topic using Bloom’s Taxonomy. 
-                Create questions at different cognitive levels: Remember, Understand, Apply, Analyze, Evaluate, and Create. 
-                Label each question with its Bloom’s level. Provide 2–3 questions per level. 
+                You are an expert educator. The user will provide a topic, and you must generate multiple-choice questions on that topic using Bloom’s Taxonomy.  
+                Create questions at different cognitive levels: Remember, Understand, Apply, Analyze, Evaluate, and Create.  
+
+                For each question:  
+                - Only write the question text (do not generate the options like A. B. C. D. etc. Don't do it at all costs).  
+                - Indicate which option letter (A, B, C, or D) is the correct answer.  
+                - Don't label the Bloom’s level.  
+
+                Do not explain the answer.  
                 Ensure progression from simple factual recall to higher-order critical thinking and creativity.
             """),
             ("human", "{content}")
@@ -211,10 +220,38 @@ async def generate_quiz(state: State) -> Dict[str, Optional[Dict]]:
         logger.error(f"Error in generate_quiz: {str(e)}")
         return {"quiz": None}
 
+async def generate_important(state: State):
+    try:
+        llm = ChatGoogleGenerativeAI(
+            model='gemini-1.5-flash',
+            temperature=0.7
+        ).with_structured_output(ImportantPoint)
+
+        content = state['content']
+        if not content:
+            raise ValueError("No content available to generate important points.")
+
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", """You are an important points generator. Your job is to create key points from the provided content.
+                Focus on key concepts and important details. Make points clear and concise."""),
+            ("human", "Generate important points from this content: {content}")
+        ])
+
+        chain = prompt | llm
+        result = await chain.ainvoke({"content": content})
+        result = result.model_dump()
+        
+        print(f"result generated: {result}")
+        return {"important": result['points']}
+
+    except Exception as e:
+        logger.error(f"Error in generate_important: {str(e)}")
+        return {"important_points": ImportantPoint(points=[])}
+
 async def generate_flashcards(state: State) -> Dict[str, Optional[Dict]]:
     try:
         llm = ChatGoogleGenerativeAI(
-            model='gemini-2.0-flash',
+            model='gemini-2.5-flash',
             temperature=0.7
         ).with_structured_output(Flashcards)
 
@@ -244,7 +281,8 @@ async def chat(state: State) -> Dict[str, Optional[Any]]:
             "result": {
                 "flashcards": state.get("flashcards"),
                 "quiz": state.get("quiz"),
-                "summarize": state.get("summarize")
+                "summarize": state.get("summarize"),
+                "important": state.get("important")
             }
         }
     except Exception as e:
@@ -258,13 +296,16 @@ graph_builder.add_node("flashcards", generate_flashcards)
 graph_builder.add_node("summarize", summarize)
 graph_builder.add_node("extract", extract_file)
 graph_builder.set_entry_point("extract")
+graph_builder.add_node("important", generate_important)
 graph_builder.add_node("chat", chat)
 graph_builder.add_edge("extract", "quiz")
 graph_builder.add_edge("extract", "flashcards")
 graph_builder.add_edge("extract", "summarize")
+graph_builder.add_edge("extract", "important")
 graph_builder.add_edge("quiz", "chat")
 graph_builder.add_edge("flashcards", "chat")
 graph_builder.add_edge("summarize", "chat")
+graph_builder.add_edge("important", "chat")
 graph_builder.set_finish_point("chat")
 
 graph = graph_builder.compile()

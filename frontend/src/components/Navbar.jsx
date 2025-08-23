@@ -113,7 +113,7 @@ const Navbar = ({ isDarkMode = true }) => {
             className={cn("text-lg font-bold tracking-wider", navTheme.text)}
           >
             <Link to={firebaseUid ? "/dashboard" : "/"}>
-              {visible ? "StudyGenie" : "StudyGenie"}
+              {visible ? "PadhAI" : "PadhAI"}
             </Link>
           </motion.h1>
 
