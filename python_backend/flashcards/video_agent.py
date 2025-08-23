@@ -17,12 +17,7 @@ load_dotenv()
 logger = logging.getLogger("app_logger")
 logger.setLevel(logging.DEBUG)  # or INFO in production
 
-class ImportantPoint(BaseModel):
-    points: List[str]
-
 class State(TypedDict):
-    messages: Annotated[List, add_messages]
-    important_points: ImportantPoint
     pdf_path: Optional[str]
     content: str
     result: str
@@ -82,33 +77,28 @@ def extract_file(state: State) -> str:
                 logger.warning(f"Unsupported file extension for extraction: {pdf_path}")
                 content = ""
         else:
-            # If no file, fallback to last message in messages list safely
-            messages = state.get('messages', [])
-            if messages and isinstance(messages, list):
-                content = messages[-1] if messages else ""
-            else:
-                logger.warning("State messages missing or invalid when extracting content.")
-                content = ""
+            content = ""
 
         return {"content": content}
     except Exception as e:
         logger.error(f"Unhandled exception in extract_file: {str(e)}")
         return ""
 
-async def generate_important(state: State):
+async def generate_story(state: State):
     try:
         llm = ChatGoogleGenerativeAI(
             model='gemini-2.0-flash',
             temperature=0.7
-        ).with_structured_output(ImportantPoint)
+        )
 
         content = state['content']
         if not content:
             raise ValueError("No content available to generate important points.")
 
         prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are an important points generator. Your job is to create key points from the provided content.
-                Focus on key concepts and important details. Make points clear and concise."""),
+            ("system", """
+             "You are a knowledgeable and patient teacher. Explain the following study topic in a way that a smart 12-year-old can understand. Break down complex ideas into simple terms, use clear analogies, and provide relevant examples that make the topic easy to grasp. Make the explanation engaging and step-by-step so the student can follow along and fully understand the concept."
+             """),
             ("human", "Generate important points from this content: {content}")
         ])
 
@@ -119,17 +109,17 @@ async def generate_important(state: State):
         return {"result": result}
 
     except Exception as e:
-        logger.error(f"Error in generate_important: {str(e)}")
-        return {"important_points": ImportantPoint(points=[])}
+        logger.error(f"Error in generate_story: {str(e)}")
+        return {"story": ""}
 
 # Build graph with error handling integrated
 graph_builder = StateGraph(State)
-graph_builder.add_node("imp", generate_important)
+graph_builder.add_node("story", generate_story)
 graph_builder.add_node("extract", extract_file)
 graph_builder.set_entry_point("extract")
-graph_builder.add_edge("extract", "imp")
-graph_builder.add_edge("imp", END)
+graph_builder.add_edge("extract", "story")
+graph_builder.add_edge("story", END)
 
-graph_imp = graph_builder.compile()
+graph_story = graph_builder.compile()
 
-print(graph_imp.get_graph().draw_mermaid())
+print(graph_story.get_graph().draw_mermaid())

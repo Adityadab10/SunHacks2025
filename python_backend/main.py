@@ -13,7 +13,7 @@ from datetime import datetime
 from flashcards.flashcard_agent import graph
 from flashcards.agent import agent
 from langchain_core.messages import HumanMessage
-from flashcards.video_agent import graph_imp
+from flashcards.video_agent import graph_story
 
 app = FastAPI(title="Teacher Agent API", version="1.0.0")
 
@@ -309,12 +309,10 @@ async def flashcard_generation(
             except Exception as e:
                 logger.error(f"Error removing temp directory: {e}")
 
-@app.post("/video-desc")
-async def video_desc(
+@app.post("/story")
+async def story(
     file: UploadFile = File(...),
-    message: str = Form(...),
-    teacher: str = Form("Anil Deshmukh"),
-    thread_id: Optional[str] = Form(None)
+    thread_id: Optional[str] = Form(None),
 ):
     """Upload document and chat endpoint - supports PDF, DOCX, and PPTX"""
     logger.info(f"File received: {file.filename}")
@@ -347,15 +345,14 @@ async def video_desc(
 
         # Build state for chat with document
         state = {
-            "messages": [HumanMessage(content=message)],
             "pdf_path": temp_file_path,
         }
 
         # Execute graph directly
-        result = await graph_imp.ainvoke(state, config={"configurable": {"thread_id": thread_id}})
+        result = await graph_story.ainvoke(state, config={"configurable": {"thread_id": thread_id}})
         
         if result['result']:
-            response_content = result['result']['points']
+            response_content = result['result']['content']
             return JSONResponse({
                 "status": "success",
                 "thread_id": thread_id,
