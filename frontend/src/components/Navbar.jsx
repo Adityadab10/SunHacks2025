@@ -21,23 +21,24 @@ const Navbar = ({ isDarkMode = true }) => {
   const [visible, setVisible] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { firebaseUid, logout } = useUser();
+  const { t } = useTranslation();
   
   // Get current Firebase user for display data
   const currentUser = auth.currentUser;
   
   // Navigation items for non-authenticated users
   const publicNavItems = [
-    { name: "Features", link: "#features" },
-    { name: "About", link: "#about" },
-    { name: "Contact", link: "#contact" }
+    { name: t("Features"), link: "#features" },
+    { name: t("About"), link: "#about" },
+    { name: t("Contact"), link: "#contact" }
   ];
 
   // Navigation items for authenticated users
   const privateNavItems = [
-    { name: "Dashboard", link: "/dashboard" },
-    { name: "Courses", link: "#courses" },
-    { name: "Progress", link: "#progress" },
-    { name: "Settings", link: "#settings" }
+    { name: t("Dashboard"), link: "/dashboard" },
+    { name: t("Courses"), link: "#courses" },
+    { name: t("Progress"), link: "#progress" },
+    { name: t("Settings"), link: "#settings" }
   ];
 
   const navItems = firebaseUid ? privateNavItems : publicNavItems;
@@ -115,7 +116,7 @@ const Navbar = ({ isDarkMode = true }) => {
             className={cn("text-lg font-bold tracking-wider", navTheme.text)}
           >
             <Link to={firebaseUid ? "/dashboard" : "/"}>
-              {visible ? "PadhAI" : "PadhAI"}
+              {t("PadhAI")}
             </Link>
           </motion.h1>
 
@@ -188,7 +189,7 @@ const Navbar = ({ isDarkMode = true }) => {
                       navTheme.buttonSecondary
                     )}
                   >
-                    Login
+                    {t("Login")}
                   </Link>
                 </motion.div>
                 <LanguageSelector />
@@ -208,7 +209,7 @@ const Navbar = ({ isDarkMode = true }) => {
                       navTheme.buttonPrimary
                     )}
                   >
-                    Signup
+                    {t("Signup")}
                   </Link>
                 </motion.div>
               </div>
@@ -250,7 +251,7 @@ const Navbar = ({ isDarkMode = true }) => {
           className={cn("text-lg font-bold tracking-wider", navTheme.text)}
         >
           <Link to={firebaseUid ? "/dashboard" : "/"}>
-            StudyGenie
+            {t("PadhAI")}
           </Link>
         </motion.h1>
 
@@ -365,7 +366,7 @@ const Navbar = ({ isDarkMode = true }) => {
                         isDarkMode ? "border-gray-300 hover:bg-gray-100" : "border-gray-600 hover:bg-gray-800"
                       )}
                     >
-                      Login
+                      {t("Login")}
                     </Link>
                   </motion.div>
                   <motion.div
@@ -381,7 +382,7 @@ const Navbar = ({ isDarkMode = true }) => {
                         navTheme.buttonPrimary
                       )}
                     >
-                      Register
+                      {t("Register")}
                     </Link>
                   </motion.div>
                 </div>
