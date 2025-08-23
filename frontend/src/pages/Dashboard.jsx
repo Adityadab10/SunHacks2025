@@ -581,7 +581,7 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg"
+              className="lg:col-span-2 bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg"
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
@@ -608,8 +608,8 @@ const Dashboard = () => {
                   <span className="ml-2 text-gray-400">Loading...</span>
                 </div>
               ) : youtubeHistory.length > 0 ? (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {youtubeHistory.slice(0, 3).map((video, index) => (
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {youtubeHistory.slice(0, 4).map((video, index) => (
                     <motion.div
                       key={video.id}
                       initial={{ opacity: 0, y: 20 }}

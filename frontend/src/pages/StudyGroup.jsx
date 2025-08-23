@@ -597,7 +597,7 @@ const StudyGroup = () => {
       </AnimatePresence>
 
       {/* Custom Scrollbar Styles */}
-      <style jsx>{`
+      <style>{`
         .scrollbar-thin::-webkit-scrollbar {
           width: 6px;
         }
