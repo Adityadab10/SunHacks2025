@@ -25,6 +25,7 @@ class State(TypedDict):
     important_points: ImportantPoint
     pdf_path: Optional[str]
     content: str
+    result: str
 
 def extract_pdf(pdf_path: str) -> str:
     try:
@@ -94,7 +95,7 @@ def extract_file(state: State) -> str:
         logger.error(f"Unhandled exception in extract_file: {str(e)}")
         return ""
 
-async def generate_important(state: State) -> Dict[str, Optional[Dict]]:
+async def generate_important(state: State):
     try:
         llm = ChatGoogleGenerativeAI(
             model='gemini-2.0-flash',
@@ -113,12 +114,13 @@ async def generate_important(state: State) -> Dict[str, Optional[Dict]]:
 
         chain = prompt | llm
         result = await chain.ainvoke({"content": content})
+        result = result.model_dump()
         print(f"result generated: {result}")
-        return {"result": result.points}
+        return {"result": result}
 
     except Exception as e:
         logger.error(f"Error in generate_important: {str(e)}")
-        return {"important_points": None}
+        return {"important_points": ImportantPoint(points=[])}
 
 # Build graph with error handling integrated
 graph_builder = StateGraph(State)
@@ -126,7 +128,7 @@ graph_builder.add_node("imp", generate_important)
 graph_builder.add_node("extract", extract_file)
 graph_builder.set_entry_point("extract")
 graph_builder.add_edge("extract", "imp")
-graph_builder.set_finish_point("imp")
+graph_builder.add_edge("imp", END)
 
 graph_imp = graph_builder.compile()
 
