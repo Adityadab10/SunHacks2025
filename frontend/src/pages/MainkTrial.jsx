@@ -18,7 +18,8 @@ import {
   Send,
   FileText,
   X,
-  Upload
+  Upload,
+  Star
 } from 'lucide-react';
 
 const StudyboardPage = () => {
@@ -46,6 +47,7 @@ const StudyboardPage = () => {
     { id: "detailed", label: "📖 Detailed" },
     { id: "flashcards", label: "🔄 Flashcards" },
     { id: "quiz", label: "❓ Quiz" },
+    { id: "important", label: "⭐ Important Points" },
     { id: "chat", label: "💬 Chat" },
   ];
 
@@ -119,9 +121,16 @@ const StudyboardPage = () => {
         body: formData,
       });
 
-      if (flashcardsResponse.ok) {
+      const video_desc = await fetch("http://localhost:8000/video-desc", {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (flashcardsResponse.ok && video_desc.ok) {
         const flashcardsData = await flashcardsResponse.json();
-        if (flashcardsData.status === 'success') {
+        const videoDescData = await video_desc.json();
+
+        if (flashcardsData.status === 'success' && videoDescData.status === 'success') {
           // Ensure summary is in array format
           let summaryArray = [];
           if (flashcardsData.summary) {
@@ -143,6 +152,17 @@ const StudyboardPage = () => {
             ? flashcardsData.quiz 
             : [];
 
+          // Extract important points from videoDescData - handle different response formats
+          let importantPoints = [];
+          if (videoDescData.results && Array.isArray(videoDescData.results.points)) {
+            importantPoints = videoDescData.results.points;
+          } else if (videoDescData.important_points && Array.isArray(videoDescData.important_points)) {
+            importantPoints = videoDescData.important_points;
+          } else if (typeof videoDescData.results === 'string') {
+            // If results is a string, split it into points
+            importantPoints = videoDescData.results.split('\n').filter(point => point.trim());
+          }
+
           setStudyBoard({
             studyBoardName: documentFile.name,
             createdAt: new Date().toISOString(),
@@ -151,7 +171,8 @@ const StudyboardPage = () => {
               tldr: flashcardsData.tldr || "No TLDR available",
               detailedSummary: flashcardsData.detailedSummary || "No detailed summary available",
               flashcards: flashcardsArray,
-              quiz: quizArray
+              quiz: quizArray,
+              importantPoints: importantPoints
             }
           });
           setHasUploadedDocument(true);
@@ -620,6 +641,31 @@ const StudyboardPage = () => {
                         );
                       })}
                     </div>
+                  </motion.div>
+                )}
+
+                {/* Important Points Tab */}
+                {activeTab === "important" && studyBoard?.content?.importantPoints && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gray-900 rounded-xl p-6 border border-gray-800"
+                  >
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="bg-yellow-500/20 p-2 rounded-lg">
+                        <Star className="w-5 h-5 text-yellow-400" />
+                      </div>
+                      <h2 className="text-xl font-semibold">Important Points</h2>
+                    </div>
+                    {studyBoard.content.importantPoints.length > 0 ? (
+                      <ul className="list-disc pl-4 space-y-2">
+                        {studyBoard.content.importantPoints.map((point, idx) => (
+                          <li key={idx} className="text-gray-300 leading-relaxed">{point}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-gray-500">No important points available</p>
+                    )}
                   </motion.div>
                 )}
 
