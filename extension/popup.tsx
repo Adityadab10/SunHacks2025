@@ -17,7 +17,6 @@ function IndexPopup() {
 
   const tabs: TabData[] = [
     { id: "youtube", label: "YouTube", icon: Play },
-    { id: "pdf", label: "PDF", icon: FileText },
     { id: "notes", label: "Notes", icon: BookOpen },
     { id: "focus", label: "Focus", icon: Focus }
   ]
