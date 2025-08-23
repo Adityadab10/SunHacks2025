@@ -18,12 +18,15 @@ import {
   Bot,
   Hash
 } from 'lucide-react';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, LineChart, Line, Legend, Cell 
+} from 'recharts';
 
 const Dashboard = () => {
   const { firebaseUid, mongoUid } = useUser();
   const currentUser = auth.currentUser;
   const navigate = useNavigate();
-  const [minutesSpent, setMinutesSpent] = useState(0);
   const [streak, setStreak] = useState(1);
   const [studyBoards, setStudyBoards] = useState([]);
   const [youtubeHistory, setYoutubeHistory] = useState([]);
@@ -31,26 +34,9 @@ const Dashboard = () => {
   const [loadingStudyBoards, setLoadingStudyBoards] = useState(false);
   const [loadingYouTube, setLoadingYouTube] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
-
-  // Fetch session time from backend (same as Profile)
-  useEffect(() => {
-    let intervalId;
-    async function fetchSessionTime() {
-      if (firebaseUid) {
-        try {
-          const today = new Date().toISOString().split('T')[0];
-          const res = await fetch(`http://localhost:5000/api/user/${firebaseUid}/session?date=${today}`);
-          const data = await res.json();
-          setMinutesSpent(Math.floor((data.totalTime || 0) / 60));
-        } catch (err) {
-          setMinutesSpent(0);
-        }
-      }
-    }
-    fetchSessionTime();
-    intervalId = setInterval(fetchSessionTime, 60000);
-    return () => clearInterval(intervalId);
-  }, [firebaseUid]);
+  const [weeklyStats, setWeeklyStats] = useState([]);
+  const [activityStats, setActivityStats] = useState([]);
+  const [timelineStats, setTimelineStats] = useState([]);
 
   // Streak logic (simple: checks localStorage for login days)
   useEffect(() => {
@@ -148,6 +134,36 @@ const Dashboard = () => {
     fetchChatHistory();
   }, [mongoUid]);
 
+  // Weekly stats and activity distribution (simulated)
+  useEffect(() => {
+    // Simulate weekly stats - in real app, fetch from backend
+    const last7Days = [...Array(7)].map((_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      return {
+        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        studyBoards: Math.floor(Math.random() * 5),
+        chats: Math.floor(Math.random() * 8),
+        videos: Math.floor(Math.random() * 6)
+      };
+    }).reverse();
+    setWeeklyStats(last7Days);
+
+    // Activity distribution
+    setActivityStats([
+      { name: 'Study Boards', value: studyBoards.length, color: '#74AA9C' },
+      { name: 'Chat Sessions', value: chatHistory.length, color: '#6366f1' },
+      { name: 'Video Summaries', value: youtubeHistory.length, color: '#ef4444' }
+    ]);
+
+    // Timeline data
+    const timelineData = [...Array(24)].map((_, i) => ({
+      hour: `${i}:00`,
+      activity: Math.floor(Math.random() * 100)
+    }));
+    setTimelineStats(timelineData);
+  }, [studyBoards.length, chatHistory.length, youtubeHistory.length]);
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -161,86 +177,155 @@ const Dashboard = () => {
     return title.length > maxLength ? title.substring(0, maxLength) + '...' : title;
   };
 
+  const renderStats = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="grid lg:grid-cols-2 gap-8 mb-8"
+    >
+      {/* Activity Distribution */}
+      <div className="bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg">
+        <h3 className="text-xl font-semibold mb-6 text-white">Activity Distribution</h3>
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={activityStats}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                labelLine={false}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              >
+                {activityStats.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Weekly Activity */}
+      <div className="bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg">
+        <h3 className="text-xl font-semibold mb-6 text-white">Weekly Activity</h3>
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={weeklyStats}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis dataKey="day" stroke="#666" />
+              <YAxis stroke="#666" />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#111', border: '1px solid #333' }}
+                labelStyle={{ color: '#fff' }}
+              />
+              <Legend />
+              <Bar dataKey="studyBoards" name="Study Boards" fill="#74AA9C" />
+              <Bar dataKey="chats" name="Chat Sessions" fill="#6366f1" />
+              <Bar dataKey="videos" name="Video Summaries" fill="#ef4444" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Activity Timeline */}
+      <div className="lg:col-span-2 bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg">
+        <h3 className="text-xl font-semibold mb-6 text-white">Today's Activity Timeline</h3>
+        <div className="h-[200px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={timelineStats}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis dataKey="hour" stroke="#666" />
+              <YAxis stroke="#666" />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#111', border: '1px solid #333' }}
+                labelStyle={{ color: '#fff' }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="activity" 
+                stroke="#74AA9C" 
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </motion.div>
+  );
+
   return (
-    <div className="min-h-screen bg-black text-white flex">
+    <div className="min-h-screen bg-gradient-to-br from-black via-[#111] to-[#222] text-white flex font-sans relative">
+      {/* Green accent floating shapes */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-6 h-6 bg-[#74AA9C]/30 rounded-full blur-2xl"
+            style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
+            animate={{ scale: [0.7, 1.2, 0.7], opacity: [0.5, 0.8, 0.5] }}
+            transition={{ duration: 6, repeat: Infinity, delay: Math.random() * 3 }}
+          />
+        ))}
+      </div>
       <MainSidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">
-              Welcome back, {currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Student'}!
-            </h1>
-            <p className="text-gray-400">Ready to continue your learning journey?</p>
-          </div>
-
-          {/* Profile Section */}
-          <div className="bg-gray-900 rounded-lg p-6 mb-8">
-            <div className="flex items-center space-x-4">
-              {currentUser?.photoURL ? (
-                <img src={currentUser.photoURL} alt="Profile" className="w-16 h-16 rounded-full" />
-              ) : (
-                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-2xl font-bold">
-                    {currentUser?.displayName?.charAt(0) || currentUser?.email?.charAt(0) || 'U'}
-                  </span>
+      <div className="flex-1 overflow-auto relative z-10">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Header Section with Profile */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative rounded-3xl p-10 mb-10 overflow-hidden shadow-2xl bg-gradient-to-br from-black via-[#222] to-[#222] border border-[#74AA9C]/30"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-[#74AA9C]/20 via-black/30 to-transparent pointer-events-none"></div>
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex items-center gap-8">
+                <div className="relative">
+                  {currentUser?.photoURL ? (
+                    <img 
+                      src={currentUser.photoURL} 
+                      alt="Profile" 
+                      className="w-28 h-28 rounded-2xl border-4 border-[#74AA9C]/40 shadow-2xl object-cover"
+                    />
+                  ) : (
+                    <div className="w-28 h-28 bg-gradient-to-br from-[#74AA9C]/30 to-black/30 rounded-2xl flex items-center justify-center border-4 border-[#74AA9C]/40 shadow-2xl">
+                      <User className="w-14 h-14 text-[#74AA9C]" />
+                    </div>
+                  )}
                 </div>
-              )}
-              <div>
-                <h3 className="text-xl font-semibold">
-                  {currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User'}
-                </h3>
-                <p className="text-gray-400">{currentUser?.email}</p>
-                <div className="mt-2 text-xs text-gray-600">
-                  <p>Day Streak: <b>{streak}</b></p>
-                  <p>Time spent on this website: <b>{minutesSpent}</b> min</p>
+                <div>
+                  <h1 className="text-5xl font-extrabold text-white mb-2 bg-gradient-to-r from-white to-[#74AA9C] bg-clip-text text-transparent drop-shadow-lg">
+                    Welcome back, {currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Student'}!
+                  </h1>
+                  <p className="text-[#74AA9C]/80 text-lg">Ready to continue your learning journey?</p>
+                </div>
+              </div>
+              <div className="flex flex-row md:flex-col gap-4 text-center">
+                <div className="p-5 bg-gradient-to-br from-[#74AA9C]/40 to-black/30 rounded-2xl border border-[#74AA9C]/50 shadow-lg min-w-[90px]">
+                  <div className="text-3xl font-bold text-[#74AA9C] mb-1 font-mono">{streak}</div>
+                  <div className="text-[#74AA9C]/80 text-xs font-semibold">STREAK</div>
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Stats Section */}
-          <div className="bg-gray-900 rounded-lg p-6 mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Today's Progress</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="text-center">
-                <div className="bg-blue-500/20 p-3 rounded-full w-12 h-12 mx-auto mb-2 flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-blue-400" />
-                </div>
-                <p className="text-gray-400 text-sm">Day Streak</p>
-                <p className="text-2xl font-bold text-blue-400">{streak}</p>
-              </div>
-              <div className="text-center">
-                <div className="bg-green-500/20 p-3 rounded-full w-12 h-12 mx-auto mb-2 flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-green-400" />
-                </div>
-                <p className="text-gray-400 text-sm">Time Spent</p>
-                <p className="text-2xl font-bold text-green-400">{minutesSpent}m</p>
-              </div>
-              <div className="text-center">
-                <div className="bg-purple-500/20 p-3 rounded-full w-12 h-12 mx-auto mb-2 flex items-center justify-center">
-                  <BrainCircuit className="w-6 h-6 text-purple-400" />
-                </div>
-                <p className="text-gray-400 text-sm">Study Boards</p>
-                <p className="text-2xl font-bold text-purple-400">{studyBoards.length}</p>
-              </div>
-              <div className="text-center">
-                <div className="bg-cyan-500/20 p-3 rounded-full w-12 h-12 mx-auto mb-2 flex items-center justify-center">
-                  <MessageCircle className="w-6 h-6 text-cyan-400" />
-                </div>
-                <p className="text-gray-400 text-sm">Chat Sessions</p>
-                <p className="text-2xl font-bold text-cyan-400">{chatHistory.length}</p>
-              </div>
-            </div>
-          </div>
+          {/* Stats Section - Updated to remove minutes */}
+          {renderStats()}
 
           {/* Main Content Grid */}
           <div className="grid lg:grid-cols-2 gap-8 mb-8">
-            {/* YouTube Study Boards Section */}
+            {/* Study Boards Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-gray-900 rounded-xl p-6 border border-gray-800"
+              transition={{ delay: 0.2 }}
+              className="bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg"
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
@@ -325,8 +410,8 @@ const Dashboard = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-gray-900 rounded-xl p-6 border border-gray-800"
+              transition={{ delay: 0.3 }}
+              className="bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg"
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
@@ -406,8 +491,8 @@ const Dashboard = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-gray-900 rounded-xl p-6 border border-gray-800"
+            transition={{ delay: 0.4 }}
+            className="bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg"
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
@@ -496,8 +581,24 @@ const Dashboard = () => {
           </motion.div>
         </div>
       </div>
+      
+      {/* Custom Styles */}
+      <style>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
+        }
+        .glass {
+          background: rgba(20, 20, 20, 0.7);
+          backdrop-filter: blur(12px);
+        }
+      `}</style>
     </div>
   );
 };
 
 export default Dashboard;
+
