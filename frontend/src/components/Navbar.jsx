@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { LogOut, User } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import { auth } from '../../firebase.config';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from './LanguageSelector';
 
 // Simple utility function for classNames
 const cn = (...classes) => {
@@ -166,6 +168,7 @@ const Navbar = ({ isDarkMode = true }) => {
                 >
                   <LogOut className="w-5 h-5" />
                 </button>
+                <LanguageSelector />
               </>
             ) : (
               <div className="flex items-center space-x-2">
@@ -188,6 +191,7 @@ const Navbar = ({ isDarkMode = true }) => {
                     Login
                   </Link>
                 </motion.div>
+                <LanguageSelector />
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
