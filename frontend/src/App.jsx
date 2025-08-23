@@ -18,6 +18,10 @@ import { io } from 'socket.io-client';
 import ChatSession from "./pages/ChatSession"
 import StudyboardPage from "./pages/StudyboardPage"
 import PublicStudyboard from "./pages/PublicStudyboard"
+import ViewAllStudyBoards from './pages/ViewAllStudyBoards';
+import ViewAllChatSessions from './pages/ViewAllChatSessions';
+import ViewAllSummaries from './pages/ViewAllSummaries';
+import StudyFlow from './pages/StudyFlow';
 
 window.socket = io('http://localhost:5000');
 
@@ -48,6 +52,10 @@ const AppContent = () => {
             <Route path="/studyboard/:boardId" element={<StudyboardPage />} />
             <Route path="/public-studyboards" element={<PublicStudyboard />} />
             <Route path="/chat/:sessionId" element={<ChatSession />} />
+            <Route path="/studyboards" element={<ViewAllStudyBoards />} />
+            <Route path="/chat-sessions" element={<ViewAllChatSessions />} />
+            <Route path="/summaries" element={<ViewAllSummaries />} />
+            <Route path="/study-flow" element={<StudyFlow />} />
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </>

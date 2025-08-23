@@ -99,7 +99,7 @@ const Dashboard = () => {
           const data = await response.json();
           console.log('YouTube history response:', data);
           if (data.success) {
-            setYoutubeHistory(data.data.videos.slice(0, 4)); // Show only recent 4
+            setYoutubeHistory(data.data.videos.slice(0, 3)); // Show only recent 3
           } else {
             console.error('Failed to fetch YouTube history:', data.error);
           }
@@ -122,7 +122,7 @@ const Dashboard = () => {
           const response = await fetch(`http://localhost:5000/api/youtube/chat/user/${mongoUid}/sessions`);
           const data = await response.json();
           if (data.success) {
-            setChatHistory(data.data.sessions.slice(0, 4)); // Show only recent 4
+            setChatHistory(data.data.sessions.slice(0, 3)); // Show only recent 3
           }
         } catch (error) {
           console.error('Error fetching chat history:', error);
@@ -134,17 +134,29 @@ const Dashboard = () => {
     fetchChatHistory();
   }, [mongoUid]);
 
-  // Weekly stats and activity distribution (simulated)
+  // Weekly stats and activity distribution
   useEffect(() => {
-    // Simulate weekly stats - in real app, fetch from backend
+    // Create weekly stats with specific pattern
+    const getDayActivity = (day) => {
+      switch (day) {
+        case 'Thu':
+          return { studyBoards: 1, chats: 1, videos: 1 }; // Low activity
+        case 'Fri':
+          return { studyBoards: 8, chats: 10, videos: 7 }; // High activity
+        case 'Sat':
+          return { studyBoards: 4, chats: 5, videos: 4 }; // Medium activity
+        default:
+          return { studyBoards: 0, chats: 0, videos: 0 }; // No activity
+      }
+    };
+
     const last7Days = [...Array(7)].map((_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - i);
+      const day = date.toLocaleDateString('en-US', { weekday: 'short' });
       return {
-        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
-        studyBoards: Math.floor(Math.random() * 5),
-        chats: Math.floor(Math.random() * 8),
-        videos: Math.floor(Math.random() * 6)
+        day,
+        ...getDayActivity(day)
       };
     }).reverse();
     setWeeklyStats(last7Days);
@@ -416,7 +428,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <a
-                  href="/youtube"
+                  href="/studyboards"
                   className="text-purple-400 hover:text-purple-300 transition-colors flex items-center space-x-1 text-sm font-medium group"
                 >
                   <span>View All</span>
@@ -431,7 +443,7 @@ const Dashboard = () => {
                 </div>
               ) : studyBoards.length > 0 ? (
                 <div className="space-y-3">
-                  {studyBoards.map((board, index) => (
+                  {studyBoards.slice(0, 3).map((board, index) => (
                     <motion.div
                       key={board.id}
                       initial={{ opacity: 0, x: -20 }}
@@ -502,7 +514,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <a
-                  href="/youtube"
+                  href="/chat-sessions"
                   className="text-cyan-400 hover:text-cyan-300 transition-colors flex items-center space-x-1 text-sm font-medium group"
                 >
                   <span>View All</span>
@@ -517,7 +529,7 @@ const Dashboard = () => {
                 </div>
               ) : chatHistory.length > 0 ? (
                 <div className="space-y-3">
-                  {chatHistory.map((session, index) => (
+                  {chatHistory.slice(0, 3).map((session, index) => (
                     <motion.div
                       key={session.sessionId}
                       initial={{ opacity: 0, x: -20 }}
@@ -563,100 +575,100 @@ const Dashboard = () => {
                 </div>
               )}
             </motion.div>
-          </div>
 
-          {/* YouTube History Section - Full Width */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="bg-gradient-to-r from-red-500 to-pink-500 p-2 rounded-lg">
-                  <Youtube className="w-5 h-5 text-white" />
+            {/* YouTube History Section - Full Width */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-gradient-to-r from-red-500 to-pink-500 p-2 rounded-lg">
+                    <Youtube className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Recent Summaries</h2>
+                    <p className="text-gray-500 text-sm">Your latest YouTube video summaries</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-semibold">Recent Summaries</h2>
-                  <p className="text-gray-500 text-sm">Your latest YouTube video summaries</p>
-                </div>
-              </div>
-              <a
-                href="/youtube"
-                className="text-red-400 hover:text-red-300 transition-colors flex items-center space-x-1 text-sm font-medium group"
-              >
-                <span>View All</span>
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </a>
-            </div>
-
-            {loadingYouTube ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-red-400" />
-                <span className="ml-2 text-gray-400">Loading...</span>
-              </div>
-            ) : youtubeHistory.length > 0 ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {youtubeHistory.map((video, index) => (
-                  <motion.div
-                    key={video.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50 hover:border-red-500/30 hover:bg-gray-800/70 transition-all duration-200 cursor-pointer group"
-                    onClick={() => window.open(video.url, '_blank')}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-red-500/20 p-2 rounded-lg shrink-0">
-                        <Play className="w-4 h-4 text-red-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-white group-hover:text-red-300 transition-colors mb-2 line-clamp-2 leading-tight">
-                          {truncateTitle(video.title, 50)}
-                        </h3>
-                        <div className="space-y-1 mb-3">
-                          <div className="flex items-center space-x-1 text-xs text-gray-500">
-                            <User className="w-3 h-3" />
-                            <span className="truncate">{video.channel}</span>
-                          </div>
-                          <div className="flex items-center space-x-1 text-xs text-gray-500">
-                            <Clock className="w-3 h-3" />
-                            <span>{video.duration}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">
-                            {formatDate(video.createdAt)}
-                          </span>
-                          <div className="text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded-full">
-                            ✓ Summarized
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <div className="bg-gray-800/50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                  <Youtube className="w-10 h-10 text-gray-600" />
-                </div>
-                <p className="text-gray-400 mb-2">No YouTube summaries yet</p>
-                <p className="text-gray-600 text-sm">Summarize your first video to get started</p>
-                <motion.a
-                  href="/youtube"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="inline-flex items-center space-x-2 mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-all text-sm"
+                <a
+                  href="/summaries"
+                  className="text-red-400 hover:text-red-300 transition-colors flex items-center space-x-1 text-sm font-medium group"
                 >
-                  <Youtube className="w-4 h-4" />
-                  <span>Start Summarizing</span>
-                </motion.a>
+                  <span>View All</span>
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </a>
               </div>
-            )}
-          </motion.div>
+
+              {loadingYouTube ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-red-400" />
+                  <span className="ml-2 text-gray-400">Loading...</span>
+                </div>
+              ) : youtubeHistory.length > 0 ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {youtubeHistory.slice(0, 3).map((video, index) => (
+                    <motion.div
+                      key={video.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50 hover:border-red-500/30 hover:bg-gray-800/70 transition-all duration-200 cursor-pointer group"
+                      onClick={() => window.open(video.url, '_blank')}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className="bg-red-500/20 p-2 rounded-lg shrink-0">
+                          <Play className="w-4 h-4 text-red-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-white group-hover:text-red-300 transition-colors mb-2 line-clamp-2 leading-tight">
+                            {truncateTitle(video.title, 50)}
+                          </h3>
+                          <div className="space-y-1 mb-3">
+                            <div className="flex items-center space-x-1 text-xs text-gray-500">
+                              <User className="w-3 h-3" />
+                              <span className="truncate">{video.channel}</span>
+                            </div>
+                            <div className="flex items-center space-x-1 text-xs text-gray-500">
+                              <Clock className="w-3 h-3" />
+                              <span>{video.duration}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500">
+                              {formatDate(video.createdAt)}
+                            </span>
+                            <div className="text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded-full">
+                              ✓ Summarized
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="bg-gray-800/50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                    <Youtube className="w-10 h-10 text-gray-600" />
+                  </div>
+                  <p className="text-gray-400 mb-2">No YouTube summaries yet</p>
+                  <p className="text-gray-600 text-sm">Summarize your first video to get started</p>
+                  <motion.a
+                    href="/youtube"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="inline-flex items-center space-x-2 mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-all text-sm"
+                  >
+                    <Youtube className="w-4 h-4" />
+                    <span>Start Summarizing</span>
+                  </motion.a>
+                </div>
+              )}
+            </motion.div>
+          </div>
         </div>
       </div>
       
