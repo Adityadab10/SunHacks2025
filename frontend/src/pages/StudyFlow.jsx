@@ -328,55 +328,6 @@ const StudyFlow = () => {
             </p>
           </motion.div>
 
-          {/* Quick Stats */}
-          {analytics && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
-            >
-              <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-200 text-sm">Total Activities</p>
-                    <p className="text-3xl font-bold text-white">{analytics.summary.totalActivities}</p>
-                  </div>
-                  <BookOpen className="w-8 h-8 text-blue-200" />
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-green-200 text-sm">Consistency</p>
-                    <p className="text-3xl font-bold text-white">{Math.round(analytics.summary.consistency)}%</p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-green-200" />
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-200 text-sm">Progress Rate</p>
-                    <p className="text-xl font-bold text-white">{analytics.summary.progressRate}</p>
-                  </div>
-                  <Zap className="w-8 h-8 text-purple-200" />
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-orange-200 text-sm">Weekly Average</p>
-                    <p className="text-3xl font-bold text-white">{analytics.summary.averageActivitiesPerWeek}</p>
-                  </div>
-                  <Calendar className="w-8 h-8 text-orange-200" />
-                </div>
-              </div>
-            </motion.div>
-          )}
-
           {/* Generate Flow Button */}
           {!flowData && (
             <motion.div
@@ -479,4 +430,3 @@ const StudyFlow = () => {
 };
 
 export default StudyFlow;
-             
