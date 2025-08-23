@@ -1,6 +1,6 @@
 import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, Home, BookOpen, BarChart3, Settings, LogOut, User, Upload, Target, Zap, MessageCircle, Globe, Sparkles, TrendingUp } from "lucide-react";
+import { Menu, X, Home, BookOpen, BarChart3, Settings, LogOut, User, Upload, Target, Zap, MessageCircle, Globe, Sparkles, Languages, Check, TrendingUp } from "lucide-react";
 
 // Custom scrollbar styles
 const scrollbarStyles = `
@@ -29,6 +29,7 @@ if (typeof document !== 'undefined') {
 }
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useUser } from '../context/UserContext';
+import { useLanguage } from '../context/LanguageContext';
 import { auth } from '../../firebase.config';
 
 const SidebarContext = createContext(undefined);
@@ -268,29 +269,26 @@ const MainSidebar = () => {
     navigate('/');
   };
 
+  const { translations } = useLanguage();
+
   const navigationLinks = [
     {
-      label: "Dashboard",
+      label: translations.dashboard || "Dashboard",
       href: "/dashboard",
       icon: <Home className="w-5 h-5" />,
     },
     {
-      label: "My Profile",
+      label: translations.profile || "My Profile",
       href: "/profile", 
       icon: <User className="w-5 h-5" />,
     },
-      // {
-      //   label: "My Courses",
-      //   href: "/courses",
-      //   icon: <BookOpen className="w-5 h-5" />,
-      // },
     {
-      label: "Upload Materials",
+      label: translations.upload || "Upload Materials",
       href: "/upload",
       icon: <Upload className="w-5 h-5" />,
     },
     {
-      label: "YouTube Summarizer",
+      label: translations.youtube || "YouTube Summarizer",
       href: "/youtube",
       icon: <Globe className="w-5 h-5" />,
     },
@@ -310,22 +308,12 @@ const MainSidebar = () => {
     //   icon: <Zap className="w-5 h-5" />,
     // },
     {
-      label: "Study Group",
+      label: translations.studyGroup || "Study Group",
       href: "/study-group",
       icon: <MessageCircle className="w-5 h-5" />,
     },
-    // {
-    //   label: "Progress",
-    //   href: "/progress",
-    //   icon: <BarChart3 className="w-5 h-5" />,
-    // },
-    // {
-    //   label: "Settings",
-    //   href: "/settings",
-    //   icon: <Settings className="w-5 h-5" />,
-    // },
     {
-      label: "Public Study Boards",
+      label: translations.publicBoards || "Public Study Boards",
       href: "/public-studyboards",
       icon: <Globe className="w-5 h-5" />,
     },
@@ -345,8 +333,69 @@ const MainSidebar = () => {
 };
 
 // Separate component that uses the sidebar context
+// Language selector component
+const LanguageSelector = ({ isOpen }) => {
+  const [showLanguages, setShowLanguages] = useState(false);
+  const { currentLanguage, changeLanguage, isLoading } = useLanguage();
+
+  const languages = {
+    en: 'English',
+    hi: 'हिंदी',
+    mr: 'मराठी',
+    fr: 'Français'
+  };
+
+  const handleLanguageChange = async (langCode) => {
+    setShowLanguages(false);
+    await changeLanguage(langCode);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setShowLanguages(!showLanguages)}
+        className="w-full flex items-center gap-2 p-3 rounded-xl bg-gray-800/30 border border-gray-700/30 text-gray-300 hover:text-white hover:bg-gray-700/30 transition-all duration-200"
+      >
+        <Languages className="w-5 h-5 text-[#74AA9C]" />
+        {isOpen && (
+          <span className="text-sm font-medium flex-1 text-left">
+            {languages[currentLanguage]}
+          </span>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {showLanguages && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute bottom-full mb-2 left-0 w-full bg-gray-800/95 backdrop-blur-sm rounded-xl border border-gray-700/50 py-2 shadow-xl"
+          >
+            {Object.entries(languages).map(([code, name]) => (
+              <button
+                key={code}
+                onClick={() => handleLanguageChange(code)}
+                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-[#74AA9C]/20 transition-colors"
+              >
+                {currentLanguage === code && (
+                  <Check className="w-4 h-4 text-[#74AA9C]" />
+                )}
+                <span className={currentLanguage === code ? "text-[#74AA9C]" : ""}>
+                  {name}
+                </span>
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 const SidebarContent = ({ navigationLinks, currentUser, onLogout }) => {
   const { open } = useSidebar();
+  const { translations } = useLanguage();
 
   return (
     <div className="flex flex-col h-full">
@@ -368,7 +417,7 @@ const SidebarContent = ({ navigationLinks, currentUser, onLogout }) => {
           <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
             PadhAI
           </h1>
-          <p className="text-xs text-gray-400 mt-1">AI-Powered Learning</p>
+          <p className="text-xs text-gray-400 mt-1">{translations.aiPowered || "AI-Powered Learning"}</p>
         </motion.div>
       </div>
 
@@ -378,6 +427,11 @@ const SidebarContent = ({ navigationLinks, currentUser, onLogout }) => {
           <SidebarLink key={index} link={link} />
         ))}
       </nav>
+
+      {/* Language Selector */}
+      <div className="mb-4">
+        <LanguageSelector isOpen={open} />
+      </div>
 
       {/* User Profile & Logout */}
       <div className="border-t border-gray-800/50 pt-6 mt-6">
@@ -418,7 +472,7 @@ const SidebarContent = ({ navigationLinks, currentUser, onLogout }) => {
         
         <SidebarLink
           link={{
-            label: "Logout",
+            label: translations.signOut || "Sign Out",
             href: "#",
             icon: <LogOut className="w-5 h-5" />,
             onClick: onLogout,

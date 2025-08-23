@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useUser } from '../context/UserContext';
+import { useLanguage } from '../context/LanguageContext';
 import { auth } from '../../firebase.config';
 import MainSidebar from '../components/Sidebar';
 import { motion } from 'framer-motion';
@@ -25,6 +26,7 @@ import {
 
 const Dashboard = () => {
   const { firebaseUid, mongoUid } = useUser();
+  const { translations } = useLanguage();
   const currentUser = auth.currentUser;
   const navigate = useNavigate();
   const [streak, setStreak] = useState(1);
@@ -258,7 +260,7 @@ const Dashboard = () => {
     >
       {/* Activity Distribution */}
       <div className="bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg">
-        <h3 className="text-xl font-semibold mb-6 text-white">Activity Distribution</h3>
+        <h3 className="text-xl font-semibold mb-6 text-white">{translations.activityDistribution}</h3>
         <div className="h-[300px]">
           {activityStats.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
@@ -291,7 +293,7 @@ const Dashboard = () => {
 
       {/* Weekly Activity */}
       <div className="bg-gradient-to-br from-black via-[#222] to-[#222] rounded-2xl p-6 border border-[#74AA9C]/30 shadow-lg">
-        <h3 className="text-xl font-semibold mb-6 text-white">Weekly Activity</h3>
+        <h3 className="text-xl font-semibold mb-6 text-white">{translations.weeklyActivity}</h3>
         <div className="h-[300px]">
           {weeklyStats.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
@@ -390,10 +392,10 @@ const Dashboard = () => {
                   )}
                 </div>
                 <div>
-                  <h1 className="text-5xl font-extrabold text-white mb-2 bg-gradient-to-r from-white to-[#74AA9C] bg-clip-text text-transparent drop-shadow-lg">
-                    Welcome back, {currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Student'}!
+                  <h1 className="text-5xl font-extrabold mb-2 bg-gradient-to-r from-white to-[#74AA9C] bg-clip-text text-transparent drop-shadow-lg">
+                    {translations.welcomeBack}, {currentUser?.displayName || currentUser?.email?.split('@')[0] || translations.student}!
                   </h1>
-                  <p className="text-[#74AA9C]/80 text-lg">Ready to continue your learning journey?</p>
+                  <p className="text-[#74AA9C]/80 text-lg">{translations.readyToContinue}</p>
                 </div>
               </div>
               <div className="flex flex-row md:flex-col gap-4 text-center">
@@ -423,15 +425,15 @@ const Dashboard = () => {
                     <BrainCircuit className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold">Study Boards</h2>
-                    <p className="text-gray-500 text-sm">AI-generated study materials</p>
+                    <h2 className="text-xl font-semibold">{translations.studyBoardsTitle}</h2>
+                    <p className="text-gray-500 text-sm">{translations.aiGeneratedMaterials}</p>
                   </div>
                 </div>
                 <a
                   href="/studyboards"
                   className="text-purple-400 hover:text-purple-300 transition-colors flex items-center space-x-1 text-sm font-medium group"
                 >
-                  <span>View All</span>
+                  <span>{translations.viewAll}</span>
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </a>
               </div>
@@ -490,8 +492,8 @@ const Dashboard = () => {
                   <div className="bg-gray-800/50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
                     <BrainCircuit className="w-8 h-8 text-gray-600" />
                   </div>
-                  <p className="text-gray-400 mb-1">No study boards yet</p>
-                  <p className="text-gray-600 text-sm">Create your first study board</p>
+                  <p className="text-gray-400 mb-1">{translations.noStudyBoards}</p>
+                  <p className="text-gray-600 text-sm">{translations.createFirstStudyBoard}</p>
                 </div>
               )}
             </motion.div>
@@ -509,15 +511,15 @@ const Dashboard = () => {
                     <MessageCircle className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold">Chat Sessions</h2>
-                    <p className="text-gray-500 text-sm">AI video discussions</p>
+                    <h2 className="text-xl font-semibold">{translations.chatSessionsTitle}</h2>
+                    <p className="text-gray-500 text-sm">{translations.aiVideoDiscussions}</p>
                   </div>
                 </div>
                 <a
                   href="/chat-sessions"
                   className="text-cyan-400 hover:text-cyan-300 transition-colors flex items-center space-x-1 text-sm font-medium group"
                 >
-                  <span>View All</span>
+                  <span>{translations.viewAll}</span>
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </a>
               </div>
@@ -553,7 +555,7 @@ const Dashboard = () => {
                             <div className="flex items-center space-x-3 text-xs text-gray-500">
                               <div className="flex items-center space-x-1">
                                 <Hash className="w-3 h-3" />
-                                <span>{session.messageCount} messages</span>
+                                <span>{session.messageCount} {translations.messages}</span>
                               </div>
                             </div>
                             <span className="text-xs text-gray-500 shrink-0">
@@ -570,8 +572,8 @@ const Dashboard = () => {
                   <div className="bg-gray-800/50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
                     <MessageCircle className="w-8 h-8 text-gray-600" />
                   </div>
-                  <p className="text-gray-400 mb-1">No chat sessions yet</p>
-                  <p className="text-gray-600 text-sm">Start your first AI conversation</p>
+                  <p className="text-gray-400 mb-1">{translations.noChatSessions}</p>
+                  <p className="text-gray-600 text-sm">{translations.startFirstAiConversation}</p>
                 </div>
               )}
             </motion.div>
