@@ -113,7 +113,7 @@ const StudyboardPage = () => {
       formData.append('file', documentFile);
       formData.append('message', 'Generate study materials from this document');
 
-      const response = await fetch('http://localhost:8000/flashcards', {
+      const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/flashcards`, {
         method: 'POST',
         body: formData,
       });
@@ -244,7 +244,7 @@ const StudyboardPage = () => {
       chatFormData.append('message', inputMessage);
       chatFormData.append('teacher', 'Anil Deshmukh'); // Default teacher
 
-      const chatResponse = await fetch('http://localhost:8000/upload-and-chat', {
+      const chatResponse = await fetch(`${import.meta.env.VITE_SERVER_URL}/upload-and-chat`, {
         method: 'POST',
         body: chatFormData,
       });
