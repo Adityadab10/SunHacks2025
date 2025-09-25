@@ -81,7 +81,7 @@ Built for **SunHacks 2025**, this platform leverages modern AI technologies to r
 ### 🔧 Installation  
 
 **Clone the repository**  
-git clone https://github.com/your-username/SunHacks2025.git
+git clone https://github.com/Adityadab10/SunHacks2025.git
 cd SunHacks2025
 
 **Backend Setup**
@@ -110,12 +110,17 @@ pnpm dev
 
 **Backend (.env)**
 MONGODB_URI=your_mongodb_connection_string
+
 GEMINI_API_KEY=your_google_gemini_api_key
+
 VEO_API_KEY=your_veo3_api_key
+
 JWT_SECRET=your_jwt_secret
+
 PORT=8000
 
 **Frontend (.env)**
+
 VITE_API_BASE_URL=http://localhost:8000
 
 📱 Usage
