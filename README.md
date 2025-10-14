@@ -1,5 +1,4 @@
 # SunHacks2025
-# 🌞 SunHacks2025 - AI-Powered Study Platform  
 
 A comprehensive **AI-powered study platform** that transforms learning through intelligent content processing, personalized study materials, and interactive features.  
 Built for **SunHacks 2025**, this platform leverages modern AI technologies to revolutionize the educational experience.  
